@@ -1,23 +1,16 @@
 /* ==========================================================================
-   BPMP Farm Quest: Gorontalo Edition
-   Harvest Moon / Stardew Valley Cozy Board Game Styling
+   BPMP Farm Quest: Gorontalo Edition · Roblox & Harvest Moon 3D Open World
+   Styling for Free Walking, Joystick Analog, 30 Posko, & Mobile Landscape
    ========================================================================== */
 
 :root {
   --wood-dark: #3e2723;
   --wood-med: #5d4037;
   --wood-light: #8d6e63;
-  --wood-border: #bcaaa4;
-  --parchment: #fff8e1;
-  --parchment-border: #d7ccc8;
-  --farm-green: #2e7d32;
-  --farm-light-green: #81c784;
-  --bpmp-yellow: #f59e0b;
-  --bpmp-gold: #ffb300;
-  --bpmp-red: #c62828;
-  --bpmp-blue: #1976d2;
-  --hud-bg: rgba(30, 24, 20, 0.88);
-  --text-dark: #2c1810;
+  --bpmp-gold: #f59e0b;
+  --bpmp-green: #10b981;
+  --bpmp-blue: #38bdf8;
+  --bpmp-red: #ef4444;
   --text-light: #fdfbf7;
 }
 
@@ -34,11 +27,10 @@ body, html {
   height: 100%;
   overflow: hidden;
   background-color: #81c784;
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   color: var(--text-light);
 }
 
-/* 3D Canvas Background */
 #canvas-container {
   position: absolute;
   top: 0;
@@ -46,14 +38,8 @@ body, html {
   width: 100%;
   height: 100%;
   z-index: 1;
-  cursor: grab;
 }
 
-#canvas-container:active {
-  cursor: grabbing;
-}
-
-/* UI Overlay Container */
 #ui-overlay {
   position: absolute;
   top: 0;
@@ -65,329 +51,220 @@ body, html {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 16px;
+  padding: 12px;
 }
 
-/* Top HUD Bar */
+/* TOP HUD */
 .top-hud {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
   pointer-events: auto;
 }
 
-.hud-group-left, .hud-group-right {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* Harvest Moon Wood Plaque Panels */
 .wood-panel {
   background: linear-gradient(180deg, #5d4037 0%, #3e2723 100%);
-  border: 3px solid #8d6e63;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.2);
-  border-radius: 14px;
-  padding: 8px 14px;
+  border: 2px solid #8d6e63;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  padding: 6px 12px;
   color: #fff;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .brand-badge {
   background: linear-gradient(135deg, #f59e0b, #d97706);
   border: 2px solid #ffedd5;
   border-radius: 12px;
-  padding: 6px 14px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  padding: 6px 12px;
 }
 
 .brand-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   color: #fff;
-  letter-spacing: 0.5px;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .brand-sub {
-  font-size: 11px;
+  font-size: 10px;
   color: #fef3c7;
   font-weight: 600;
 }
 
-/* Timer HUD */
 .timer-panel {
   display: flex;
   flex-direction: column;
-  min-width: 170px;
+  min-width: 140px;
 }
 
 .timer-header {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   color: #fde68a;
-  margin-bottom: 2px;
 }
 
 .timer-clock {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 900;
-  font-family: 'Orbitron', monospace, sans-serif;
-  letter-spacing: 1px;
+  font-family: 'Orbitron', monospace;
   color: #ffffff;
-  text-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
 }
 
 .timer-bar-bg {
   width: 100%;
-  height: 6px;
+  height: 5px;
   background: rgba(0, 0, 0, 0.5);
   border-radius: 4px;
   overflow: hidden;
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
 .timer-bar-fill {
   width: 100%;
   height: 100%;
   background: #43a047;
-  transition: width 0.4s linear, background-color 0.4s ease;
+  transition: width 0.4s linear;
 }
 
-/* Energy & Stamina Bar (Harvest Moon Style) */
-.energy-bar-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.energy-icon {
-  font-size: 18px;
-  animation: pulse 1.8s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-}
-
-.energy-meter {
-  width: 120px;
-  height: 12px;
-  background: #261713;
-  border: 1px solid #8d6e63;
-  border-radius: 8px;
-  overflow: hidden;
-  position: relative;
-}
-
-.energy-fill {
-  height: 100%;
-  width: 100%;
-  background: linear-gradient(90deg, #ff5722, #4caf50);
-  transition: width 0.3s ease;
-}
-
-.energy-text {
-  font-size: 11px;
-  font-weight: 800;
-  color: #fff;
-}
-
-/* Score Plaque */
 .score-badge {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 900;
   color: #fef08a;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
 }
 
-/* Top Center Active Tile Indicator */
-.current-tile-tag {
-  background: rgba(46, 125, 50, 0.9);
-  border: 2px solid #a5d6a7;
-  border-radius: 20px;
-  padding: 4px 14px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #fff;
-  align-self: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-
-/* Sync Status Badge */
 .sync-badge {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: #bbf7d0;
   display: flex;
   align-items: center;
   gap: 4px;
-  opacity: 0.85;
-  transition: opacity 0.3s ease;
 }
 
 .sync-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   background-color: #22c55e;
   border-radius: 50%;
-  box-shadow: 0 0 8px #22c55e;
+  box-shadow: 0 0 6px #22c55e;
 }
 
-/* Minimap Widget */
+/* RADAR MINIMAP */
 .minimap-panel {
   position: absolute;
-  top: 90px;
-  right: 16px;
+  top: 75px;
+  right: 12px;
   background: rgba(30, 24, 20, 0.9);
-  border: 3px solid #8d6e63;
-  border-radius: 14px;
-  padding: 8px;
+  border: 2px solid #8d6e63;
+  border-radius: 12px;
+  padding: 6px;
   pointer-events: auto;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.4);
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .minimap-title {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
   color: #fde68a;
-  margin-bottom: 4px;
-  letter-spacing: 0.5px;
+  margin-bottom: 2px;
 }
 
 #minimap-canvas {
-  border-radius: 8px;
-  background: #33691e;
+  border-radius: 6px;
+  background: #2e7d32;
   display: block;
 }
 
-/* Bottom Action Bar */
-.bottom-hud {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
+/* VIRTUAL JOYSTICK (UNTUK MOBILE / HP SEPERTI ROBLOX) */
+.joystick-zone {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  width: 120px;
+  height: 120px;
   pointer-events: auto;
-  gap: 12px;
+  touch-action: none;
+  z-index: 40;
 }
 
-/* Big Dice Roll Button */
-.dice-action-area {
+.joystick-base {
+  width: 110px;
+  height: 110px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 3px solid rgba(245, 158, 11, 0.8);
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.joystick-stick {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  position: absolute;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  cursor: grab;
+  transition: transform 0.05s linear;
+}
+
+/* PROXIMITY ACTION BUTTON (TOMBOL MASUK POSKO SAAT DEKAT) */
+.posko-action-container {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 45;
+  pointer-events: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
 }
 
-.btn-roll {
-  background: linear-gradient(180deg, #ffca28 0%, #f57f17 100%);
-  color: #3e2723;
-  border: 4px solid #fff9c4;
-  border-radius: 28px;
-  padding: 14px 28px;
-  font-size: 18px;
+.btn-enter-posko {
+  background: linear-gradient(135deg, #f59e0b, #e65100);
+  border: 3px solid #ffedd5;
+  border-radius: 30px;
+  padding: 12px 28px;
+  color: #fff;
+  font-size: 15px;
   font-weight: 900;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(245, 127, 23, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.7);
+  animation: pulseGlow 1.4s infinite;
   display: flex;
   align-items: center;
-  gap: 10px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.btn-roll:hover:not(:disabled) {
-  transform: translateY(-4px) scale(1.03);
-  box-shadow: 0 12px 28px rgba(245, 127, 23, 0.7);
-}
-
-.btn-roll:active:not(:disabled) {
-  transform: translateY(2px) scale(0.98);
-}
-
-.btn-roll:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  filter: grayscale(0.5);
-}
-
-.dice-icon {
-  font-size: 26px;
-  animation: diceWiggle 3s infinite;
-}
-
-@keyframes diceWiggle {
-  0%, 80%, 100% { transform: rotate(0deg); }
-  85% { transform: rotate(-12deg); }
-  90% { transform: rotate(12deg); }
-  95% { transform: rotate(-6deg); }
-}
-
-/* Secondary Button Groups (Camera, Audio, BPMP info) */
-.hud-btn-group {
-  display: flex;
   gap: 8px;
 }
 
-.hud-btn {
-  background: rgba(62, 39, 35, 0.85);
-  border: 2px solid #8d6e63;
-  color: #fdfbf7;
-  padding: 8px 14px;
+@keyframes pulseGlow {
+  0%, 100% { transform: scale(1); box-shadow: 0 8px 25px rgba(245, 158, 11, 0.6); }
+  50% { transform: scale(1.05); box-shadow: 0 12px 30px rgba(245, 158, 11, 0.9); }
+}
+
+.desktop-controls-hint {
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(4px);
+  padding: 4px 12px;
+  font-size: 11px;
+  color: #e2e8f0;
 }
 
-.hud-btn:hover {
-  background: #5d4037;
-  border-color: #ffd54f;
-  transform: translateY(-2px);
-}
-
-/* Retro Toast Notification */
-.retro-toast {
-  position: absolute;
-  top: 130px;
-  left: 50%;
-  transform: translateX(-50%) translateY(-20px);
-  background: linear-gradient(180deg, #4e342e, #2d1e17);
-  border: 3px solid #ffb300;
-  border-radius: 20px;
-  padding: 10px 22px;
-  font-size: 14px;
-  font-weight: 800;
-  color: #fff9c4;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  z-index: 100;
-  text-align: center;
-}
-
-.retro-toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* ==========================================================================
-   RPG RETRO DIALOG BOX / QUIZ MODAL
-   Stardew Valley / Harvest Moon Wood Parchment Aesthetic
-   ========================================================================== */
+/* MODAL SOAL POSKO (POP-UP RETRO PARCHMENT) */
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -395,12 +272,12 @@ body, html {
   width: 100%;
   height: 100%;
   background: rgba(10, 15, 20, 0.75);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(5px);
   z-index: 200;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 14px;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease;
@@ -411,31 +288,24 @@ body, html {
   pointer-events: auto;
 }
 
-/* Wood Framing */
 .rpg-dialog-frame {
   background: #5d4037;
-  border: 6px solid #8d6e63;
-  outline: 4px solid #3e2723;
-  border-radius: 24px;
-  padding: 16px;
+  border: 5px solid #8d6e63;
+  outline: 3px solid #3e2723;
+  border-radius: 20px;
+  padding: 12px;
   width: 100%;
-  max-width: 680px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), inset 0 2px 8px rgba(255, 255, 255, 0.25);
-  position: relative;
-  animation: modalPop 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  max-width: 660px;
+  max-height: 94vh;
+  overflow-y: auto;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
 }
 
-@keyframes modalPop {
-  0% { transform: scale(0.85); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-/* Parchment Interior */
 .rpg-dialog-parchment {
   background: #fff8e1;
-  border: 3px solid #d7ccc8;
-  border-radius: 16px;
-  padding: 22px;
+  border: 2px solid #d7ccc8;
+  border-radius: 14px;
+  padding: 16px;
   color: #2c1810;
 }
 
@@ -444,106 +314,73 @@ body, html {
   justify-content: space-between;
   align-items: center;
   border-bottom: 2px dashed #bcaaa4;
-  padding-bottom: 12px;
-  margin-bottom: 16px;
-}
-
-.dialog-title-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.dialog-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #ffecb3;
-  border: 3px solid #f57f17;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .dialog-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   color: #3e2723;
 }
 
 .dialog-meta {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: #e65100;
 }
 
-.dialog-badge {
-  background: #1976d2;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 4px 10px;
-  border-radius: 12px;
-}
-
-/* Question Typography */
 .dialog-question {
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 14px;
+  line-height: 1.5;
   font-weight: 700;
   color: #212121;
-  margin-bottom: 20px;
-  min-height: 52px;
+  margin-bottom: 14px;
 }
 
-/* Options Container */
 .dialog-options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 640px) {
+  .dialog-options {
+    grid-template-columns: 1fr;
+  }
 }
 
 .retro-option-btn {
   background: #ffffff;
   border: 2px solid #bcaaa4;
-  border-radius: 12px;
-  padding: 12px 16px;
+  border-radius: 10px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   text-align: left;
   cursor: pointer;
-  transition: all 0.15s ease;
-  font-size: 14px;
+  font-size: 12px;
   font-family: inherit;
   color: #263238;
 }
 
 .retro-option-btn:hover:not(:disabled) {
-  border-color: #f57f17;
+  border-color: #f59e0b;
   background: #fffde7;
-  transform: translateX(4px);
 }
 
 .retro-option-btn .option-key {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   background: #efebe9;
-  border: 2px solid #8d6e63;
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
-  color: #4e342e;
   flex-shrink: 0;
-}
-
-.retro-option-btn .option-text {
-  font-weight: 600;
-  line-height: 1.4;
 }
 
 .retro-option-btn.correct {
@@ -552,403 +389,31 @@ body, html {
   color: #1b5e20 !important;
 }
 
-.retro-option-btn.correct .option-key {
-  background: #2e7d32 !important;
-  color: #ffffff !important;
-  border-color: #1b5e20 !important;
-}
-
 .retro-option-btn.wrong {
   background: #ffebee !important;
   border-color: #c62828 !important;
   color: #b71c1c !important;
 }
 
-.retro-option-btn.wrong .option-key {
-  background: #c62828 !important;
-  color: #ffffff !important;
-  border-color: #b71c1c !important;
-}
-
-/* Explanation Box */
-.quiz-explanation {
-  padding: 12px 16px;
-  border-radius: 10px;
-  font-size: 13px;
-  line-height: 1.5;
-  margin-bottom: 16px;
-}
-
-.quiz-explanation.correct {
-  background: #dcedc8;
-  border-left: 5px solid #558b2f;
-  color: #33691e;
-}
-
-.quiz-explanation.wrong {
-  background: #ffcdd2;
-  border-left: 5px solid #c62828;
-  color: #b71c1c;
-}
-
-/* Modal Actions */
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
 .btn-rpg-primary {
   background: linear-gradient(180deg, #43a047, #2e7d32);
   color: #fff;
   border: 2px solid #a5d6a7;
-  border-radius: 12px;
-  padding: 10px 22px;
-  font-size: 14px;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(46, 125, 50, 0.4);
-}
-
-.btn-rpg-primary:hover {
-  background: #388e3c;
-  transform: translateY(-2px);
-}
-
-/* ==========================================================================
-   LOGIN / REGISTRATION MODAL
-   ========================================================================== */
-.login-dialog-frame {
-  max-width: 460px;
-}
-
-.form-group {
-  margin-bottom: 14px;
-  text-align: left;
-}
-
-.form-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 800;
-  color: #4e342e;
-  margin-bottom: 6px;
-}
-
-.form-input {
-  width: 100%;
-  padding: 10px 14px;
-  border: 2px solid #bcaaa4;
   border-radius: 10px;
-  font-family: inherit;
-  font-size: 14px;
-  outline: none;
-  background: #ffffff;
-  color: #212121;
-}
-
-.form-input:focus {
-  border-color: #f59e0b;
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
-}
-
-.avatar-selector {
-  display: flex;
-  gap: 10px;
-  margin-top: 6px;
-}
-
-.avatar-opt {
-  flex: 1;
-  background: #fff;
-  border: 2px solid #d7ccc8;
-  border-radius: 10px;
-  padding: 8px;
-  text-align: center;
-  cursor: pointer;
-  font-size: 20px;
-}
-
-.avatar-opt.active {
-  border-color: #2e7d32;
-  background: #e8f5e9;
-  box-shadow: 0 0 0 2px #4caf50;
-}
-
-/* ==========================================================================
-   FINISH & LEADERBOARD MODALS
-   ========================================================================== */
-.finish-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin: 16px 0;
-}
-
-.finish-stat-card {
-  background: #ffffff;
-  border: 2px solid #d7ccc8;
-  border-radius: 12px;
-  padding: 12px;
-  text-align: center;
-}
-
-.finish-stat-card .stat-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: #795548;
-}
-
-.finish-stat-card .stat-val {
-  font-size: 20px;
-  font-weight: 900;
-  color: #2e7d32;
-  margin-top: 2px;
-}
-
-/* Leaderboard List */
-.leaderboard-list {
-  max-height: 240px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 12px 0;
-}
-
-.leaderboard-item {
-  display: flex;
-  align-items: center;
-  background: #ffffff;
-  border: 1px solid #d7ccc8;
-  border-radius: 10px;
-  padding: 8px 12px;
+  padding: 8px 18px;
   font-size: 13px;
-}
-
-.leaderboard-item.is-user {
-  background: #fffde7;
-  border: 2px solid #fbc02d;
-  font-weight: 700;
-}
-
-.lb-rank {
-  font-weight: 900;
-  width: 32px;
-  color: #e65100;
-}
-
-.lb-info {
-  flex: 1;
-}
-
-.lb-name {
   font-weight: 800;
-  color: #3e2723;
+  cursor: pointer;
 }
 
-.lb-inst {
-  font-size: 10px;
-  color: #757575;
-}
-
-.lb-score {
-  font-weight: 900;
-  color: #2e7d32;
-}
-
-/* Real BPMP Gorontalo Photo Modal */
-.bpmp-photo-box {
-  width: 100%;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 3px solid #8d6e63;
-  margin-bottom: 12px;
-}
-
-.bpmp-photo-box img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* Responsive Rules & Mobile Landscape Optimization */
-@media (max-width: 950px) {
-  #ui-overlay {
-    padding: 6px 10px;
-  }
-  
-  .top-hud {
-    gap: 6px;
-  }
-
-  .wood-panel {
-    padding: 4px 8px;
-    border-width: 2px;
-  }
-
-  .brand-title {
-    font-size: 11px;
-  }
-
-  .brand-sub, .sync-badge {
-    display: none;
-  }
-
-  .timer-clock {
-    font-size: 16px;
-  }
-
-  .energy-meter {
-    width: 80px;
-    height: 10px;
-  }
-
-  .current-tile-tag {
-    font-size: 10px;
-    padding: 2px 10px;
-  }
-
-  .minimap-panel {
-    top: auto;
-    bottom: 68px;
-    right: 8px;
-    padding: 4px;
-    transform: scale(0.75);
-    transform-origin: bottom right;
-  }
-
-  .btn-roll {
-    padding: 8px 18px;
-    font-size: 14px;
-    border-width: 3px;
-  }
-
-  .dice-icon {
-    font-size: 20px;
-  }
-
-  .hud-btn {
-    padding: 5px 8px;
-    font-size: 10px;
-    border-radius: 8px;
-  }
-
-  .rpg-dialog-frame {
-    padding: 8px;
-    max-height: 94vh;
-    overflow-y: auto;
-  }
-
-  .rpg-dialog-parchment {
-    padding: 12px;
-  }
-
-  .dialog-question {
-    font-size: 13px;
-    line-height: 1.4;
-    margin-bottom: 10px;
-    min-height: auto;
-  }
-
-  .retro-option-btn {
-    padding: 8px 12px;
-    font-size: 12px;
-    gap: 8px;
-  }
-
-  .retro-option-btn .option-key {
-    width: 26px;
-    height: 26px;
-    font-size: 12px;
-  }
-}
-
-/* Mobile Landscape Height Specifics (e.g. 360px - 450px) */
-@media (max-height: 500px) and (orientation: landscape) {
-  #ui-overlay {
-    padding: 4px 8px;
-  }
-
-  .top-hud {
-    align-items: center;
-  }
-
-  .timer-panel {
-    min-width: 120px;
-  }
-
-  .timer-clock {
-    font-size: 15px;
-  }
-
-  .bottom-hud {
-    align-items: center;
-    gap: 6px;
-  }
-
-  .btn-roll {
-    padding: 6px 14px;
-    font-size: 13px;
-  }
-
-  /* 2-Column Quiz Options on Landscape Mobile */
-  .dialog-options {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .minimap-panel {
-    display: none; /* Hide minimap on tiny landscape screens to prevent blocking buttons */
-  }
-}
-
-/* Portrait Warning Prompt for Mobile */
-.rotate-device-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #0f172a;
-  z-index: 9999;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 24px;
-  color: #fff;
-}
-
-@media (max-width: 768px) and (orientation: portrait) {
-  .rotate-device-overlay {
-    display: flex;
-  }
-}
-
-.rotate-phone-anim {
-  font-size: 52px;
-  margin-bottom: 16px;
-  animation: phoneRotate 2.5s infinite ease-in-out;
-}
-
-@keyframes phoneRotate {
-  0% { transform: rotate(0deg); }
-  40% { transform: rotate(-90deg); }
-  60% { transform: rotate(-90deg); }
-  100% { transform: rotate(0deg); }
-}
-
-/* Anti-Cheat Tab Switch Warning Modal */
+/* ANTI-CHEAT WARNING & ROTATE OVERLAYS */
 .cheat-warning-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(185, 28, 28, 0.85);
+  background: rgba(185, 28, 28, 0.88);
   backdrop-filter: blur(8px);
   z-index: 5000;
   display: flex;
@@ -968,21 +433,139 @@ body, html {
 .cheat-warning-card {
   background: #1e1b4b;
   border: 4px solid #ef4444;
-  border-radius: 20px;
-  padding: 24px;
-  max-width: 440px;
+  border-radius: 18px;
+  padding: 20px;
+  max-width: 420px;
   text-align: center;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.8);
   color: #fff;
 }
 
-.cheat-warning-icon {
-  font-size: 48px;
-  animation: shake 0.5s infinite;
+.rotate-device-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #0f172a;
+  z-index: 9999;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  color: #fff;
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-6px); }
-  75% { transform: translateX(6px); }
+@media (max-width: 768px) and (orientation: portrait) {
+  .rotate-device-overlay {
+    display: flex;
+  }
+}
+
+.rotate-phone-anim {
+  font-size: 48px;
+  margin-bottom: 12px;
+  animation: phoneRotate 2.5s infinite ease-in-out;
+}
+
+@keyframes phoneRotate {
+  0% { transform: rotate(0deg); }
+  40% { transform: rotate(-90deg); }
+  60% { transform: rotate(-90deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.form-group {
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  color: #4e342e;
+  margin-bottom: 4px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid #bcaaa4;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.avatar-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.avatar-opt {
+  flex: 1;
+  background: #fff;
+  border: 2px solid #d7ccc8;
+  border-radius: 8px;
+  padding: 6px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.avatar-opt.active {
+  border-color: #2e7d32;
+  background: #e8f5e9;
+}
+
+.finish-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.finish-stat-card {
+  background: #ffffff;
+  border: 2px solid #d7ccc8;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #795548;
+}
+
+.stat-val {
+  font-size: 16px;
+  font-weight: 900;
+  color: #2e7d32;
+}
+
+.retro-toast {
+  position: absolute;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: #3e2723;
+  border: 2px solid #ffb300;
+  border-radius: 16px;
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff9c4;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 100;
+}
+
+.retro-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }

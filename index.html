@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>BPMP Farm Quest: SMA SNT Kelas X · Asesmen 3D Arduino & Wokwi</title>
+  <title>BPMP Farm Quest: Open-World 3D · SMA SNT Kelas X (Roblox & Harvest Moon Style)</title>
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,164 +15,6 @@
   
   <!-- Three.js r128 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-  <style>
-    /* Mode Langsung: Kontainer Soal Cepat Terbuka */
-    .quest-card-hud {
-      position: absolute;
-      bottom: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 95%;
-      max-width: 760px;
-      z-index: 50;
-      pointer-events: auto;
-    }
-
-    .quest-box {
-      background: rgba(30, 24, 20, 0.94);
-      border: 3px solid #f59e0b;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-      border-radius: 18px;
-      padding: 14px 18px;
-      color: #fff;
-      backdrop-filter: blur(8px);
-    }
-
-    .quest-header-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      border-bottom: 1px dashed rgba(245, 158, 11, 0.4);
-      padding-bottom: 6px;
-    }
-
-    .quest-num-pill {
-      background: #f59e0b;
-      color: #0f172a;
-      font-weight: 900;
-      font-size: 12px;
-      padding: 3px 10px;
-      border-radius: 12px;
-    }
-
-    .quest-topic-title {
-      font-size: 11px;
-      color: #fde68a;
-      font-weight: 700;
-    }
-
-    .quest-question-text {
-      font-size: 14px;
-      line-height: 1.45;
-      font-weight: 700;
-      color: #fdfbf7;
-      margin-bottom: 10px;
-      max-height: 90px;
-      overflow-y: auto;
-    }
-
-    .quest-options-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    @media (max-width: 600px) {
-      .quest-options-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .quest-btn {
-      background: #ffffff;
-      border: 2px solid #bcaaa4;
-      border-radius: 10px;
-      padding: 8px 12px;
-      text-align: left;
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: 700;
-      color: #263238;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.15s ease;
-    }
-
-    .quest-btn:hover:not(:disabled) {
-      background: #fffde7;
-      border-color: #f59e0b;
-      transform: translateY(-1px);
-    }
-
-    .quest-btn.correct {
-      background: #e8f5e9 !important;
-      border-color: #2e7d32 !important;
-      color: #1b5e20 !important;
-    }
-
-    .quest-btn.wrong {
-      background: #ffebee !important;
-      border-color: #c62828 !important;
-      color: #b71c1c !important;
-    }
-
-    .quest-key-badge {
-      width: 22px;
-      height: 22px;
-      background: #eceff1;
-      border-radius: 6px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: 900;
-      color: #37474f;
-      flex-shrink: 0;
-    }
-
-    .quest-feedback-bar {
-      display: none;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 11px;
-      line-height: 1.4;
-      margin-top: 6px;
-    }
-
-    .quest-feedback-bar.correct {
-      background: rgba(46, 125, 50, 0.3);
-      border: 1px solid #4caf50;
-      color: #a5d6a7;
-    }
-
-    .quest-feedback-bar.wrong {
-      background: rgba(198, 40, 40, 0.3);
-      border: 1px solid #e53935;
-      color: #ef9a9a;
-    }
-
-    .quest-nav-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 6px;
-    }
-
-    .tab-switch-pill {
-      background: rgba(239, 68, 68, 0.2);
-      border: 1px solid #ef4444;
-      color: #fca5a5;
-      font-size: 11px;
-      font-weight: 800;
-      padding: 2px 8px;
-      border-radius: 10px;
-    }
-  </style>
 </head>
 <body>
 
@@ -181,7 +23,7 @@
     <div class="rotate-phone-anim">📱 ➔ 🔄</div>
     <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 8px;">Miringkan HP ke Posisi Landscape</h2>
     <p style="font-size: 0.85rem; color: #94a3b8; max-width: 320px; line-height: 1.5;">
-      Game ini dioptimalkan dalam mode mendatar (horizontal) agar seluruh tombol & animasi 3D terlihat jelas di layar HP Anda.
+      Game ini dioptimalkan dalam mode mendatar (horizontal) agar Anda leluasa menggerakkan joystick & tombol terlihat jelas!
     </p>
     <button id="btn-force-landscape" class="btn-rpg-primary" style="margin-top: 18px; font-size: 13px;">
       Kunci Layar Landscape (Mendatar) 🔄
@@ -191,10 +33,10 @@
   <!-- Peringatan Curang / Pindah Tab Modal -->
   <div id="cheat-warning-modal" class="cheat-warning-backdrop">
     <div class="cheat-warning-card">
-      <div class="cheat-warning-icon">⚠️</div>
-      <h2 style="color: #f87171; font-size: 1.3rem; margin: 10px 0 6px;">PERINGATAN: PINDAH TAB TERDETEKSI!</h2>
+      <div style="font-size: 48px; margin-bottom: 8px;">⚠️</div>
+      <h2 style="color: #f87171; font-size: 1.25rem; margin-bottom: 6px;">PERINGATAN: PINDAH TAB TERDETEKSI!</h2>
       <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 12px;">
-        Anda terdeteksi berpindah tab atau keluar dari halaman ujian. Kejadian ini dicatat secara otomatis ke Google Sheets Guru!
+        Anda terdeteksi berpindah tab atau meminimalkan browser. Pelanggaran ini otomatis tercatat di Google Sheets Guru!
       </p>
       <div id="cheat-count-text" style="font-weight: 900; color: #fbbf24; font-size: 15px; margin-bottom: 16px;">
         Pelanggaran Ke: 1 Kali
@@ -217,40 +59,37 @@
     <!-- Top HUD Navigation -->
     <header class="top-hud">
       <!-- Left: Identitas Siswa & Kelas -->
-      <div class="hud-group-left">
+      <div style="display: flex; flex-direction: column; gap: 6px;">
         <div class="brand-badge wood-panel">
           <div>
             <div id="hud-player-title" class="brand-title">👨‍💻 SMA SNT KELAS X</div>
-            <div id="hud-player-sub" class="brand-sub">Asesmen Arduino & Wokwi</div>
+            <div id="hud-player-sub" class="brand-sub">Petualangan 30 Posko Arduino & Wokwi</div>
           </div>
         </div>
 
-        <!-- Energy Bar & Pindah Tab Info -->
-        <div class="wood-panel energy-bar-container">
-          <span class="energy-icon">❤️</span>
-          <div class="energy-meter">
-            <div id="hud-energy-bar" class="energy-fill"></div>
-          </div>
-          <span id="hud-energy-text" class="energy-text">100%</span>
-          <span id="hud-tab-switch-badge" class="tab-switch-pill" style="display: none;">⚠️ Pindah Tab: 0</span>
+        <div class="wood-panel" style="padding: 4px 10px; font-size: 11px;">
+          <span id="hud-tab-switch-badge" style="color: #f87171; font-weight: 800; display: none;">⚠️ Pindah Tab: 0</span>
+          <span id="hud-current-tile" style="font-weight: 700; color: #fde68a;">Gunakan Joystick / WASD untuk Jalan</span>
         </div>
       </div>
 
-      <!-- Center: Posisi Pos 3D & Google Sheets Status -->
-      <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
-        <div id="hud-current-tile" class="current-tile-tag">Pos #1: Mulai Petualangan 🏛️</div>
+      <!-- Center: Status Google Sheets & Posko Solved -->
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
         <div class="sync-badge">
           <span class="sync-dot"></span>
-          <span id="sync-status-badge">Google Sheets Siap</span>
+          <span id="sync-status-badge">Google Sheets Aktif ✅</span>
+        </div>
+        <div style="background: rgba(16, 185, 129, 0.25); border: 1px solid #10b981; color: #a7f3d0; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 800;">
+          🏃 Berebutan Taklukkan 30 Posko!
         </div>
       </div>
 
-      <!-- Right: 60-Menit Global Timer & Skor Panen -->
-      <div class="hud-group-right">
+      <!-- Right: 60-Menit Global Timer & Skor -->
+      <div style="display: flex; flex-direction: column; gap: 6px;">
         <div class="wood-panel timer-panel">
           <div class="timer-header">
             <span>⏱️ WAKTU</span>
-            <span id="hud-soal-stats">0/30 Soal</span>
+            <span id="hud-soal-stats">0/30 Posko</span>
           </div>
           <div id="hud-timer" class="timer-clock">60:00</div>
           <div class="timer-bar-bg">
@@ -259,7 +98,7 @@
         </div>
 
         <div class="wood-panel" style="justify-content: space-between;">
-          <span style="font-size: 11px; font-weight: 700; color: #ffd54f;">🌾 SKOR:</span>
+          <span style="font-size: 11px; font-weight: 700; color: #ffd54f;">🌾 SKOR PANEN:</span>
           <span id="hud-score" class="score-badge">0</span>
         </div>
       </div>
@@ -267,48 +106,33 @@
 
     <!-- Minimap Radar Widget (Top-Right) -->
     <div class="minimap-panel">
-      <div class="minimap-title">PETA POS BPMP</div>
+      <div class="minimap-title">RADAR POSKO & PEMAIN</div>
       <canvas id="minimap-canvas" width="100" height="100"></canvas>
     </div>
 
-    <!-- KARTU SOAL LANGSUNG (MEKANISME MUDAH: LANGSUNG JAWAB & MAJU POS) -->
-    <div id="quest-card" class="quest-card-hud">
-      <div class="quest-box">
-        <div class="quest-header-bar">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span id="quest-number-badge" class="quest-num-pill">Soal 1 dari 30</span>
-            <span id="quest-category-title" class="quest-topic-title">Konsep Variabel & Memori</span>
-          </div>
-          <button id="btn-roll-bonus" class="btn-action" style="padding: 4px 10px; font-size: 11px; background: #f59e0b; color: #0f172a;">
-            🎲 Bonus Dadu
-          </button>
-        </div>
-
-        <!-- Teks Soal -->
-        <div id="quest-text" class="quest-question-text">
-          Memuat pertanyaan nomor 1...
-        </div>
-
-        <!-- 4 Tombol Pilihan Jawaban A, B, C, D -->
-        <div id="quest-options" class="quest-options-grid"></div>
-
-        <!-- Feedback Pembahasan Singkat -->
-        <div id="quest-feedback" class="quest-feedback-bar"></div>
-
-        <!-- Baris Navigasi Bawah -->
-        <div class="quest-nav-row">
-          <div style="display: flex; gap: 6px;">
-            <button id="btn-cam-iso" class="hud-btn" style="padding: 4px 8px; font-size: 10px;">📐 Isometrik</button>
-            <button id="btn-cam-top" class="hud-btn" style="padding: 4px 8px; font-size: 10px;">🗺️ Atas</button>
-            <button id="btn-cam-follow" class="hud-btn" style="padding: 4px 8px; font-size: 10px;">🚶 Ikuti</button>
-            <button id="btn-audio-toggle" class="hud-btn" style="padding: 4px 8px; font-size: 10px;">🎵 Audio</button>
-          </div>
-
-          <button id="btn-next-question" class="btn-rpg-primary" style="display: none; padding: 6px 16px; font-size: 12px;">
-            Lanjut Pos Berikutnya ➔
-          </button>
-        </div>
+    <!-- VIRTUAL JOYSTICK ANALOG (MOBILE/HP SEPERTI ROBLOX) -->
+    <div id="joystick-zone" class="joystick-zone">
+      <div class="joystick-base">
+        <div id="joystick-stick" class="joystick-stick"></div>
       </div>
+    </div>
+
+    <!-- PROXIMITY ACTION: TOMBOL BUKA POSKO KETIKA MENDEKAT -->
+    <div id="posko-action-container" class="posko-action-container" style="display: none;">
+      <button id="btn-enter-posko" class="btn-enter-posko">
+        <span>🏛️ Posko #1:</span> <span>🚪 Buka Soal Kuis</span>
+      </button>
+      <div class="desktop-controls-hint">
+        🎮 Tekan <strong>[E]</strong> atau <strong>[Spasi]</strong> di Keyboard untuk Masuk Posko
+      </div>
+    </div>
+
+    <!-- Quick Control Buttons (Bawah Kanan) -->
+    <div style="position: absolute; bottom: 12px; right: 12px; display: flex; gap: 6px; pointer-events: auto;">
+      <button id="btn-cam-follow" class="btn-action" style="padding: 6px 10px; font-size: 11px;">🚶 Kamera</button>
+      <button id="btn-cam-iso" class="btn-action" style="padding: 6px 10px; font-size: 11px;">📐 Iso</button>
+      <button id="btn-cam-top" class="btn-action" style="padding: 6px 10px; font-size: 11px;">🗺️ Peta</button>
+      <button id="btn-audio-toggle" class="btn-action" style="padding: 6px 10px; font-size: 11px;">🎵 Audio</button>
     </div>
 
   </div>
@@ -317,14 +141,14 @@
        MODAL LOGIN: KHUSUS KELAS X-A & KELAS X-B (SMA SNT)
        ======================================================================== -->
   <div id="login-modal" class="modal-backdrop active">
-    <div class="rpg-dialog-frame login-dialog-frame" style="max-width: 440px;">
+    <div class="rpg-dialog-frame" style="max-width: 440px;">
       <div class="rpg-dialog-parchment">
         <div class="dialog-header">
-          <div class="dialog-title-group">
-            <div class="dialog-avatar">👨‍💻</div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 32px;">👨‍💻</div>
             <div>
-              <div class="dialog-title">Asesmen Arduino & Wokwi</div>
-              <div class="dialog-meta">SMA SNT · Durasi 60 Menit (30 Nomor)</div>
+              <div class="dialog-title">Asesmen Arduino & Wokwi 3D</div>
+              <div class="dialog-meta">SMA SNT · Petualangan Berburu 30 Posko (60 Menit)</div>
             </div>
           </div>
         </div>
@@ -352,15 +176,14 @@
           <div class="form-group">
             <label class="form-label">Pilih Karakter 3D</label>
             <div class="avatar-selector">
-              <div class="avatar-opt active" data-avatar="student_boy">👨‍💻 Pelajar Siswa</div>
-              <div class="avatar-opt" data-avatar="student_girl">🧕 Pelajar Siswi</div>
-              <div class="avatar-opt" data-avatar="eco_expert">🧑‍🔬 Peneliti Muda</div>
+              <div class="avatar-opt active" data-avatar="student_boy">👨‍💻 Siswa</div>
+              <div class="avatar-opt" data-avatar="student_girl">🧕 Siswi</div>
             </div>
           </div>
 
           <div class="dialog-footer" style="margin-top: 16px;">
-            <button type="submit" id="btn-submit-login" class="btn-rpg-primary" style="width: 100%; font-size: 15px; padding: 12px;">
-              🚀 MASUK & MULAI PETUALANGAN (60 MENIT)
+            <button type="submit" class="btn-rpg-primary" style="width: 100%; font-size: 15px; padding: 12px;">
+              🚀 MULAI BERMAIN & JELAJAHI 30 POSKO
             </button>
           </div>
         </form>
@@ -368,19 +191,50 @@
     </div>
   </div>
 
-  <!-- MODAL FINISH -->
-  <div id="finish-modal" class="modal-backdrop">
-    <div class="rpg-dialog-frame" style="max-width: 540px;">
+  <!-- ========================================================================
+       MODAL SOAL POSKO (SAAT MENDEKATI POSKO #1 s/d #30)
+       ======================================================================== -->
+  <div id="posko-quiz-modal" class="modal-backdrop">
+    <div class="rpg-dialog-frame">
       <div class="rpg-dialog-parchment">
         <div class="dialog-header">
-          <div class="dialog-title-group">
-            <div class="dialog-avatar">🎉</div>
-            <div>
-              <div class="dialog-title">Asesmen Selesai!</div>
-              <div id="finish-reason" class="dialog-meta">Hasil Ujian Anda Telah Terkirim</div>
-            </div>
+          <div>
+            <div id="modal-posko-badge" class="dialog-title" style="color: #f59e0b;">Posko #1 dari 30</div>
+            <div id="modal-posko-topic" class="dialog-meta">Topik: Konsep Variabel & Memori</div>
           </div>
+          <button id="btn-posko-close-x" class="btn-action" style="padding: 4px 8px; font-size: 11px;">✖ Keluar</button>
         </div>
+
+        <!-- Pertanyaan -->
+        <div id="modal-posko-question" class="dialog-question">
+          Memuat pertanyaan...
+        </div>
+
+        <!-- 4 Opsi Jawaban A, B, C, D -->
+        <div id="modal-posko-options" class="dialog-options"></div>
+
+        <!-- Feedback Pembahasan -->
+        <div id="modal-posko-feedback" class="quiz-explanation" style="display: none;"></div>
+
+        <div class="dialog-footer" style="margin-top: 10px;">
+          <button id="btn-modal-close" class="btn-rpg-primary" style="display: none;">
+            Selesai & Lanjut Eksplorasi ➔
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL SELESAI / HASIL AKHIR
+       ======================================================================== -->
+  <div id="finish-modal" class="modal-backdrop">
+    <div class="rpg-dialog-frame" style="max-width: 520px;">
+      <div class="rpg-dialog-parchment">
+        <div class="dialog-header">
+          <div class="dialog-title">🎉 Asesmen Berhasil Diselesaikan!</div>
+        </div>
+        <div id="finish-reason" class="dialog-meta" style="margin-bottom: 12px;">Selamat atas pencapaian Anda!</div>
 
         <div class="finish-stats-grid">
           <div class="finish-stat-card">
@@ -388,11 +242,11 @@
             <div id="finish-player-name" class="stat-val" style="font-size: 14px;">-</div>
           </div>
           <div class="finish-stat-card">
-            <div class="stat-label">TOTAL SKOR AKHIR</div>
+            <div class="stat-label">TOTAL SKOR PANEN</div>
             <div id="finish-score" class="stat-val">0</div>
           </div>
           <div class="finish-stat-card">
-            <div class="stat-label">SOAL BENAR</div>
+            <div class="stat-label">POSKO DITAKLUKKAN</div>
             <div id="finish-correct" class="stat-val" style="color: #2e7d32;">0 / 30</div>
           </div>
           <div class="finish-stat-card">
@@ -400,8 +254,8 @@
             <div id="finish-wrong" class="stat-val" style="color: #c62828;">0</div>
           </div>
           <div class="finish-stat-card">
-            <div class="stat-label">WAKTU PENGERJAAN</div>
-            <div id="finish-time" class="stat-val" style="font-size: 15px; color: #1976d2;">00:00</div>
+            <div class="stat-label">WAKTU TEMPUH</div>
+            <div id="finish-time" class="stat-val" style="font-size: 15px; color: #0284c7;">00:00</div>
           </div>
           <div class="finish-stat-card">
             <div class="stat-label">PINDAH TAB (CURANG)</div>
@@ -409,13 +263,13 @@
           </div>
         </div>
 
-        <div style="background: #e8f5e9; border: 2px solid #81c784; border-radius: 10px; padding: 10px; margin-bottom: 14px; text-align: center; font-size: 12px; color: #1b5e20;">
-          ✅ Nilai Anda telah otomatis tercatat di Google Sheets Guru SMA SNT!
+        <div style="background: #e8f5e9; border: 2px solid #81c784; border-radius: 10px; padding: 10px; margin-bottom: 12px; text-align: center; font-size: 12px; color: #1b5e20;">
+          ✅ Data nilai Anda telah otomatis masuk ke Google Sheets Guru SMA SNT!
         </div>
 
         <div class="dialog-footer">
           <button onclick="location.reload()" class="btn-rpg-primary" style="width: 100%;">
-            🔄 Ulangi Sesi
+            🔄 Mainkan Sesi Baru
           </button>
         </div>
       </div>
@@ -434,11 +288,9 @@
 
     // Fungsi Kunci Layar ke Landscape (Auto-Landscape)
     function lockScreenLandscape() {
-      // 1. Coba Screen Orientation API
       if (screen.orientation && screen.orientation.lock) {
         screen.orientation.lock("landscape").catch(() => {});
       }
-      // 2. Request Fullscreen di HP
       const doc = document.documentElement;
       const requestFS = doc.requestFullscreen || doc.webkitRequestFullscreen || doc.mozRequestFullScreen || doc.msRequestFullscreen;
       if (requestFS && window.innerWidth < 1024) {
@@ -458,7 +310,6 @@
       const game = new BPMPFarmGame();
       window.gameInstance = game;
 
-      // Pilihan avatar
       let selectedAvatar = "student_boy";
       document.querySelectorAll(".avatar-opt").forEach(opt => {
         opt.addEventListener("click", () => {
@@ -488,13 +339,11 @@
           avatar: selectedAvatar
         };
 
-        // Otomatis kunci orientasi Landscape di HP saat klik Masuk
+        // Kunci Landscape saat masuk di HP
         lockScreenLandscape();
 
-        // Kirim registrasi ke Google Sheets
-        document.getElementById("sync-status-badge").textContent = "Mendaftarkan ke Google Sheets...";
-        await window.gasService.joinGame(game.playerData);
-        document.getElementById("sync-status-badge").textContent = "Google Sheets Aktif ✅";
+        // Kirim registrasi ke Google Sheets via Hidden Form (Pasti Tercatat)
+        window.gasService.joinGame(game.playerData);
 
         // Update HUD
         document.getElementById("hud-player-title").textContent = name;
@@ -504,40 +353,32 @@
         document.getElementById("login-modal").classList.remove("active");
         isSessionStarted = true;
 
-        // Mulai audio, timer 60 menit, dan render soal #1
+        // Mulai audio & timer 60 menit
         window.soundSystem.startMusic();
         game.startTimer();
-        game.renderCurrentQuest();
-        game.showToast(`Selamat datang ${name} di Asesmen ${kelasNama}!`);
+        game.showToast(`Selamat datang ${name}! Silakan jalan mencari Posko 1 s/d 30! 🏃`);
       });
 
       // Deteksi Pindah Tab (Anti-Curang)
       function handleTabSwitch() {
         if (!isSessionStarted || game.isGameOver) return;
-        
         window.gasService.tabSwitchCount++;
         const count = window.gasService.tabSwitchCount;
 
-        // Tampilkan badge peringatan di HUD
         const badge = document.getElementById("hud-tab-switch-badge");
         badge.style.display = "inline-block";
         badge.textContent = `⚠️ Pindah Tab: ${count}`;
 
-        // Bunyikan alarm kesalahan
         window.soundSystem.playWrong();
-
-        // Tampilkan modal peringatan
         document.getElementById("cheat-count-text").textContent = `Pelanggaran Ke: ${count} Kali`;
         document.getElementById("cheat-warning-modal").classList.add("active");
 
-        // Laporkan pelanggaran langsung ke Google Sheets!
         game.syncScoreToGAS();
       }
 
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) handleTabSwitch();
       });
-
       window.addEventListener("blur", () => {
         handleTabSwitch();
       });
@@ -546,12 +387,11 @@
         document.getElementById("cheat-warning-modal").classList.remove("active");
       });
 
-      // Bonus Kocok Dadu (Maju langkah tambahan)
-      document.getElementById("btn-roll-bonus").addEventListener("click", () => {
-        game.rollDice();
+      document.getElementById("btn-posko-close-x").addEventListener("click", () => {
+        document.getElementById("posko-quiz-modal").classList.remove("active");
       });
 
-      // Inisialisasi Game 3D
+      // Inisialisasi Game 3D Open World
       game.init();
     });
   </script>
