@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Guru · Pemantauan Multi-Player BPMP Farm Quest Gorontalo</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --bpmp-gold: #f59e0b;
+      --bpmp-green: #10b981;
+      --bpmp-blue: #38bdf8;
+      --bpmp-red: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    /* Top Navigation Header */
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 20px;
+      padding: 18px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .brand-title-area {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo-icon {
+      font-size: 36px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 2px solid var(--bpmp-gold);
+      border-radius: 14px;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-sub {
+      font-size: 0.85rem;
+      color: var(--bpmp-blue);
+      font-weight: 600;
+    }
+
+    /* Room & Sync Controls */
+    .controls-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .room-selector {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      outline: none;
+    }
+
+    .btn-action {
+      background: var(--card-border);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+      background: #475569;
+      transform: translateY(-2px);
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #0f172a;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-gold:hover {
+      filter: brightness(1.15);
+    }
+
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--bpmp-green);
+      color: var(--bpmp-green);
+      font-size: 12px;
+      font-weight: 800;
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
+
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      background-color: var(--bpmp-green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--bpmp-green);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
+
+    /* SPOTLIGHT JUARA 1 (URUTAN PERTAMA) */
+    .spotlight-leader-card {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(30, 41, 59, 0.95) 100%);
+      border: 3px solid var(--bpmp-gold);
+      border-radius: 24px;
+      padding: 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 15px 35px rgba(245, 158, 11, 0.2);
+    }
+
+    .spotlight-leader-card::before {
+      content: "👑 PERINGKAT #1";
+      position: absolute;
+      top: 12px;
+      right: 20px;
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--bpmp-gold);
+      background: rgba(245, 158, 11, 0.2);
+      border: 1px solid var(--bpmp-gold);
+      padding: 4px 12px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+    }
+
+    .leader-profile {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .leader-avatar-circle {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
+      border: 4px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+
+    .leader-name {
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .leader-meta {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .leader-scores {
+      display: flex;
+      gap: 24px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 14px 24px;
+      text-align: center;
+    }
+
+    .leader-metric-val {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--bpmp-gold);
+      font-family: 'Orbitron', monospace;
+    }
+
+    .leader-metric-lbl {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* 4 Metric Stat Cards */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .metric-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .metric-icon {
+      font-size: 24px;
+    }
+
+    .metric-value {
+      font-size: 2rem;
+      font-weight: 900;
+      color: #fff;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .metric-footer {
+      font-size: 11px;
+      color: var(--bpmp-green);
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    /* Main Table Container & Tabs */
+    .content-card {
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .tabs-header {
+      display: flex;
+      border-bottom: 2px solid var(--card-border);
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    .tab-btn {
+      padding: 16px 24px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      color: #fff;
+      border-bottom-color: var(--bpmp-gold);
+      background: rgba(245, 158, 11, 0.08);
+    }
+
+    .tab-content {
+      display: none;
+      padding: 20px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Tables */
+    .styled-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .styled-table th {
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--bpmp-blue);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 14px 16px;
+      border-bottom: 2px solid var(--card-border);
+    }
+
+    .styled-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+      font-size: 14px;
+      color: #cbd5e1;
+    }
+
+    .styled-table tr:hover {
+      background: rgba(51, 65, 85, 0.3);
+    }
+
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-weight: 900;
+      font-size: 14px;
+    }
+
+    .rank-1 { background: #f59e0b; color: #0f172a; box-shadow: 0 0 10px rgba(245, 158, 11, 0.6); }
+    .rank-2 { background: #94a3b8; color: #0f172a; }
+    .rank-3 { background: #b45309; color: #fff; }
+    .rank-other { background: #334155; color: #cbd5e1; }
+
+    .accuracy-bar-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .accuracy-bar {
+      width: 90px;
+      height: 8px;
+      background: #ef4444;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .accuracy-fill {
+      height: 100%;
+      background: #10b981;
+    }
+
+    .status-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .status-playing { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid #38bdf8; }
+    .status-finished { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid #10b981; }
+    .status-online { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid #f59e0b; }
+
+    @media (max-width: 768px) {
+      .dashboard-header { flex-direction: column; align-items: flex-start; }
+      .spotlight-leader-card { flex-direction: column; align-items: flex-start; }
+      .leader-scores { width: 100%; justify-content: space-around; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header class="dashboard-header">
+    <div class="brand-title-area">
+      <div class="brand-logo-icon">🏛️</div>
+      <div>
+        <h1 class="brand-h1">DASHBOARD PEMANTAUAN GURU</h1>
+        <div class="brand-sub">BPMP Farm Quest: Gorontalo Edition · Google Sheets Real-Time</div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-group">
+      <div class="live-indicator">
+        <span class="pulse-dot"></span>
+        <span id="live-status-text">LIVE SYNC AKTIF</span>
+      </div>
+
+      <select id="select-room-id" class="room-selector">
+        <option value="SMA-SNT-X" selected>Room: SMA SNT Kelas X (SMA-SNT-X)</option>
+        <option value="BPMP-01">Room: BPMP-01</option>
+        <option value="ALL">Semua Room</option>
+      </select>
+
+      <button id="btn-manual-refresh" class="btn-action">
+        🔄 Refresh
+      </button>
+
+      <button id="btn-export-csv" class="btn-action">
+        📥 Ekspor Nilai (CSV)
+      </button>
+
+      <a href="index.html" target="_blank" class="btn-action btn-gold" style="text-decoration: none;">
+        🎮 Tampilan Game Siswa ➔
+      </a>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       SPOTLIGHT JUARA 1 / URUTAN PERTAMA KARENA JAWAB BENAR
+       ======================================================================== -->
+  <section id="spotlight-leader-section" class="spotlight-leader-card">
+    <div class="leader-profile">
+      <div id="leader-avatar" class="leader-avatar-circle">🥇</div>
+      <div>
+        <div id="leader-name" class="leader-name">Menunggu Siswa Masuk...</div>
+        <div id="leader-institution" class="leader-meta">Instansi: - · NIM/ID: -</div>
+      </div>
+    </div>
+
+    <div class="leader-scores">
+      <div>
+        <div id="leader-score" class="leader-metric-val">0</div>
+        <div class="leader-metric-lbl">Total Skor Panen</div>
+      </div>
+      <div>
+        <div id="leader-correct" class="leader-metric-val" style="color: var(--bpmp-green);">0 / 30</div>
+        <div class="leader-metric-lbl">Soal Dijawab Benar</div>
+      </div>
+      <div>
+        <div id="leader-accuracy" class="leader-metric-val" style="color: var(--bpmp-blue);">0%</div>
+        <div class="leader-metric-lbl">Akurasi</div>
+      </div>
+      <div>
+        <div id="leader-tile" class="leader-metric-val" style="color: #cbd5e1;">#0</div>
+        <div class="leader-metric-lbl">Posisi Petak</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       4 STAT METRIC CARDS
+       ======================================================================== -->
+  <div class="metrics-grid">
+    <!-- Card 1: Total Hadir / Masuk -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-title">TOTAL SISWA MASUK</span>
+        <span class="metric-icon">👥</span>
+      </div>
+      <div id="metric-total-joined" class="metric-value">0</div>
+      <div class="metric-footer">✅ Presensi otomatis dari Google Sheets</div>
+    </div>
+
+    <!-- Card 2: Skor Tertinggi -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-title">SKOR TERTINGGI SAAT INI</span>
+        <span class="metric-icon">🌾</span>
+      </div>
+      <div id="metric-top-score" class="metric-value" style="color: var(--bpmp-gold);">0</div>
+      <div class="metric-footer">🏆 Memimpin perolehan hasil panen</div>
+    </div>
+
+    <!-- Card 3: Rata-Rata Jawaban Benar -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-title">RATA-RATA BENAR</span>
+        <span class="metric-icon">🎯</span>
+      </div>
+      <div id="metric-avg-correct" class="metric-value" style="color: var(--bpmp-green);">0</div>
+      <div class="metric-footer">Dari 30 soal Arduino & Wokwi</div>
+    </div>
+
+    <!-- Card 4: Siswa Sedang Aktif -->
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-title">SISWA AKTIF DI BOARD</span>
+        <span class="metric-icon">🎮</span>
+      </div>
+      <div id="metric-active-now" class="metric-value" style="color: var(--bpmp-blue);">0</div>
+      <div class="metric-footer">Sedang melempar dadu & kuis</div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       CONTENT TABS: LEADERBOARD & DAFTAR PRESENSI
+       ======================================================================== -->
+  <div class="content-card">
+    <div class="tabs-header">
+      <button class="tab-btn active" data-tab="tab-leaderboard">
+        🏆 Peringkat Real-Time (Live Leaderboard)
+      </button>
+      <button class="tab-btn" data-tab="tab-attendance">
+        📋 Daftar Siswa yang Sudah Masuk (Presensi Masuk)
+      </button>
+    </div>
+
+    <!-- TAB 1: LIVE LEADERBOARD -->
+    <div id="tab-leaderboard" class="tab-content active">
+      <table class="styled-table">
+        <thead>
+          <tr>
+            <th style="width: 70px;">Rank</th>
+            <th>Nama Siswa</th>
+            <th>NIM / ID</th>
+            <th>Instansi / Sekolah</th>
+            <th>Total Skor</th>
+            <th>Jawaban Benar / Salah</th>
+            <th>Posisi Petak</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-leaderboard">
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 24px;">Memuat data papan peringkat...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TAB 2: ATTENDANCE LIST (PRESENSI SISWA MASUK) -->
+    <div id="tab-attendance" class="tab-content">
+      <table class="styled-table">
+        <thead>
+          <tr>
+            <th style="width: 60px;">No</th>
+            <th>Waktu Masuk</th>
+            <th>Nama Siswa</th>
+            <th>NIM / NISN</th>
+            <th>Instansi / Sekolah</th>
+            <th>Avatar</th>
+            <th>Status Keaktifan</th>
+            <th>Aktivitas Terakhir</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-attendance">
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 24px;">Memuat daftar siswa masuk...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/gas-service.js"></script>
+
+  <script>
+    let currentRoom = "SMA-SNT-X";
+    let refreshTimer = null;
+    let latestData = null;
+
+    // Tabs navigation
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(btn.dataset.tab).classList.add("active");
+      });
+    });
+
+    // Room selector change
+    const roomSelect = document.getElementById("select-room-id");
+    roomSelect.addEventListener("change", (e) => {
+      currentRoom = e.target.value;
+      fetchDashboardData();
+    });
+
+    // Manual Refresh
+    document.getElementById("btn-manual-refresh").addEventListener("click", () => {
+      fetchDashboardData();
+    });
+
+    // Export to CSV
+    document.getElementById("btn-export-csv").addEventListener("click", () => {
+      if (!latestData || !latestData.leaderboard || latestData.leaderboard.length === 0) {
+        alert("Belum ada data untuk diekspor!");
+        return;
+      }
+      let csv = "Rank,Nama Lengkap,NIM/ID,Instansi,Total Skor,Jawaban Benar,Jawaban Salah,Petak,Status,Waktu Update\n";
+      latestData.leaderboard.forEach((p, idx) => {
+        csv += `"${idx + 1}","${p.name}","${p.nim}","${p.institution}","${p.score}","${p.correct}","${p.wrong}","Petak #${p.currentTile}","${p.status}","${p.lastPing}"\n`;
+      });
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Rekap_Nilai_BPMP_FarmQuest_${currentRoom}.csv`);
+      link.click();
+    });
+
+    // Listen to local BroadcastChannel from active game tabs
+    if (window.gasService.channel) {
+      window.gasService.channel.onmessage = (event) => {
+        console.log("[Dashboard] Broadcast received:", event.data);
+        fetchDashboardData();
+      };
+    }
+
+    async function fetchDashboardData() {
+      const data = await window.gasService.fetchTeacherDashboard(currentRoom);
+      latestData = data;
+      renderDashboard(data);
+    }
+
+    function renderDashboard(data) {
+      // 1. Metric Stat Cards
+      document.getElementById("metric-total-joined").textContent = data.totalJoined || 0;
+      document.getElementById("metric-active-now").textContent = data.activeNow || 0;
+      
+      const leader = data.leader;
+      if (leader) {
+        document.getElementById("metric-top-score").textContent = leader.score;
+      } else {
+        document.getElementById("metric-top-score").textContent = "0";
+      }
+
+      // Calculate Average Correct
+      if (data.leaderboard && data.leaderboard.length > 0) {
+        const totalCorrect = data.leaderboard.reduce((acc, p) => acc + (p.correct || 0), 0);
+        const avg = (totalCorrect / data.leaderboard.length).toFixed(1);
+        document.getElementById("metric-avg-correct").textContent = `${avg} Soal`;
+      } else {
+        document.getElementById("metric-avg-correct").textContent = "0";
+      }
+
+      // 2. Spotlight Juara 1 (Urutan Pertama)
+      if (leader && leader.name) {
+        document.getElementById("leader-name").textContent = `🥇 ${leader.name}`;
+        document.getElementById("leader-institution").textContent = `Instansi: ${leader.institution} · NIM/ID: ${leader.nim}`;
+        document.getElementById("leader-score").textContent = leader.score;
+        document.getElementById("leader-correct").textContent = `${leader.correct} / 30`;
+        const acc = (leader.correct + leader.wrong > 0) 
+          ? Math.round((leader.correct / (leader.correct + leader.wrong)) * 100) 
+          : 0;
+        document.getElementById("leader-accuracy").textContent = `${acc}%`;
+        document.getElementById("leader-tile").textContent = `#${leader.currentTile}`;
+      } else {
+        document.getElementById("leader-name").textContent = "Menunggu Siswa Masuk...";
+        document.getElementById("leader-institution").textContent = "Belum ada pemain aktif di room ini";
+        document.getElementById("leader-score").textContent = "0";
+        document.getElementById("leader-correct").textContent = "0 / 30";
+        document.getElementById("leader-accuracy").textContent = "0%";
+      }
+
+      // 3. Tab 1: Leaderboard Table
+      const tbLeaderboard = document.getElementById("tbody-leaderboard");
+      tbLeaderboard.innerHTML = "";
+      if (!data.leaderboard || data.leaderboard.length === 0) {
+        tbLeaderboard.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 24px; color: var(--text-muted);">Belum ada siswa yang bergabung di room ${currentRoom}.</td></tr>`;
+      } else {
+        data.leaderboard.forEach((p, idx) => {
+          const rank = idx + 1;
+          const rankClass = rank === 1 ? "rank-1" : (rank === 2 ? "rank-2" : (rank === 3 ? "rank-3" : "rank-other"));
+          const totalAnswered = (p.correct || 0) + (p.wrong || 0);
+          const percent = totalAnswered > 0 ? ((p.correct || 0) / totalAnswered) * 100 : 0;
+          const statusClass = p.status === "FINISHED" ? "status-finished" : (p.status === "PLAYING" ? "status-playing" : "status-online");
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td><span class="rank-badge ${rankClass}">#${rank}</span></td>
+            <td><strong>${p.name}</strong> ${rank === 1 ? '👑' : ''}</td>
+            <td><code>${p.nim}</code></td>
+            <td>${p.institution}</td>
+            <td><strong style="color: var(--bpmp-gold); font-size: 15px;">${p.score} pts</strong></td>
+            <td>
+              <div class="accuracy-bar-box">
+                <span style="color: var(--bpmp-green); font-weight: 700;">${p.correct}✓</span>
+                <div class="accuracy-bar">
+                  <div class="accuracy-fill" style="width: ${percent}%;"></div>
+                </div>
+                <span style="color: var(--bpmp-red); font-weight: 700;">${p.wrong}✗</span>
+              </div>
+            </td>
+            <td>Petak #${p.currentTile || 0}</td>
+            <td><span class="status-pill ${statusClass}">${p.status || 'ONLINE'}</span></td>
+          `;
+          tbLeaderboard.appendChild(tr);
+        });
+      }
+
+      // 4. Tab 2: Attendance Table (Presensi Siswa Masuk)
+      const tbAttendance = document.getElementById("tbody-attendance");
+      tbAttendance.innerHTML = "";
+      if (!data.players || data.players.length === 0) {
+        tbAttendance.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 24px; color: var(--text-muted);">Belum ada data presensi siswa.</td></tr>`;
+      } else {
+        data.players.forEach((p, idx) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td>${p.registeredAt || p.lastPing || '-'}</td>
+            <td><strong>${p.name}</strong></td>
+            <td><code>${p.nim}</code></td>
+            <td>${p.institution}</td>
+            <td>${p.avatar === 'student_girl' ? '🧕 Pelajar Hijab' : (p.avatar === 'eco_expert' ? '🧑‍🔬 Peneliti Hijau' : '👨‍🌾 Petani Caping')}</td>
+            <td><span class="status-pill status-online">${p.status || 'ONLINE'}</span></td>
+            <td>${p.lastPing || '-'}</td>
+          `;
+          tbAttendance.appendChild(tr);
+        });
+      }
+    }
+
+    // Auto-refresh loop every 4 seconds
+    fetchDashboardData();
+    refreshTimer = setInterval(fetchDashboardData, 4000);
+  </script>
+</body>
+</html>
