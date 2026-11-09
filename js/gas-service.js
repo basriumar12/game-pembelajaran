@@ -261,14 +261,7 @@ class GASService {
     if (s) {
       try { return JSON.parse(s); } catch (e) {}
     }
-    const initial = [
-      { roomId: "SMA-SNT-XA", playerId: "BOT_01", name: "Ahmad Fauzan", nim: "0071234561", institution: "SMA SNT (Kelas X-A)", avatar: "student_boy", status: "PLAYING", score: 260, correct: 13, wrong: 2, currentTile: 14, tabSwitches: 0, lastPing: "10:14" },
-      { roomId: "SMA-SNT-XA", playerId: "BOT_02", name: "Zahra Salsabila", nim: "0071234562", institution: "SMA SNT (Kelas X-A)", avatar: "student_girl", status: "PLAYING", score: 220, correct: 11, wrong: 3, currentTile: 11, tabSwitches: 1, lastPing: "10:15" },
-      { roomId: "SMA-SNT-XB", playerId: "BOT_03", name: "Rizky Pratama", nim: "0071234571", institution: "SMA SNT (Kelas X-B)", avatar: "student_boy", status: "ONLINE", score: 180, correct: 9, wrong: 4, currentTile: 8, tabSwitches: 0, lastPing: "10:15" },
-      { roomId: "SMA-SNT-XB", playerId: "BOT_04", name: "Nabila Putri", nim: "0071234572", institution: "SMA SNT (Kelas X-B)", avatar: "student_girl", status: "ONLINE", score: 140, correct: 7, wrong: 5, currentTile: 6, tabSwitches: 2, lastPing: "10:12" }
-    ];
-    localStorage.setItem("bpmp_room_players", JSON.stringify(initial));
-    return initial;
+    return []; // Murni hanya siswa asli yang telah mencatatkan nama
   }
 
   updateLocalScoreboard(name, score, correct, wrong, duration, inst, tile = 0, pid = null, tabSwitches = 0) {

@@ -72,7 +72,7 @@ class BPMPFarmGame {
     this.buildEcoFarmEnvironment();
     this.build30PoskoSoal();
     this.spawnMyPlayer();
-    this.setupMultiplayerBots();
+    this.setupRealMultiplayer();
     this.setupKeyboardControls();
     this.setupVirtualJoystick();
     this.setupMinimap();
@@ -370,27 +370,47 @@ class BPMPFarmGame {
   }
 
   /**
-   * Multiplayer Roster: Siswa-Siswa Lain yang Terlihat Berlari di Board
+   * Multiplayer: Hanya Siswa Asli yang Masuk dan Mencatatkan Nama
+   * (Tanpa Bot / Dummy Player Sama Sekali)
    */
-  setupMultiplayerBots() {
-    const peers = [
-      { id: "peer_1", name: "Zahra Salsabila", x: -8, z: 4, color: 0xe91e63, avatar: "student_girl" },
-      { id: "peer_2", name: "Fajar Pakaya", x: 8, z: 4, color: 0x00c853, avatar: "student_boy" },
-      { id: "peer_3", name: "Rizky Pratama", x: -16, z: 12, color: 0xff9100, avatar: "student_boy" },
-      { id: "peer_4", name: "Nabila Putri", x: 14, z: 14, color: 0x9c27b0, avatar: "student_girl" }
-    ];
-
-    peers.forEach(p => {
-      const mesh = this.createChibiAvatar(p.color, p.avatar, false, p.name);
-      mesh.position.set(p.x, 0, p.z);
-      this.scene.add(mesh);
-      this.otherPlayers.set(p.id, {
-        name: p.name,
-        mesh: mesh,
-        targetPos: new THREE.Vector3(p.x, 0, p.z),
-        speed: 0.12 + Math.random() * 0.08
-      });
+  setupRealMultiplayer() {
+    this.otherPlayers.clear();
+    // Ambil daftar siswa yang benar-benar sudah registrasi
+    const localRoster = window.gasService.getLocalPlayers();
+    localRoster.forEach(p => {
+      if (p.playerId !== window.gasService.playerId && p.roomId === this.playerData.roomId) {
+        this.addOrUpdateRealPlayer(p.playerId, p.name, p.avatar || "student_boy", p.x || -4, p.z || 6);
+      }
     });
+
+    // Sinkronisasi berkala untuk siswa baru yang baru registrasi
+    setInterval(() => {
+      if (!window.gasService) return;
+      const roster = window.gasService.getLocalPlayers();
+      roster.forEach(p => {
+        if (p.playerId !== window.gasService.playerId && p.roomId === this.playerData.roomId) {
+          if (!this.otherPlayers.has(p.playerId)) {
+            this.addOrUpdateRealPlayer(p.playerId, p.name, p.avatar || "student_boy", p.x || -4, p.z || 6);
+          }
+        }
+      });
+    }, 3000);
+  }
+
+  addOrUpdateRealPlayer(id, name, avatarType, x, z) {
+    let peer = this.otherPlayers.get(id);
+    if (!peer) {
+      const color = (avatarType === "student_girl") ? 0xe91e63 : 0x0284c7;
+      const mesh = this.createChibiAvatar(color, avatarType, false, name);
+      mesh.position.set(x, 0, z);
+      this.scene.add(mesh);
+      peer = { name: name, mesh: mesh, targetPos: new THREE.Vector3(x, 0, z), speed: 0.18 };
+      this.otherPlayers.set(id, peer);
+      this.updateMinimap();
+    } else {
+      peer.targetPos.set(x, 0, z);
+    }
+    return peer;
   }
 
   createChibiAvatar(colorHex, type = "student_boy", isMain = false, labelText = "") {
@@ -651,14 +671,15 @@ class BPMPFarmGame {
   }
 
   /**
-   * Simulasi Siswa Lain Berlari Mendatangi Posko di Map
+   * Menggerakkan Karakter Siswa Lain Sesuai Posisi Asli Mereka di Arena
    */
   updateOtherPlayers(delta) {
     this.otherPlayers.forEach(p => {
       const dist = p.mesh.position.distanceTo(p.targetPos);
-      if (dist > 0.5) {
+      if (dist > 0.15) {
         const dir = new THREE.Vector3().subVectors(p.targetPos, p.mesh.position).normalize();
-        p.mesh.position.addScaledVector(dir, p.speed);
+        const step = Math.min(dist, p.speed * 60 * delta);
+        p.mesh.position.addScaledVector(dir, step);
         p.mesh.rotation.y = Math.atan2(dir.x, dir.z);
 
         if (p.mesh.leftLeg) {
@@ -666,9 +687,11 @@ class BPMPFarmGame {
           p.mesh.rightLeg.rotation.x = -Math.sin(this.clock.getElapsedTime() * 10) * 0.5;
         }
       } else {
-        // Pilih posko acak berikutnya untuk didatangi
-        const randomPosko = this.poskoList[Math.floor(Math.random() * this.poskoList.length)];
-        p.targetPos.set(randomPosko.x + (Math.random() - 0.5) * 3, 0, randomPosko.z + (Math.random() - 0.5) * 3);
+        // Posisi sudah sesuai, karakter diam (tidak ada jalan acak otomatis)
+        if (p.mesh.leftLeg) {
+          p.mesh.leftLeg.rotation.x = 0;
+          p.mesh.rightLeg.rotation.x = 0;
+        }
       }
     });
   }
@@ -679,6 +702,7 @@ class BPMPFarmGame {
         type: "PLAYER_MOVE",
         id: window.gasService.playerId,
         name: this.playerData.name,
+        avatar: this.playerData.avatar || "student_boy",
         x: this.playerPos.x,
         z: this.playerPos.z,
         rotY: this.playerMesh.rotation.y,
@@ -961,15 +985,20 @@ class BPMPFarmGame {
     if (window.gasService && window.gasService.channel) {
       window.gasService.channel.onmessage = e => {
         const msg = e.data;
+        if (!msg) return;
+
+        if (msg.type === "PLAYER_JOINED" && msg.player && msg.player.playerId !== window.gasService.playerId) {
+          const p = msg.player;
+          this.addOrUpdateRealPlayer(p.playerId, p.name, p.avatar || "student_boy", p.x || -4, p.z || 6);
+        }
+
         if (msg.type === "PLAYER_MOVE" && msg.id !== window.gasService.playerId) {
           let peer = this.otherPlayers.get(msg.id);
           if (!peer) {
-            const mesh = this.createChibiAvatar(0x0284c7, "student_boy", false, msg.name);
-            this.scene.add(mesh);
-            peer = { name: msg.name, mesh: mesh, targetPos: new THREE.Vector3(), speed: 0.2 };
-            this.otherPlayers.set(msg.id, peer);
+            peer = this.addOrUpdateRealPlayer(msg.id, msg.name, msg.avatar || "student_boy", msg.x, msg.z);
+          } else {
+            peer.targetPos.set(msg.x, 0, msg.z);
           }
-          peer.targetPos.set(msg.x, 0, msg.z);
         }
       };
     }
