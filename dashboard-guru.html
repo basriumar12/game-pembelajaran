@@ -440,9 +440,9 @@
       </div>
 
       <select id="select-room-id" class="room-selector">
-        <option value="SMA-SNT-X" selected>Room: SMA SNT Kelas X (SMA-SNT-X)</option>
-        <option value="BPMP-01">Room: BPMP-01</option>
-        <option value="ALL">Semua Room</option>
+        <option value="SMA-SNT-XA" selected>Kelas X-A (SMA SNT)</option>
+        <option value="SMA-SNT-XB">Kelas X-B (SMA SNT)</option>
+        <option value="ALL">Semua Kelas X (ALL)</option>
       </select>
 
       <button id="btn-manual-refresh" class="btn-action">
@@ -556,11 +556,11 @@
           <tr>
             <th style="width: 70px;">Rank</th>
             <th>Nama Siswa</th>
-            <th>NIM / ID</th>
-            <th>Instansi / Sekolah</th>
+            <th>NISN / No. Absen</th>
+            <th>Kelas / Sekolah</th>
             <th>Total Skor</th>
             <th>Jawaban Benar / Salah</th>
-            <th>Posisi Petak</th>
+            <th>Pindah Tab</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -600,7 +600,7 @@
   <script src="js/gas-service.js"></script>
 
   <script>
-    let currentRoom = "SMA-SNT-X";
+    let currentRoom = "SMA-SNT-XA";
     let refreshTimer = null;
     let latestData = null;
 
@@ -727,7 +727,7 @@
                 <span style="color: var(--bpmp-red); font-weight: 700;">${p.wrong}✗</span>
               </div>
             </td>
-            <td>Petak #${p.currentTile || 0}</td>
+            <td>${(p.tabSwitches || 0) > 0 ? `<span style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; padding: 2px 8px; border-radius: 8px; font-weight: 800; font-size: 11px;">⚠️ ${p.tabSwitches}x Pindah</span>` : `<span style="color: #10b981; font-weight: 700; font-size: 11px;">0x (Aman)</span>`}</td>
             <td><span class="status-pill ${statusClass}">${p.status || 'ONLINE'}</span></td>
           `;
           tbLeaderboard.appendChild(tr);

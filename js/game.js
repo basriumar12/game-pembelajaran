@@ -37,6 +37,7 @@ class BPMPFarmGame {
     this.correctCount = 0;
     this.wrongCount = 0;
     this.totalQuestions = 30;
+    this.questIndex = 0;
     this.answeredQuestions = [];
     this.currentTileIndex = 0;
     this.tilesVisited = 1;
@@ -1235,6 +1236,119 @@ class BPMPFarmGame {
       await this.movePlayerSteps(i, botSteps);
     }
     this.updateLeaderboardUI();
+  }
+
+  /**
+   * Mekanisme Baru: Quest Soal Langsung di HUD (Maju Pos 1 s/d 30)
+   */
+  renderCurrentQuest() {
+    if (this.questIndex >= this.questions.length) {
+      this.triggerGameFinish("Selamat! Anda telah menyelesaikan 30 Soal Asesmen Arduino & Wokwi!");
+      return;
+    }
+
+    const q = this.questions[this.questIndex];
+    this.currentQuestion = q;
+
+    const numBadge = document.getElementById("quest-number-badge");
+    const catTitle = document.getElementById("quest-category-title");
+    const qText = document.getElementById("quest-text");
+    const optContainer = document.getElementById("quest-options");
+    const feedbackBox = document.getElementById("quest-feedback");
+    const nextBtn = document.getElementById("btn-next-question");
+
+    if (numBadge) numBadge.textContent = `Soal ${this.questIndex + 1} dari ${this.totalQuestions}`;
+    if (catTitle) catTitle.textContent = q.category || "Arduino & Wokwi";
+    if (qText) qText.textContent = q.question;
+
+    if (feedbackBox) {
+      feedbackBox.style.display = "none";
+      feedbackBox.textContent = "";
+    }
+    if (nextBtn) {
+      nextBtn.style.display = "none";
+    }
+
+    if (optContainer) {
+      optContainer.innerHTML = "";
+      q.options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.className = "quest-btn";
+        btn.innerHTML = `
+          <span class="quest-key-badge">${opt.key}</span>
+          <span>${opt.text}</span>
+        `;
+        btn.onclick = () => this.handleQuestAnswer(opt.key, btn);
+        optContainer.appendChild(btn);
+      });
+    }
+
+    this.updateHUD();
+  }
+
+  handleQuestAnswer(selectedKey, clickedBtn) {
+    const q = this.currentQuestion;
+    if (!q) return;
+
+    const isCorrect = (selectedKey === q.answer);
+    const allBtns = document.querySelectorAll(".quest-btn");
+    allBtns.forEach(b => b.disabled = true);
+
+    const feedbackBox = document.getElementById("quest-feedback");
+    const nextBtn = document.getElementById("btn-next-question");
+
+    if (isCorrect) {
+      clickedBtn.classList.add("correct");
+      window.soundSystem.playCorrect();
+      this.score += 20;
+      this.correctCount++;
+      this.energy = Math.min(this.maxEnergy, this.energy + 5);
+
+      if (feedbackBox) {
+        feedbackBox.innerHTML = `<strong>🎉 BENAR (+20 Poin):</strong> ${q.explanation}`;
+        feedbackBox.className = "quest-feedback-bar correct";
+        feedbackBox.style.display = "block";
+      }
+
+      // Karakter 3D otomatis melangkah maju ke Pos berikutnya!
+      const nextTileIdx = (this.currentTileIndex + 1) % this.tiles.length;
+      if (this.players[0]) {
+        this.hopToTile(this.players[0], this.tiles[nextTileIdx]).then(() => {
+          this.currentTileIndex = nextTileIdx;
+          this.players[0].tileIndex = nextTileIdx;
+          this.tilesVisited++;
+          this.updateHUD();
+        });
+      }
+    } else {
+      clickedBtn.classList.add("wrong");
+      window.soundSystem.playWrong();
+      this.wrongCount++;
+      this.energy = Math.max(5, this.energy - 5);
+
+      allBtns.forEach(b => {
+        if (b.querySelector(".quest-key-badge") && b.querySelector(".quest-key-badge").textContent.trim() === q.answer) {
+          b.classList.add("correct");
+        }
+      });
+
+      if (feedbackBox) {
+        feedbackBox.innerHTML = `<strong>❌ KURANG TEPAT (Kunci: ${q.answer}):</strong> ${q.explanation}`;
+        feedbackBox.className = "quest-feedback-bar wrong";
+        feedbackBox.style.display = "block";
+      }
+    }
+
+    if (nextBtn) {
+      nextBtn.style.display = "inline-block";
+      nextBtn.onclick = () => {
+        this.questIndex++;
+        this.renderCurrentQuest();
+      };
+    }
+
+    this.updateHUD();
+    this.syncScoreToGAS();
   }
 
   /**

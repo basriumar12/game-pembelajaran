@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>BPMP Farm Quest: Gorontalo Edition · Board Game Edukasi 3D</title>
+  <title>BPMP Farm Quest: SMA SNT Kelas X · Asesmen 3D Arduino & Wokwi</title>
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,56 +15,241 @@
   
   <!-- Three.js r128 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    /* Mode Langsung: Kontainer Soal Cepat Terbuka */
+    .quest-card-hud {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 95%;
+      max-width: 760px;
+      z-index: 50;
+      pointer-events: auto;
+    }
+
+    .quest-box {
+      background: rgba(30, 24, 20, 0.94);
+      border: 3px solid #f59e0b;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      border-radius: 18px;
+      padding: 14px 18px;
+      color: #fff;
+      backdrop-filter: blur(8px);
+    }
+
+    .quest-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      border-bottom: 1px dashed rgba(245, 158, 11, 0.4);
+      padding-bottom: 6px;
+    }
+
+    .quest-num-pill {
+      background: #f59e0b;
+      color: #0f172a;
+      font-weight: 900;
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 12px;
+    }
+
+    .quest-topic-title {
+      font-size: 11px;
+      color: #fde68a;
+      font-weight: 700;
+    }
+
+    .quest-question-text {
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 700;
+      color: #fdfbf7;
+      margin-bottom: 10px;
+      max-height: 90px;
+      overflow-y: auto;
+    }
+
+    .quest-options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    @media (max-width: 600px) {
+      .quest-options-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .quest-btn {
+      background: #ffffff;
+      border: 2px solid #bcaaa4;
+      border-radius: 10px;
+      padding: 8px 12px;
+      text-align: left;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      color: #263238;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+
+    .quest-btn:hover:not(:disabled) {
+      background: #fffde7;
+      border-color: #f59e0b;
+      transform: translateY(-1px);
+    }
+
+    .quest-btn.correct {
+      background: #e8f5e9 !important;
+      border-color: #2e7d32 !important;
+      color: #1b5e20 !important;
+    }
+
+    .quest-btn.wrong {
+      background: #ffebee !important;
+      border-color: #c62828 !important;
+      color: #b71c1c !important;
+    }
+
+    .quest-key-badge {
+      width: 22px;
+      height: 22px;
+      background: #eceff1;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      color: #37474f;
+      flex-shrink: 0;
+    }
+
+    .quest-feedback-bar {
+      display: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      line-height: 1.4;
+      margin-top: 6px;
+    }
+
+    .quest-feedback-bar.correct {
+      background: rgba(46, 125, 50, 0.3);
+      border: 1px solid #4caf50;
+      color: #a5d6a7;
+    }
+
+    .quest-feedback-bar.wrong {
+      background: rgba(198, 40, 40, 0.3);
+      border: 1px solid #e53935;
+      color: #ef9a9a;
+    }
+
+    .quest-nav-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+    }
+
+    .tab-switch-pill {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid #ef4444;
+      color: #fca5a5;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+  </style>
 </head>
 <body>
+
+  <!-- Overlay Putar HP ke Landscape (Mobile) -->
+  <div id="rotate-device-prompt" class="rotate-device-overlay">
+    <div class="rotate-phone-anim">📱 ➔ 🔄</div>
+    <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 8px;">Miringkan HP ke Posisi Landscape</h2>
+    <p style="font-size: 0.85rem; color: #94a3b8; max-width: 320px; line-height: 1.5;">
+      Game ini dioptimalkan dalam mode mendatar (horizontal) agar seluruh tombol & animasi 3D terlihat jelas di layar HP Anda.
+    </p>
+    <button id="btn-force-landscape" class="btn-rpg-primary" style="margin-top: 18px; font-size: 13px;">
+      Kunci Layar Landscape (Mendatar) 🔄
+    </button>
+  </div>
+
+  <!-- Peringatan Curang / Pindah Tab Modal -->
+  <div id="cheat-warning-modal" class="cheat-warning-backdrop">
+    <div class="cheat-warning-card">
+      <div class="cheat-warning-icon">⚠️</div>
+      <h2 style="color: #f87171; font-size: 1.3rem; margin: 10px 0 6px;">PERINGATAN: PINDAH TAB TERDETEKSI!</h2>
+      <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 12px;">
+        Anda terdeteksi berpindah tab atau keluar dari halaman ujian. Kejadian ini dicatat secara otomatis ke Google Sheets Guru!
+      </p>
+      <div id="cheat-count-text" style="font-weight: 900; color: #fbbf24; font-size: 15px; margin-bottom: 16px;">
+        Pelanggaran Ke: 1 Kali
+      </div>
+      <button id="btn-close-cheat-warning" class="btn-rpg-primary" style="width: 100%; background: #dc2626;">
+        Saya Mengerti & Kembali ke Game
+      </button>
+    </div>
+  </div>
 
   <!-- 3D WebGL Canvas Layer -->
   <div id="canvas-container"></div>
 
   <!-- Retro Toast Notification -->
-  <div id="retro-toast" class="retro-toast">Selamat Datang di BPMP Gorontalo!</div>
+  <div id="retro-toast" class="retro-toast">Selamat Datang di Asesmen SMA SNT!</div>
 
   <!-- UI Overlay -->
   <div id="ui-overlay">
     
     <!-- Top HUD Navigation -->
     <header class="top-hud">
-      <!-- Left: Brand & Player Energy -->
+      <!-- Left: Identitas Siswa & Kelas -->
       <div class="hud-group-left">
         <div class="brand-badge wood-panel">
           <div>
-            <div class="brand-title">🏛️ BPMP FARM QUEST</div>
-            <div class="brand-sub">Gorontalo Edition · Eco-Friendly</div>
+            <div id="hud-player-title" class="brand-title">👨‍💻 SMA SNT KELAS X</div>
+            <div id="hud-player-sub" class="brand-sub">Asesmen Arduino & Wokwi</div>
           </div>
         </div>
 
-        <!-- Energy / Stamina Bar (Harvest Moon Style) -->
+        <!-- Energy Bar & Pindah Tab Info -->
         <div class="wood-panel energy-bar-container">
           <span class="energy-icon">❤️</span>
-          <div>
-            <div class="energy-meter">
-              <div id="hud-energy-bar" class="energy-fill"></div>
-            </div>
+          <div class="energy-meter">
+            <div id="hud-energy-bar" class="energy-fill"></div>
           </div>
           <span id="hud-energy-text" class="energy-text">100%</span>
+          <span id="hud-tab-switch-badge" class="tab-switch-pill" style="display: none;">⚠️ Pindah Tab: 0</span>
         </div>
       </div>
 
-      <!-- Center: Active Tile Indicator & Sync Status -->
-      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-        <div id="hud-current-tile" class="current-tile-tag">Petak #0: Gerbang BPMP Gorontalo 🏛️</div>
+      <!-- Center: Posisi Pos 3D & Google Sheets Status -->
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+        <div id="hud-current-tile" class="current-tile-tag">Pos #1: Mulai Petualangan 🏛️</div>
         <div class="sync-badge">
           <span class="sync-dot"></span>
-          <span id="sync-status-badge">Google Sheets Real-Time Siap</span>
+          <span id="sync-status-badge">Google Sheets Siap</span>
         </div>
       </div>
 
-      <!-- Right: 30-Min Global Timer & Harvest Score -->
+      <!-- Right: 60-Menit Global Timer & Skor Panen -->
       <div class="hud-group-right">
-        <!-- Timer 60 Menit -->
         <div class="wood-panel timer-panel">
           <div class="timer-header">
-            <span>⏱️ SISA WAKTU</span>
+            <span>⏱️ WAKTU</span>
             <span id="hud-soal-stats">0/30 Soal</span>
           </div>
           <div id="hud-timer" class="timer-clock">60:00</div>
@@ -73,101 +258,109 @@
           </div>
         </div>
 
-        <!-- Scoreboard Poin -->
         <div class="wood-panel" style="justify-content: space-between;">
-          <span style="font-size: 12px; font-weight: 700; color: #ffd54f;">🌾 HASIL PANEN:</span>
+          <span style="font-size: 11px; font-weight: 700; color: #ffd54f;">🌾 SKOR:</span>
           <span id="hud-score" class="score-badge">0</span>
         </div>
-
-        <!-- Tombol Link Dashboard Guru -->
-        <a href="dashboard-guru.html" target="_blank" class="hud-btn" style="text-decoration: none; background: linear-gradient(135deg, #1e293b, #0f172a); border-color: #f59e0b; color: #fde68a; font-weight: 800; text-align: center;">
-          👨‍🏫 Dashboard Pantauan Guru ➔
-        </a>
       </div>
     </header>
 
     <!-- Minimap Radar Widget (Top-Right) -->
     <div class="minimap-panel">
-      <div class="minimap-title">RADAR BPMP GORONTALO</div>
-      <canvas id="minimap-canvas" width="130" height="130"></canvas>
+      <div class="minimap-title">PETA POS BPMP</div>
+      <canvas id="minimap-canvas" width="100" height="100"></canvas>
     </div>
 
-    <!-- Bottom HUD Action Bar -->
-    <footer class="bottom-hud">
-      <!-- Left Controls: Camera Modes & Info -->
-      <div class="hud-btn-group">
-        <button id="btn-cam-iso" class="hud-btn" title="Kamera Isometrik">📐 Isometrik</button>
-        <button id="btn-cam-top" class="hud-btn" title="Kamera Peta Atas">🗺️ Top-Down</button>
-        <button id="btn-cam-follow" class="hud-btn" title="Ikuti Karakter">🚶 Follow</button>
-        <button id="btn-bpmp-info" class="hud-btn" title="Gedung BPMP Gorontalo">🏛️ Info BPMP</button>
-      </div>
+    <!-- KARTU SOAL LANGSUNG (MEKANISME MUDAH: LANGSUNG JAWAB & MAJU POS) -->
+    <div id="quest-card" class="quest-card-hud">
+      <div class="quest-box">
+        <div class="quest-header-bar">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="quest-number-badge" class="quest-num-pill">Soal 1 dari 30</span>
+            <span id="quest-category-title" class="quest-topic-title">Konsep Variabel & Memori</span>
+          </div>
+          <button id="btn-roll-bonus" class="btn-action" style="padding: 4px 10px; font-size: 11px; background: #f59e0b; color: #0f172a;">
+            🎲 Bonus Dadu
+          </button>
+        </div>
 
-      <!-- Center: Big 3D Dice Action Button -->
-      <div class="dice-action-area">
-        <button id="btn-roll-dice" class="btn-roll">
-          <span class="dice-icon">🎲</span>
-          <span>KOCOK DADU</span>
-        </button>
-      </div>
+        <!-- Teks Soal -->
+        <div id="quest-text" class="quest-question-text">
+          Memuat pertanyaan nomor 1...
+        </div>
 
-      <!-- Right Controls: Audio & Scoreboard -->
-      <div class="hud-btn-group">
-        <button id="btn-audio-toggle" class="hud-btn">🎵 Musik Hidup</button>
-        <button id="btn-open-leaderboard" class="hud-btn" style="border-color: #f59e0b;">🏆 Papan Skor</button>
+        <!-- 4 Tombol Pilihan Jawaban A, B, C, D -->
+        <div id="quest-options" class="quest-options-grid"></div>
+
+        <!-- Feedback Pembahasan Singkat -->
+        <div id="quest-feedback" class="quest-feedback-bar"></div>
+
+        <!-- Baris Navigasi Bawah -->
+        <div class="quest-nav-row">
+          <div style="display: flex; gap: 6px;">
+            <button id="btn-cam-iso" class="hud-btn" style="padding: 4px 8px; font-size: 10px;">📐 Isometrik</button>
+            <button id="btn-cam-top" class="hud-btn" style="padding: 4px 8px; font-size: 10px;">🗺️ Atas</button>
+            <button id="btn-cam-follow" class="hud-btn" style="padding: 4px 8px; font-size: 10px;">🚶 Ikuti</button>
+            <button id="btn-audio-toggle" class="hud-btn" style="padding: 4px 8px; font-size: 10px;">🎵 Audio</button>
+          </div>
+
+          <button id="btn-next-question" class="btn-rpg-primary" style="display: none; padding: 6px 16px; font-size: 12px;">
+            Lanjut Pos Berikutnya ➔
+          </button>
+        </div>
       </div>
-    </footer>
+    </div>
+
   </div>
 
   <!-- ========================================================================
-       MODAL 1: JOIN / REGISTER ROOM (LOGIN)
+       MODAL LOGIN: KHUSUS KELAS X-A & KELAS X-B (SMA SNT)
        ======================================================================== -->
   <div id="login-modal" class="modal-backdrop active">
-    <div class="rpg-dialog-frame login-dialog-frame">
+    <div class="rpg-dialog-frame login-dialog-frame" style="max-width: 440px;">
       <div class="rpg-dialog-parchment">
         <div class="dialog-header">
           <div class="dialog-title-group">
             <div class="dialog-avatar">👨‍💻</div>
             <div>
               <div class="dialog-title">Asesmen Arduino & Wokwi</div>
-              <div class="dialog-meta">SMA SNT Kelas X · Proyek Batas Jarak (60 Menit)</div>
+              <div class="dialog-meta">SMA SNT · Durasi 60 Menit (30 Nomor)</div>
             </div>
           </div>
         </div>
 
         <form id="login-form">
+          <!-- Pilihan Kelas: Hanya X-A dan X-B -->
           <div class="form-group">
-            <label class="form-label">Kode Room / Sesi Kelas *</label>
-            <input type="text" id="input-room-id" class="form-input" placeholder="Contoh: SMA-SNT-X" required value="SMA-SNT-X" style="font-weight: 800; color: #1976d2;">
-            <div style="font-size: 11px; color: #5d4037; margin-top: 3px;">Siswa SMA SNT Kelas X menggunakan kode room ini untuk bermain bersama.</div>
+            <label class="form-label">Pilih Kelas X (SMA SNT) *</label>
+            <select id="select-kelas-x" class="form-input" style="font-weight: 800; color: #1976d2; font-size: 15px;" required>
+              <option value="SMA-SNT-XA" selected>Kelas X-A</option>
+              <option value="SMA-SNT-XB">Kelas X-B</option>
+            </select>
           </div>
 
           <div class="form-group">
             <label class="form-label">Nama Lengkap Siswa *</label>
-            <input type="text" id="input-player-name" class="form-input" placeholder="Masukkan Nama Lengkap Anda" required>
+            <input type="text" id="input-player-name" class="form-input" placeholder="Masukkan nama lengkap Anda" required>
           </div>
 
           <div class="form-group">
-            <label class="form-label">NISN / No. Absen Siswa *</label>
-            <input type="text" id="input-player-nim" class="form-input" placeholder="Contoh: NISN / No. Absen" required>
+            <label class="form-label">NISN / No. Absen *</label>
+            <input type="text" id="input-player-nim" class="form-input" placeholder="Contoh: 0071234567 atau No. Absen" required>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Kelas / Sekolah *</label>
-            <input type="text" id="input-player-institution" class="form-input" required value="SMA SNT (Kelas X)">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Pilih Karakter Pelajar / Petani</label>
+            <label class="form-label">Pilih Karakter 3D</label>
             <div class="avatar-selector">
-              <div class="avatar-opt active" data-avatar="farmer_boy">👨‍🌾 Petani Caping</div>
-              <div class="avatar-opt" data-avatar="student_girl">🧕 Pelajar Hijab</div>
-              <div class="avatar-opt" data-avatar="eco_expert">🧑‍🔬 Peneliti Hijau</div>
+              <div class="avatar-opt active" data-avatar="student_boy">👨‍💻 Pelajar Siswa</div>
+              <div class="avatar-opt" data-avatar="student_girl">🧕 Pelajar Siswi</div>
+              <div class="avatar-opt" data-avatar="eco_expert">🧑‍🔬 Peneliti Muda</div>
             </div>
           </div>
 
-          <div class="dialog-footer" style="margin-top: 20px;">
-            <button type="submit" class="btn-rpg-primary" style="width: 100%; font-size: 16px; padding: 14px;">
-              🚀 MASUK & MULAI PERMAINAN
+          <div class="dialog-footer" style="margin-top: 16px;">
+            <button type="submit" id="btn-submit-login" class="btn-rpg-primary" style="width: 100%; font-size: 15px; padding: 12px;">
+              🚀 MASUK & MULAI PETUALANGAN (60 MENIT)
             </button>
           </div>
         </form>
@@ -175,131 +368,27 @@
     </div>
   </div>
 
-  <!-- ========================================================================
-       MODAL 2: 20 SOAL PILIHAN GANDA (RPG RETRO DIALOG BOX)
-       ======================================================================== -->
-  <div id="quiz-modal" class="modal-backdrop">
-    <div class="rpg-dialog-frame">
-      <div class="rpg-dialog-parchment">
-        <!-- Header -->
-        <div class="dialog-header">
-          <div class="dialog-title-group">
-            <div class="dialog-avatar">📖</div>
-            <div>
-              <div id="quiz-tile-title" class="dialog-title">🏛️ BPMP Edu Tile</div>
-              <div id="quiz-category" class="dialog-meta">Penjaminan Mutu & Kearifan Lokal</div>
-            </div>
-          </div>
-          <div id="quiz-number-badge" class="dialog-badge">Soal #1 dari 30</div>
-        </div>
-
-        <!-- Question Text -->
-        <div id="quiz-question-text" class="dialog-question">
-          Memuat pertanyaan kuis...
-        </div>
-
-        <!-- Options A, B, C, D -->
-        <div id="quiz-options-container" class="dialog-options"></div>
-
-        <!-- Explanation & Feedback -->
-        <div id="quiz-explanation-box" class="quiz-explanation" style="display: none;">
-          <div id="quiz-explanation-text"></div>
-        </div>
-
-        <!-- Footer / Action -->
-        <div class="dialog-footer">
-          <button id="btn-quiz-next" class="btn-rpg-primary" style="display: none;">
-            Lanjutkan Perjalanan ➔
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ========================================================================
-       MODAL 3: LEADERBOARD REAL-TIME & GOOGLE SHEETS SYNC
-       ======================================================================== -->
-  <div id="leaderboard-modal" class="modal-backdrop">
-    <div class="rpg-dialog-frame" style="max-width: 540px;">
-      <div class="rpg-dialog-parchment">
-        <div class="dialog-header">
-          <div class="dialog-title-group">
-            <div class="dialog-avatar">🏆</div>
-            <div>
-              <div class="dialog-title">Papan Skor Real-Time</div>
-              <div class="dialog-meta">Terhubung ke Google Apps Script / Sheets</div>
-            </div>
-          </div>
-          <button id="btn-close-leaderboard" class="hud-btn" style="padding: 4px 10px;">✖ Tutup</button>
-        </div>
-
-        <div id="leaderboard-list" class="leaderboard-list">
-          <!-- Filled dynamically by JavaScript -->
-        </div>
-
-        <div style="font-size: 11px; color: #5d4037; text-align: center; margin-top: 10px;">
-          🔗 Database: <em>Google Sheets BPMP Gorontalo Web App</em>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ========================================================================
-       MODAL 4: INFORMASI GEDUNG BPMP GORONTALO (DENGAN FOTO ASLI)
-       ======================================================================== -->
-  <div id="bpmp-info-modal" class="modal-backdrop">
-    <div class="rpg-dialog-frame" style="max-width: 580px;">
-      <div class="rpg-dialog-parchment">
-        <div class="dialog-header">
-          <div class="dialog-title-group">
-            <div class="dialog-avatar">🏛️</div>
-            <div>
-              <div class="dialog-title">Gedung BPMP Provinsi Gorontalo</div>
-              <div class="dialog-meta">Balai Penjaminan Mutu Pendidikan Kemendikbudristek</div>
-            </div>
-          </div>
-          <button id="btn-close-bpmp-info" class="hud-btn" style="padding: 4px 10px;">✖ Tutup</button>
-        </div>
-
-        <div class="bpmp-photo-box">
-          <img src="assets/bpmp_building.jpg" alt="Gedung BPMP Provinsi Gorontalo">
-        </div>
-
-        <div style="font-size: 13px; line-height: 1.6; color: #3e2723;">
-          <p style="margin-bottom: 8px;">
-            <strong>Arsitektur Ikonik:</strong> Gedung BPMP (sebelumnya LPMP) Provinsi Gorontalo dihiasi 4 pilar kehormatan berundak warna-warni (hijau, jingga, kuning, ungu) serta mahkota atap khas Rumah Adat Dulohupa Gorontalo.
-          </p>
-          <p>
-            <strong>Komitmen Zona Integritas:</strong> Menjadi pelopor Wilayah Bebas dari Korupsi (WBK) dan Wilayah Birokrasi Bersih dan Melayani (WBBM) untuk mewujudkan penjaminan mutu pendidikan yang berkualitas, inklusif, dan berkarakter Profil Pelajar Pancasila.
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ========================================================================
-       MODAL 5: SELESAI / SCOREBOARD AKHIR PERMAINAN
-       ======================================================================== -->
+  <!-- MODAL FINISH -->
   <div id="finish-modal" class="modal-backdrop">
-    <div class="rpg-dialog-frame" style="max-width: 560px;">
+    <div class="rpg-dialog-frame" style="max-width: 540px;">
       <div class="rpg-dialog-parchment">
         <div class="dialog-header">
           <div class="dialog-title-group">
             <div class="dialog-avatar">🎉</div>
             <div>
-              <div class="dialog-title">Sesi Permainan Selesai!</div>
-              <div id="finish-reason" class="dialog-meta">Selamat atas pencapaian Anda</div>
+              <div class="dialog-title">Asesmen Selesai!</div>
+              <div id="finish-reason" class="dialog-meta">Hasil Ujian Anda Telah Terkirim</div>
             </div>
           </div>
         </div>
 
         <div class="finish-stats-grid">
           <div class="finish-stat-card">
-            <div class="stat-label">NAMA PEMAIN</div>
-            <div id="finish-player-name" class="stat-val" style="font-size: 15px;">-</div>
+            <div class="stat-label">NAMA SISWA</div>
+            <div id="finish-player-name" class="stat-val" style="font-size: 14px;">-</div>
           </div>
           <div class="finish-stat-card">
-            <div class="stat-label">TOTAL SKOR PANEN</div>
+            <div class="stat-label">TOTAL SKOR AKHIR</div>
             <div id="finish-score" class="stat-val">0</div>
           </div>
           <div class="finish-stat-card">
@@ -312,21 +401,21 @@
           </div>
           <div class="finish-stat-card">
             <div class="stat-label">WAKTU PENGERJAAN</div>
-            <div id="finish-time" class="stat-val" style="font-size: 16px; color: #1976d2;">00:00</div>
+            <div id="finish-time" class="stat-val" style="font-size: 15px; color: #1976d2;">00:00</div>
           </div>
           <div class="finish-stat-card">
-            <div class="stat-label">INSTANSI / SEKOLAH</div>
-            <div id="finish-inst" class="stat-val" style="font-size: 13px;">-</div>
+            <div class="stat-label">PINDAH TAB (CURANG)</div>
+            <div id="finish-tab-switches" class="stat-val" style="font-size: 15px; color: #dc2626;">0 Kali</div>
           </div>
         </div>
 
-        <div style="background: #e8f5e9; border: 2px solid #81c784; border-radius: 10px; padding: 10px; margin-bottom: 16px; text-align: center; font-size: 12px; color: #1b5e20;">
-          ✅ Data hasil permainan telah dikirimkan secara otomatis ke Google Sheets BPMP Gorontalo!
+        <div style="background: #e8f5e9; border: 2px solid #81c784; border-radius: 10px; padding: 10px; margin-bottom: 14px; text-align: center; font-size: 12px; color: #1b5e20;">
+          ✅ Nilai Anda telah otomatis tercatat di Google Sheets Guru SMA SNT!
         </div>
 
         <div class="dialog-footer">
           <button onclick="location.reload()" class="btn-rpg-primary" style="width: 100%;">
-            🔄 Mainkan Sesi Baru
+            🔄 Ulangi Sesi
           </button>
         </div>
       </div>
@@ -339,81 +428,130 @@
   <script src="js/audio.js"></script>
   <script src="js/game.js"></script>
 
-  <!-- App Entry Controller -->
+  <!-- App Controller -->
   <script>
+    let isSessionStarted = false;
+
+    // Fungsi Kunci Layar ke Landscape (Auto-Landscape)
+    function lockScreenLandscape() {
+      // 1. Coba Screen Orientation API
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock("landscape").catch(() => {});
+      }
+      // 2. Request Fullscreen di HP
+      const doc = document.documentElement;
+      const requestFS = doc.requestFullscreen || doc.webkitRequestFullscreen || doc.mozRequestFullScreen || doc.msRequestFullscreen;
+      if (requestFS && window.innerWidth < 1024) {
+        requestFS.call(doc).then(() => {
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock("landscape").catch(() => {});
+          }
+        }).catch(() => {});
+      }
+    }
+
+    document.getElementById("btn-force-landscape").addEventListener("click", () => {
+      lockScreenLandscape();
+    });
+
     document.addEventListener("DOMContentLoaded", () => {
       const game = new BPMPFarmGame();
       window.gameInstance = game;
 
-      // Handle Avatar selection
-      const avatarOpts = document.querySelectorAll(".avatar-opt");
-      let selectedAvatar = "farmer_boy";
-      avatarOpts.forEach(opt => {
+      // Pilihan avatar
+      let selectedAvatar = "student_boy";
+      document.querySelectorAll(".avatar-opt").forEach(opt => {
         opt.addEventListener("click", () => {
-          avatarOpts.forEach(o => o.classList.remove("active"));
+          document.querySelectorAll(".avatar-opt").forEach(o => o.classList.remove("active"));
           opt.classList.add("active");
           selectedAvatar = opt.dataset.avatar;
         });
       });
 
-      // Handle Login Form Submit
+      // Form Submit: Kelas X-A atau X-B
       const loginForm = document.getElementById("login-form");
       loginForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        const roomId = document.getElementById("input-room-id").value.trim().toUpperCase() || "BPMP-01";
+        const kelasSelect = document.getElementById("select-kelas-x").value;
         const name = document.getElementById("input-player-name").value.trim();
         const nim = document.getElementById("input-player-nim").value.trim();
-        const inst = document.getElementById("input-player-institution").value.trim();
 
-        if (!name || !nim || !inst) return;
+        if (!name || !nim) return;
+
+        const kelasNama = (kelasSelect === "SMA-SNT-XA") ? "Kelas X-A" : "Kelas X-B";
 
         game.playerData = {
-          roomId: roomId,
+          roomId: kelasSelect,
           name: name,
           nim: nim,
-          institution: inst,
+          institution: `SMA SNT (${kelasNama})`,
           avatar: selectedAvatar
         };
 
-        // Update player 0
-        if (game.players[0]) {
-          game.players[0].name = name;
-          game.players[0].institution = inst;
-          game.players[0].roomId = roomId;
-        }
+        // Otomatis kunci orientasi Landscape di HP saat klik Masuk
+        lockScreenLandscape();
 
-        // Send register payload to Google Apps Script
-        window.gasService.joinGame(game.playerData);
+        // Kirim registrasi ke Google Sheets
+        document.getElementById("sync-status-badge").textContent = "Mendaftarkan ke Google Sheets...";
+        await window.gasService.joinGame(game.playerData);
+        document.getElementById("sync-status-badge").textContent = "Google Sheets Aktif ✅";
 
-        // Hide Login Modal
+        // Update HUD
+        document.getElementById("hud-player-title").textContent = name;
+        document.getElementById("hud-player-sub").textContent = `SMA SNT · ${kelasNama}`;
+
+        // Tutup Modal Login
         document.getElementById("login-modal").classList.remove("active");
+        isSessionStarted = true;
 
-        // Start BGM and Timer
+        // Mulai audio, timer 60 menit, dan render soal #1
         window.soundSystem.startMusic();
         game.startTimer();
-        game.updateHUD();
-        game.updateLeaderboardUI();
-        game.showToast(`Selamat datang ${name} di BPMP Gorontalo! 🌾`);
+        game.renderCurrentQuest();
+        game.showToast(`Selamat datang ${name} di Asesmen ${kelasNama}!`);
       });
 
-      // Leaderboard Modal controls
-      document.getElementById("btn-open-leaderboard").addEventListener("click", () => {
-        game.updateLeaderboardUI();
-        document.getElementById("leaderboard-modal").classList.add("active");
-      });
-      document.getElementById("btn-close-leaderboard").addEventListener("click", () => {
-        document.getElementById("leaderboard-modal").classList.remove("active");
+      // Deteksi Pindah Tab (Anti-Curang)
+      function handleTabSwitch() {
+        if (!isSessionStarted || game.isGameOver) return;
+        
+        window.gasService.tabSwitchCount++;
+        const count = window.gasService.tabSwitchCount;
+
+        // Tampilkan badge peringatan di HUD
+        const badge = document.getElementById("hud-tab-switch-badge");
+        badge.style.display = "inline-block";
+        badge.textContent = `⚠️ Pindah Tab: ${count}`;
+
+        // Bunyikan alarm kesalahan
+        window.soundSystem.playWrong();
+
+        // Tampilkan modal peringatan
+        document.getElementById("cheat-count-text").textContent = `Pelanggaran Ke: ${count} Kali`;
+        document.getElementById("cheat-warning-modal").classList.add("active");
+
+        // Laporkan pelanggaran langsung ke Google Sheets!
+        game.syncScoreToGAS();
+      }
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) handleTabSwitch();
       });
 
-      // BPMP Info Modal controls
-      document.getElementById("btn-bpmp-info").addEventListener("click", () => {
-        document.getElementById("bpmp-info-modal").classList.add("active");
-      });
-      document.getElementById("btn-close-bpmp-info").addEventListener("click", () => {
-        document.getElementById("bpmp-info-modal").classList.remove("active");
+      window.addEventListener("blur", () => {
+        handleTabSwitch();
       });
 
-      // Initialize Three.js Game World
+      document.getElementById("btn-close-cheat-warning").addEventListener("click", () => {
+        document.getElementById("cheat-warning-modal").classList.remove("active");
+      });
+
+      // Bonus Kocok Dadu (Maju langkah tambahan)
+      document.getElementById("btn-roll-bonus").addEventListener("click", () => {
+        game.rollDice();
+      });
+
+      // Inisialisasi Game 3D
       game.init();
     });
   </script>

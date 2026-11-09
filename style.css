@@ -772,47 +772,217 @@ body, html {
   display: block;
 }
 
-/* Responsive Rules */
-@media (max-width: 768px) {
+/* Responsive Rules & Mobile Landscape Optimization */
+@media (max-width: 950px) {
   #ui-overlay {
-    padding: 8px;
+    padding: 6px 10px;
   }
   
   .top-hud {
-    flex-wrap: wrap;
+    gap: 6px;
   }
 
   .wood-panel {
-    padding: 6px 10px;
+    padding: 4px 8px;
+    border-width: 2px;
+  }
+
+  .brand-title {
+    font-size: 11px;
   }
 
   .brand-sub, .sync-badge {
     display: none;
   }
 
+  .timer-clock {
+    font-size: 16px;
+  }
+
+  .energy-meter {
+    width: 80px;
+    height: 10px;
+  }
+
+  .current-tile-tag {
+    font-size: 10px;
+    padding: 2px 10px;
+  }
+
   .minimap-panel {
     top: auto;
-    bottom: 80px;
+    bottom: 68px;
     right: 8px;
-    transform: scale(0.85);
+    padding: 4px;
+    transform: scale(0.75);
     transform-origin: bottom right;
   }
 
   .btn-roll {
-    padding: 10px 20px;
-    font-size: 15px;
+    padding: 8px 18px;
+    font-size: 14px;
+    border-width: 3px;
+  }
+
+  .dice-icon {
+    font-size: 20px;
   }
 
   .hud-btn {
-    padding: 6px 10px;
-    font-size: 11px;
+    padding: 5px 8px;
+    font-size: 10px;
+    border-radius: 8px;
   }
 
   .rpg-dialog-frame {
-    padding: 10px;
+    padding: 8px;
+    max-height: 94vh;
+    overflow-y: auto;
   }
 
   .rpg-dialog-parchment {
-    padding: 14px;
+    padding: 12px;
   }
+
+  .dialog-question {
+    font-size: 13px;
+    line-height: 1.4;
+    margin-bottom: 10px;
+    min-height: auto;
+  }
+
+  .retro-option-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    gap: 8px;
+  }
+
+  .retro-option-btn .option-key {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+  }
+}
+
+/* Mobile Landscape Height Specifics (e.g. 360px - 450px) */
+@media (max-height: 500px) and (orientation: landscape) {
+  #ui-overlay {
+    padding: 4px 8px;
+  }
+
+  .top-hud {
+    align-items: center;
+  }
+
+  .timer-panel {
+    min-width: 120px;
+  }
+
+  .timer-clock {
+    font-size: 15px;
+  }
+
+  .bottom-hud {
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-roll {
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+
+  /* 2-Column Quiz Options on Landscape Mobile */
+  .dialog-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .minimap-panel {
+    display: none; /* Hide minimap on tiny landscape screens to prevent blocking buttons */
+  }
+}
+
+/* Portrait Warning Prompt for Mobile */
+.rotate-device-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #0f172a;
+  z-index: 9999;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  color: #fff;
+}
+
+@media (max-width: 768px) and (orientation: portrait) {
+  .rotate-device-overlay {
+    display: flex;
+  }
+}
+
+.rotate-phone-anim {
+  font-size: 52px;
+  margin-bottom: 16px;
+  animation: phoneRotate 2.5s infinite ease-in-out;
+}
+
+@keyframes phoneRotate {
+  0% { transform: rotate(0deg); }
+  40% { transform: rotate(-90deg); }
+  60% { transform: rotate(-90deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Anti-Cheat Tab Switch Warning Modal */
+.cheat-warning-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(185, 28, 28, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.cheat-warning-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.cheat-warning-card {
+  background: #1e1b4b;
+  border: 4px solid #ef4444;
+  border-radius: 20px;
+  padding: 24px;
+  max-width: 440px;
+  text-align: center;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+  color: #fff;
+}
+
+.cheat-warning-icon {
+  font-size: 48px;
+  animation: shake 0.5s infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
 }
