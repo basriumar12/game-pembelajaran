@@ -4,7 +4,7 @@
  */
 
 const GAS_CONFIG = {
-  ENDPOINT_URL: "https://script.google.com/a/macros/unigo.ac.id/s/AKfycbx1CZb3x8kpuaY9OvsZVfYoM9IAorENR16720We-4qAKtlMlnkm-43hjWXp7_BqcmM/exec",
+  ENDPOINT_URL: "https://script.google.com/macros/s/AKfycbx1CZb3x8kpuaY9OvsZVfYoM9IAorENR16720We-4qAKtlMlnkm-43hjWXp7_BqcmM/exec",
   TIMEOUT_MS: 7000
 };
 
