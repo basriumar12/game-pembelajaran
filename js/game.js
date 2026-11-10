@@ -37,6 +37,7 @@ class BPMPFarmGame {
     // 30 Posko Soal
     this.poskoList = [];
     this.solvedPosko = []; // IDs of answered posko
+    this.answeredMap = {}; // { [poskoId]: { selectedKey, isCorrect } }
     this.activeNearbyPosko = null;
 
     // Multiplayer Peers (Siswa lain di room)
@@ -352,6 +353,9 @@ class BPMPFarmGame {
         x: pos.x,
         z: pos.z,
         isSolved: false,
+        isAnswered: false,
+        userAnswer: null,
+        isCorrect: false,
         mesh: poskoGroup,
         ring: ring,
         roof: roof,
@@ -661,8 +665,16 @@ class BPMPFarmGame {
       this.activeNearbyPosko = closestPosko;
       if (actionContainer) actionContainer.style.display = "flex";
       if (btnEnter) {
-        const status = closestPosko.isSolved ? "✅ SUDAH TERJAWAB (Buka Lagi)" : "🚪 Buka Soal Posko";
-        btnEnter.innerHTML = `<span>🏛️ Posko #${closestPosko.id}:</span> <span>${status}</span>`;
+        if (closestPosko.isAnswered) {
+          const badge = closestPosko.isCorrect ? "✅ BENAR" : "❌ SALAH";
+          btnEnter.innerHTML = `<span>🏛️ Posko #${closestPosko.id}:</span> <span>🔒 SUDAH DIJAWAB (${badge}) - Lihat Pembahasan</span>`;
+          btnEnter.style.background = closestPosko.isCorrect 
+            ? "linear-gradient(135deg, #059669, #10b981)" 
+            : "linear-gradient(135deg, #b91c1c, #ef4444)";
+        } else {
+          btnEnter.innerHTML = `<span>🏛️ Posko #${closestPosko.id}:</span> <span>🚪 [E / Ketuk] Masuk & Kerjakan Soal</span>`;
+          btnEnter.style.background = "linear-gradient(135deg, #d97706, #b45309)";
+        }
       }
     } else {
       this.activeNearbyPosko = null;
@@ -722,13 +734,55 @@ class BPMPFarmGame {
 
     window.soundSystem.playModalOpen();
 
-    document.getElementById("modal-posko-badge").textContent = `Posko #${posko.id} dari 30`;
-    document.getElementById("modal-posko-topic").textContent = q.category || "Arduino & Wokwi";
-    document.getElementById("modal-posko-question").textContent = q.question;
-
     const optContainer = document.getElementById("modal-posko-options");
     const feedbackBox = document.getElementById("modal-posko-feedback");
     const nextBtn = document.getElementById("btn-modal-close");
+
+    // 🔒 JIKA SOAL INI SUDAH DIJAWAB: KUNCI TOTAL! HANYA BISA LIHAT PEMBAHASAN
+    if (posko.isAnswered) {
+      const statusTitle = posko.isCorrect ? "✅ TERJAWAB BENAR" : "❌ TERJAWAB SALAH";
+      document.getElementById("modal-posko-badge").textContent = `Posko #${posko.id} dari 30 (🔒 SUDAH SELESAI)`;
+      document.getElementById("modal-posko-topic").textContent = `${q.category || "Arduino & Wokwi"} — ${statusTitle}`;
+      document.getElementById("modal-posko-question").textContent = q.question;
+
+      optContainer.innerHTML = "";
+      q.options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.className = "retro-option-btn";
+        btn.disabled = true; // Dinonaktifkan mutlak
+        btn.style.cursor = "not-allowed";
+        btn.style.opacity = "0.85";
+
+        if (opt.key === posko.userAnswer) {
+          btn.classList.add(posko.isCorrect ? "correct" : "wrong");
+          btn.innerHTML = `<span class="option-key">${opt.key}</span> <span>${opt.text} <b style="margin-left: 8px;">(Jawaban Anda)</b></span>`;
+        } else if (opt.key === q.answer && !posko.isCorrect) {
+          btn.classList.add("correct");
+          btn.innerHTML = `<span class="option-key">${opt.key}</span> <span>${opt.text} <b style="margin-left: 8px;">(Kunci yang Benar)</b></span>`;
+        } else {
+          btn.innerHTML = `<span class="option-key">${opt.key}</span> <span>${opt.text}</span>`;
+        }
+        optContainer.appendChild(btn);
+      });
+
+      feedbackBox.className = posko.isCorrect ? "quiz-explanation correct" : "quiz-explanation wrong";
+      feedbackBox.innerHTML = `<strong>🔒 SOAL INI TELAH DIJAWAB (${posko.isCorrect ? 'BENAR +20 Poin' : 'SALAH 0 Poin'}):</strong><br>Soal yang sudah dikerjakan tidak dapat diubah atau dijawab ulang.<br><br><strong>Kunci Jawaban: ${q.answer}</strong><br><em>Pembahasan:</em> ${q.explanation}`;
+      feedbackBox.style.display = "block";
+
+      nextBtn.style.display = "inline-block";
+      nextBtn.textContent = "Tutup & Lanjut Jelajahi Posko Lain ➔";
+      nextBtn.onclick = () => {
+        modal.classList.remove("active");
+      };
+
+      modal.classList.add("active");
+      return;
+    }
+
+    // JIKA BELUM DIJAWAB: TAMPILKAN SOAL BARU UNTUK DIJAWAB
+    document.getElementById("modal-posko-badge").textContent = `Posko #${posko.id} dari 30`;
+    document.getElementById("modal-posko-topic").textContent = q.category || "Arduino & Wokwi";
+    document.getElementById("modal-posko-question").textContent = q.question;
 
     feedbackBox.style.display = "none";
     nextBtn.style.display = "none";
@@ -746,10 +800,25 @@ class BPMPFarmGame {
   }
 
   handlePoskoAnswer(posko, selectedKey, clickedBtn) {
+    if (posko.isAnswered) return; // Mencegah double click / pengulangan
+
     const q = posko.question;
     const isCorrect = (selectedKey === q.answer);
     const allBtns = document.querySelectorAll("#modal-posko-options .retro-option-btn");
-    allBtns.forEach(b => b.disabled = true);
+    allBtns.forEach(b => {
+      b.disabled = true;
+      b.style.cursor = "not-allowed";
+    });
+
+    // Tandai permanen bahwa posko ini sudah dijawab
+    posko.isAnswered = true;
+    posko.userAnswer = selectedKey;
+    posko.isCorrect = isCorrect;
+    this.answeredMap[posko.id] = { selectedKey, isCorrect };
+
+    if (!this.solvedPosko.includes(posko.id)) {
+      this.solvedPosko.push(posko.id);
+    }
 
     const feedbackBox = document.getElementById("modal-posko-feedback");
     const nextBtn = document.getElementById("btn-modal-close");
@@ -758,16 +827,13 @@ class BPMPFarmGame {
       clickedBtn.classList.add("correct");
       window.soundSystem.playCorrect();
 
-      if (!posko.isSolved) {
-        this.score += 20;
-        this.correctCount++;
-        posko.isSolved = true;
-        this.solvedPosko.push(posko.id);
+      posko.isSolved = true;
+      this.score += 20;
+      this.correctCount++;
 
-        // Ubah tampilan Posko 3D menjadi Hijau Mengkilap
-        posko.roof.material.color.setHex(0x10b981);
-        posko.ring.material.color.setHex(0x10b981);
-      }
+      // Ubah tampilan Posko 3D menjadi Hijau Mengkilap
+      posko.roof.material.color.setHex(0x10b981);
+      posko.ring.material.color.setHex(0x10b981);
 
       feedbackBox.className = "quiz-explanation correct";
       feedbackBox.innerHTML = `<strong>🎉 JAWABAN BENAR! (+20 Poin):</strong><br>${q.explanation}`;
@@ -776,6 +842,10 @@ class BPMPFarmGame {
       clickedBtn.classList.add("wrong");
       window.soundSystem.playWrong();
       this.wrongCount++;
+
+      // Ubah tampilan Posko 3D menjadi Merah (Sudah Dijawab, Salah)
+      posko.roof.material.color.setHex(0xef4444);
+      posko.ring.material.color.setHex(0xef4444);
 
       allBtns.forEach(b => {
         if (b.querySelector(".option-key").textContent.trim() === q.answer) {
@@ -787,6 +857,9 @@ class BPMPFarmGame {
       feedbackBox.innerHTML = `<strong>❌ KURANG TEPAT (Kunci: ${q.answer}):</strong><br>${q.explanation}`;
       feedbackBox.style.display = "block";
     }
+
+    // Update floating badge 3D agar terlihat jelas statusnya dari kejauhan
+    this.updatePosko3DBadge(posko);
 
     nextBtn.style.display = "inline-block";
     nextBtn.textContent = "Selesai & Lanjut Eksplorasi Peta ➔";
@@ -800,9 +873,38 @@ class BPMPFarmGame {
     if (this.solvedPosko.length >= 30) {
       setTimeout(() => {
         document.getElementById("posko-quiz-modal").classList.remove("active");
-        this.triggerGameFinish("Luar Biasa! Seluruh 30 Posko Telah Berhasil Anda Taklukkan!");
+        this.triggerGameFinish("Luar Biasa! Seluruh 30 Posko Telah Berhasil Anda Kerjakan!");
       }, 2500);
     }
+  }
+
+  /**
+   * Update Floating Billboard Nomor Posko (Centang Hijau jika Benar, Silang Merah jika Salah)
+   */
+  updatePosko3DBadge(posko) {
+    if (!posko || !posko.sprite) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = posko.isCorrect ? "#065f46" : "#7f1d1d";
+    ctx.beginPath();
+    ctx.arc(64, 64, 58, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = posko.isCorrect ? "#10b981" : "#ef4444";
+    ctx.lineWidth = 8;
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 42px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(posko.isCorrect ? `✓ ${posko.id}` : `✗ ${posko.id}`, 64, 64);
+
+    posko.sprite.material.map = new THREE.CanvasTexture(canvas);
+    posko.sprite.material.needsUpdate = true;
   }
 
   /**
@@ -840,9 +942,13 @@ class BPMPFarmGame {
     this.poskoList.forEach(p => {
       const px = cx + p.x * scale;
       const py = cy + p.z * scale;
-      ctx.fillStyle = p.isSolved ? "#10b981" : "#f59e0b";
+      if (p.isAnswered) {
+        ctx.fillStyle = p.isCorrect ? "#10b981" : "#ef4444";
+      } else {
+        ctx.fillStyle = "#f59e0b";
+      }
       ctx.beginPath();
-      ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+      ctx.arc(px, py, 2.8, 0, Math.PI * 2);
       ctx.fill();
     });
 
