@@ -708,6 +708,7 @@
           const rank = idx + 1;
           const rankClass = rank === 1 ? "rank-1" : (rank === 2 ? "rank-2" : (rank === 3 ? "rank-3" : "rank-other"));
           const totalAnswered = (p.correct || 0) + (p.wrong || 0);
+          const answered = (p.currentTile && p.currentTile > 0) ? p.currentTile : totalAnswered;
           const percent = totalAnswered > 0 ? ((p.correct || 0) / totalAnswered) * 100 : 0;
           const statusClass = p.status === "FINISHED" ? "status-finished" : (p.status === "PLAYING" ? "status-playing" : "status-online");
 
@@ -717,8 +718,11 @@
             <td><strong>${p.name}</strong> ${rank === 1 ? '👑' : ''}</td>
             <td><code>${p.nim}</code></td>
             <td>${p.institution}</td>
-            <td><strong style="color: var(--bpmp-gold); font-size: 15px;">${p.score} pts</strong></td>
+            <td><strong style="color: var(--bpmp-gold); font-size: 16px;">${p.score} Poin</strong></td>
             <td>
+              <div style="font-size: 12px; font-weight: 800; color: #fff; margin-bottom: 3px;">
+                ${answered} / 30 Soal Terjawab
+              </div>
               <div class="accuracy-bar-box">
                 <span style="color: var(--bpmp-green); font-weight: 700;">${p.correct}✓</span>
                 <div class="accuracy-bar">

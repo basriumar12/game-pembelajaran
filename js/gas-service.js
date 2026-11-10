@@ -99,6 +99,7 @@ class GASService {
       timeElapsed: progressData.timeElapsed || "00:00:00",
       timeRemaining: progressData.timeRemaining || "00:00:00",
       isFinished: progressData.isFinished || false,
+      lastAnswer: progressData.lastAnswer || null,
       timestamp: new Date().toLocaleTimeString("id-ID")
     };
 

@@ -181,6 +181,33 @@ function handleUpdatePlayerProgress(data) {
     tabSwitches, data.timeElapsed || "00:00:00", data.timeRemaining || "00:00:00"
   ]);
 
+  // Simpan Detail Jawaban Per Posko ke Sheet "Jawaban_Siswa"
+  if (data.lastAnswer) {
+    let ansSheet = ss.getSheetByName("Jawaban_Siswa");
+    if (!ansSheet) {
+      ansSheet = ss.insertSheet("Jawaban_Siswa");
+      ansSheet.appendRow([
+        "Timestamp", "Room / Kelas", "Nama Siswa", "NISN", "Posko #", "Topik Soal",
+        "Jawaban Siswa", "Kunci Jawaban", "Status", "Poin Diperoleh", "Total Skor Saat Ini"
+      ]);
+      ansSheet.getRange(1, 1, 1, 11).setFontWeight("bold").setBackground("#b2dfdb");
+    }
+    let ans = data.lastAnswer;
+    if (typeof ans === "string") {
+      try { ans = JSON.parse(ans); } catch (e) {}
+    }
+    ansSheet.appendRow([
+      now, roomId, data.name || "Anonim", data.nim || "-",
+      "Posko #" + (ans.poskoId || "-"),
+      ans.category || "Arduino & Wokwi",
+      ans.userAnswer || "-",
+      ans.correctAnswer || "-",
+      ans.isCorrect ? "BENAR" : "SALAH",
+      ans.scoreGained || (ans.isCorrect ? 20 : 0),
+      Number(data.totalScore) || 0
+    ]);
+  }
+
   SpreadsheetApp.flush();
 
   return jsonResponse({

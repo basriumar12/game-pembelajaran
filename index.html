@@ -15,6 +15,8 @@
   
   <!-- Three.js r128 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- MQTT for Real-Time Cross-Device Multiplayer Sync -->
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 </head>
 <body>
 
@@ -79,8 +81,10 @@
           <span class="sync-dot"></span>
           <span id="sync-status-badge">Google Sheets Aktif ✅</span>
         </div>
-        <div style="background: rgba(16, 185, 129, 0.25); border: 1px solid #10b981; color: #a7f3d0; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 800;">
-          🏃 Berebutan Taklukkan 30 Posko!
+        <div class="wood-panel" style="padding: 3px 10px; font-size: 11px; font-weight: 800; color: #fff;">
+          <span style="color: #ffd54f;">📝 SOAL:</span>
+          <span id="hud-soal-stats" style="color: #10b981; font-family: 'Orbitron', monospace; margin: 0 4px; font-size: 13px;">0 / 30 Terjawab</span>
+          <span id="hud-soal-remaining" style="font-size: 10px; color: #cbd5e1;">(Sisa: 30)</span>
         </div>
       </div>
 
@@ -88,8 +92,8 @@
       <div style="display: flex; flex-direction: column; gap: 6px;">
         <div class="wood-panel timer-panel">
           <div class="timer-header">
-            <span>⏱️ WAKTU</span>
-            <span id="hud-soal-stats">0/30 Posko</span>
+            <span>⏱️ SISA WAKTU</span>
+            <span id="hud-soal-accuracy" style="font-size: 10px; color: #38bdf8;">Akurasi: 100%</span>
           </div>
           <div id="hud-timer" class="timer-clock">60:00</div>
           <div class="timer-bar-bg">
@@ -98,16 +102,24 @@
         </div>
 
         <div class="wood-panel" style="justify-content: space-between;">
-          <span style="font-size: 11px; font-weight: 700; color: #ffd54f;">🌾 SKOR PANEN:</span>
-          <span id="hud-score" class="score-badge">0</span>
+          <span style="font-size: 11px; font-weight: 700; color: #ffd54f;">🌾 SKOR SAYA:</span>
+          <span id="hud-score" class="score-badge">0 Poin</span>
         </div>
       </div>
     </header>
 
-    <!-- Minimap Radar Widget (Top-Right) -->
-    <div class="minimap-panel">
-      <div class="minimap-title">RADAR POSKO & PEMAIN</div>
+    <!-- GPS GUIDE BAR (Panduan Arah ke Posko Terpilih) -->
+    <div id="gps-guide-bar" class="gps-guide-bar" style="display: none;">
+      <span id="gps-target-text" style="font-weight: 800; color: #fff;">🧭 Menuju Posko #1</span>
+      <span id="gps-distance-text" class="gps-dist-badge">24 meter ↗️</span>
+      <button id="btn-cancel-gps" class="btn-cancel-gps">✕ Selesai</button>
+    </div>
+
+    <!-- Minimap Radar Widget (Top-Right) - Klik untuk Buka Peta Lengkap -->
+    <div class="minimap-panel" id="minimap-panel" style="cursor: pointer;" title="Klik untuk Buka Peta Lengkap & Daftar 30 Posko">
+      <div class="minimap-title">RADAR ARENA 🔍</div>
       <canvas id="minimap-canvas" width="100" height="100"></canvas>
+      <div style="font-size: 9px; color: #ffd54f; font-weight: 800; text-align: center; margin-top: 2px;">(Ketuk Buka Peta)</div>
     </div>
 
     <!-- VIRTUAL JOYSTICK ANALOG (MOBILE/HP SEPERTI ROBLOX) -->
@@ -129,9 +141,10 @@
 
     <!-- Quick Control Buttons (Bawah Kanan) -->
     <div style="position: absolute; bottom: 12px; right: 12px; display: flex; gap: 6px; pointer-events: auto;">
+      <button id="btn-open-map" class="btn-action" style="padding: 6px 12px; font-size: 11px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-weight: 800; border-color: #b45309;">🗺️ Peta Posko</button>
       <button id="btn-cam-follow" class="btn-action" style="padding: 6px 10px; font-size: 11px;">🚶 Kamera</button>
       <button id="btn-cam-iso" class="btn-action" style="padding: 6px 10px; font-size: 11px;">📐 Iso</button>
-      <button id="btn-cam-top" class="btn-action" style="padding: 6px 10px; font-size: 11px;">🗺️ Peta</button>
+      <button id="btn-cam-top" class="btn-action" style="padding: 6px 10px; font-size: 11px;">🗺️ Top View</button>
       <button id="btn-audio-toggle" class="btn-action" style="padding: 6px 10px; font-size: 11px;">🎵 Audio</button>
     </div>
 
@@ -272,6 +285,59 @@
             🔄 Mainkan Sesi Baru
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL PETA ARENA & DAFTAR 30 POSKO (SCROLLABLE & STATUS LENGKAP)
+       ======================================================================== -->
+  <div id="full-map-modal" class="modal-backdrop">
+    <div class="rpg-dialog-frame" style="max-width: 680px; width: 95vw; max-height: 92vh; display: flex; flex-direction: column;">
+      <div class="rpg-dialog-parchment" style="overflow-y: auto; max-height: 88vh; padding: 14px;">
+        <div class="dialog-header" style="margin-bottom: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div>
+              <div class="dialog-title" style="font-size: 18px;">🗺️ Peta Arena & Status 30 Posko</div>
+              <div class="dialog-meta">Cek posko mana saja yang belum terjawab atau pandu arah jalan</div>
+            </div>
+            <button id="btn-close-map-modal" class="btn-action" style="padding: 6px 14px; font-size: 13px; font-weight: 800;">✕ Tutup</button>
+          </div>
+        </div>
+
+        <!-- Filter Tabs & Status Summary -->
+        <div style="background: rgba(0,0,0,0.06); padding: 10px 12px; border-radius: 12px; margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; font-weight: 800;">
+            <span id="map-modal-stats-text" style="color: #2e7d32;">0 / 30 Posko Terjawab</span>
+            <span id="map-modal-active-players" style="color: #0284c7;">👥 Pemain Aktif di Arena</span>
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="map-filter-btn active" data-filter="all">Semua (30)</button>
+            <button class="map-filter-btn" data-filter="unanswered">⏳ Belum Dijawab (<span id="count-unanswered">30</span>)</button>
+            <button class="map-filter-btn" data-filter="correct">✅ Benar (<span id="count-correct">0</span>)</button>
+            <button class="map-filter-btn" data-filter="wrong">❌ Salah (<span id="count-wrong">0</span>)</button>
+          </div>
+        </div>
+
+        <!-- Visual 2D Denah Map Section (Pan/Zoom/Klik Posko) -->
+        <div style="text-align: center; margin-bottom: 14px;">
+          <div style="font-size: 11px; font-weight: 800; color: #5d4037; margin-bottom: 4px;">
+            DENAH KAWASAN BPMP GORONTALO (Ketuk nomor posko untuk panduan arah):
+          </div>
+          <div style="position: relative; display: inline-block; border: 3px solid #8d6e63; border-radius: 14px; overflow: hidden; background: #e8f5e9; box-shadow: inset 0 2px 8px rgba(0,0,0,0.15);">
+            <canvas id="large-map-canvas" width="560" height="380" style="max-width: 100%; height: auto; display: block;"></canvas>
+          </div>
+        </div>
+
+        <!-- Scrollable Posko Directory List -->
+        <div style="font-size: 13px; font-weight: 900; color: #3e2723; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <span>📋 DAFTAR POSKO SOAL (Scroll untuk cek semua posko):</span>
+          <span style="font-size: 11px; font-weight: normal; color: #795548;">Klik "Tunjukkan Arah" untuk dipandu</span>
+        </div>
+        <div id="posko-directory-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; padding-right: 4px;">
+          <!-- Kartu-kartu posko 1 - 30 akan di-render otomatis di sini -->
+        </div>
+
       </div>
     </div>
   </div>

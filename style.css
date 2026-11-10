@@ -569,3 +569,149 @@ body, html {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* ==========================================================================
+   PETA ARENA INTERAKTIF & DIREKTORI 30 POSKO
+   ========================================================================== */
+.map-filter-btn {
+  background: #efebe9;
+  border: 1.5px solid #a1887f;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4e342e;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.map-filter-btn.active, .map-filter-btn:hover {
+  background: #3e2723;
+  color: #fff9c4;
+  border-color: #ffd54f;
+}
+
+.posko-dir-card {
+  background: #ffffff;
+  border: 2px solid #d7ccc8;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.posko-dir-card:hover {
+  transform: translateY(-2px);
+  border-color: #f59e0b;
+}
+
+.posko-dir-card.status-correct {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.posko-dir-card.status-wrong {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.posko-dir-card.status-unanswered {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.posko-card-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.badge-unanswered {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.badge-correct {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.badge-wrong {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.btn-guide-posko {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-guide-posko:hover {
+  background: #0284c7;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+}
+
+/* GPS GUIDE BAR (HUD ATAS) */
+.gps-guide-bar {
+  position: absolute;
+  top: 68px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 41, 59, 0.95);
+  border: 2px solid #38bdf8;
+  border-radius: 20px;
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 50;
+  pointer-events: auto;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  animation: pulse-gps 2s infinite ease-in-out;
+}
+
+@keyframes pulse-gps {
+  0%, 100% { border-color: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.4); }
+  50% { border-color: #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.6); }
+}
+
+.gps-dist-badge {
+  background: #0284c7;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.btn-cancel-gps {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #cbd5e1;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-cancel-gps:hover {
+  background: rgba(239, 68, 68, 0.8);
+  color: white;
+  border-color: transparent;
+}

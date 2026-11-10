@@ -33,6 +33,7 @@ class BPMPFarmGame {
     // Camera
     this.camOffset = new THREE.Vector3(0, 8, 12);
     this.camMode = "follow"; // 'follow', 'isometric', 'top'
+    this.cameraZoomDistance = 14;
 
     // 30 Posko Soal
     this.poskoList = [];
@@ -40,8 +41,15 @@ class BPMPFarmGame {
     this.answeredMap = {}; // { [poskoId]: { selectedKey, isCorrect } }
     this.activeNearbyPosko = null;
 
+    // GPS Guide & Interactive Map
+    this.guidedPoskoId = null;
+    this.guidedBeaconMesh = null;
+    this.activeMapFilter = "all";
+
     // Multiplayer Peers (Siswa lain di room)
     this.otherPlayers = new Map();
+    this.mqttClient = null;
+    this.lastBroadcastTime = 0;
 
     // Session Stats
     this.score = 0;
@@ -77,6 +85,7 @@ class BPMPFarmGame {
     this.setupKeyboardControls();
     this.setupVirtualJoystick();
     this.setupMinimap();
+    this.setupFullMapModal();
     this.setupEventListeners();
 
     // Start Animation Loop
@@ -368,18 +377,19 @@ class BPMPFarmGame {
    * Karakter Saya (Pemain Utama)
    */
   spawnMyPlayer() {
-    this.playerMesh = this.createChibiAvatar(0x1976d2, "student_boy", true);
+    this.playerMesh = this.createChibiAvatar(0x1976d2, this.playerData.avatar || "student_boy", true, this.playerData.name, this.score);
     this.playerMesh.position.copy(this.playerPos);
     this.scene.add(this.playerMesh);
   }
 
   /**
-   * Multiplayer: Hanya Siswa Asli yang Masuk dan Mencatatkan Nama
-   * (Tanpa Bot / Dummy Player Sama Sekali)
+   * Multiplayer Real: Siswa Asli Terlihat Berlari di Arena (Antar-HP & Laptop)
+   * Menggunakan Dual-Sync: MQTT WebSockets (Realtime) + Google Sheets Roster Sync
    */
   setupRealMultiplayer() {
     this.otherPlayers.clear();
-    // Ambil daftar siswa yang benar-benar sudah registrasi
+
+    // 1. Ambil daftar siswa dari penyimpanan lokal
     const localRoster = window.gasService.getLocalPlayers();
     localRoster.forEach(p => {
       if (p.playerId !== window.gasService.playerId && p.roomId === this.playerData.roomId) {
@@ -387,37 +397,107 @@ class BPMPFarmGame {
       }
     });
 
-    // Sinkronisasi berkala untuk siswa baru yang baru registrasi
+    // 2. Hubungkan ke Broker Real-time Cross-Device (MQTT over WebSocket)
+    this.initRealtimeMQTT();
+
+    // 3. Sinkronisasi berkala dari Google Sheets agar semua murid yang login muncul di arena
+    this.syncOnlineRosterFromGAS();
     setInterval(() => {
-      if (!window.gasService) return;
-      const roster = window.gasService.getLocalPlayers();
-      roster.forEach(p => {
-        if (p.playerId !== window.gasService.playerId && p.roomId === this.playerData.roomId) {
-          if (!this.otherPlayers.has(p.playerId)) {
-            this.addOrUpdateRealPlayer(p.playerId, p.name, p.avatar || "student_boy", p.x || -4, p.z || 6);
-          }
-        }
-      });
-    }, 3000);
+      this.syncOnlineRosterFromGAS();
+    }, 4000);
   }
 
-  addOrUpdateRealPlayer(id, name, avatarType, x, z) {
+  initRealtimeMQTT() {
+    try {
+      if (typeof mqtt !== "undefined") {
+        const clientId = "snt_client_" + Math.random().toString(16).substring(2, 9);
+        this.mqttClient = mqtt.connect("wss://broker.emqx.io:8084/mqtt", {
+          clientId: clientId,
+          clean: true,
+          connectTimeout: 5000,
+          reconnectPeriod: 4000
+        });
+
+        const topic = `snt/bpmp/arena/${this.playerData.roomId || "SMA-SNT-XA"}`;
+        this.mqttClient.on("connect", () => {
+          console.log("[Multiplayer Realtime] Terhubung ke Broker Cross-Device! Topic:", topic);
+          this.mqttClient.subscribe(topic);
+          this.broadcastMyPosition();
+        });
+
+        this.mqttClient.on("message", (t, msg) => {
+          try {
+            const data = JSON.parse(msg.toString());
+            if (data.id && data.id !== window.gasService.playerId) {
+              const peer = this.addOrUpdateRealPlayer(data.id, data.name, data.avatar || "student_boy", data.x, data.z, data.score || 0);
+              if (peer) peer.hasRealtimeMQTT = true;
+            }
+          } catch (e) {}
+        });
+      }
+    } catch (err) {
+      console.warn("[MQTT Error]:", err);
+    }
+  }
+
+  async syncOnlineRosterFromGAS() {
+    if (!window.gasService) return;
+    try {
+      const data = await window.gasService.fetchTeacherDashboard(this.playerData.roomId);
+      if (data && data.players && Array.isArray(data.players)) {
+        data.players.forEach((p, idx) => {
+          if (p.playerId !== window.gasService.playerId && (p.roomId === this.playerData.roomId || !p.roomId)) {
+            let peer = this.otherPlayers.get(p.playerId);
+            if (!peer) {
+              // Siswa baru yang masuk dari HP / laptop lain!
+              const tileIdx = (p.currentTile && p.currentTile > 0 && p.currentTile <= 30) 
+                ? (p.currentTile - 1) 
+                : (idx % 6);
+              const posko = this.poskoList[tileIdx];
+              const startX = posko ? posko.x + (Math.random() - 0.5) * 4 : (Math.random() - 0.5) * 12;
+              const startZ = posko ? posko.z + (Math.random() - 0.5) * 4 : 4 + (Math.random() - 0.5) * 8;
+              this.addOrUpdateRealPlayer(p.playerId, p.name, p.avatar || "student_boy", startX, startZ, p.score || 0);
+            } else {
+              if (p.score !== undefined) {
+                peer.score = p.score;
+                this.updateAvatarTag(peer.mesh, peer.name, peer.score, false);
+              }
+              if (p.currentTile && !peer.hasRealtimeMQTT) {
+                const posko = this.poskoList[p.currentTile - 1];
+                if (posko) peer.targetPos.set(posko.x, 0, posko.z);
+              }
+            }
+          }
+        });
+        this.updateMapModalStats();
+      }
+    } catch (e) {
+      console.warn("[GAS Roster Sync Error]:", e);
+    }
+  }
+
+  addOrUpdateRealPlayer(id, name, avatarType, x, z, score = 0) {
     let peer = this.otherPlayers.get(id);
     if (!peer) {
       const color = (avatarType === "student_girl") ? 0xe91e63 : 0x0284c7;
-      const mesh = this.createChibiAvatar(color, avatarType, false, name);
+      const mesh = this.createChibiAvatar(color, avatarType, false, name, score);
       mesh.position.set(x, 0, z);
       this.scene.add(mesh);
-      peer = { name: name, mesh: mesh, targetPos: new THREE.Vector3(x, 0, z), speed: 0.18 };
+      peer = { name: name, mesh: mesh, targetPos: new THREE.Vector3(x, 0, z), speed: 0.18, score: score };
       this.otherPlayers.set(id, peer);
       this.updateMinimap();
+      this.updateMapModalStats();
     } else {
       peer.targetPos.set(x, 0, z);
+      if (score !== undefined && score !== peer.score) {
+        peer.score = score;
+        this.updateAvatarTag(peer.mesh, name, score, false);
+      }
     }
     return peer;
   }
 
-  createChibiAvatar(colorHex, type = "student_boy", isMain = false, labelText = "") {
+  createChibiAvatar(colorHex, type = "student_boy", isMain = false, labelText = "", score = 0) {
     const avatar = new THREE.Group();
 
     // Body
@@ -454,28 +534,57 @@ class BPMPFarmGame {
     avatar.leftLeg = lLeg;
     avatar.rightLeg = rLeg;
 
-    // Floating Name Tag (Roblox Style)
-    const name = isMain ? "Saya (Pemain)" : labelText;
+    // Floating Name Tag (Roblox Style dengan Skor Live)
+    const displayName = isMain ? `${this.playerData.name || "Saya"} (⭐ ${this.score})` : `${labelText} (⭐ ${score})`;
     const tagCanvas = document.createElement("canvas");
-    tagCanvas.width = 256;
-    tagCanvas.height = 64;
+    tagCanvas.width = 300;
+    tagCanvas.height = 70;
     const tCtx = tagCanvas.getContext("2d");
-    tCtx.fillStyle = isMain ? "rgba(245, 158, 11, 0.9)" : "rgba(15, 23, 42, 0.8)";
-    tCtx.roundRect(10, 10, 236, 44, 12);
+    tCtx.fillStyle = isMain ? "rgba(245, 158, 11, 0.95)" : "rgba(15, 23, 42, 0.85)";
+    tCtx.roundRect(8, 8, 284, 54, 14);
     tCtx.fill();
+    tCtx.strokeStyle = isMain ? "#ffffff" : "#38bdf8";
+    tCtx.lineWidth = 3;
+    tCtx.stroke();
+
     tCtx.fillStyle = "#ffffff";
-    tCtx.font = "bold 24px sans-serif";
+    tCtx.font = "bold 22px sans-serif";
     tCtx.textAlign = "center";
     tCtx.textBaseline = "middle";
-    tCtx.fillText(name, 128, 32);
+    tCtx.fillText(displayName, 150, 35);
 
     const tagSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(tagCanvas) }));
     tagSprite.position.set(0, 2.7, 0);
-    tagSprite.scale.set(2.4, 0.6, 1);
+    tagSprite.scale.set(2.8, 0.65, 1);
     avatar.add(tagSprite);
+    avatar.tagSprite = tagSprite;
 
     avatar.scale.set(1.2, 1.2, 1.2);
     return avatar;
+  }
+
+  updateAvatarTag(avatar, nameText, score = 0, isMain = false) {
+    if (!avatar || !avatar.tagSprite) return;
+    const tagCanvas = document.createElement("canvas");
+    tagCanvas.width = 300;
+    tagCanvas.height = 70;
+    const tCtx = tagCanvas.getContext("2d");
+    tCtx.fillStyle = isMain ? "rgba(245, 158, 11, 0.95)" : "rgba(15, 23, 42, 0.85)";
+    tCtx.roundRect(8, 8, 284, 54, 14);
+    tCtx.fill();
+    tCtx.strokeStyle = isMain ? "#ffffff" : "#38bdf8";
+    tCtx.lineWidth = 3;
+    tCtx.stroke();
+
+    tCtx.fillStyle = "#ffffff";
+    tCtx.font = "bold 22px sans-serif";
+    tCtx.textAlign = "center";
+    tCtx.textBaseline = "middle";
+    const label = isMain ? `${nameText} (⭐ ${score})` : `${nameText} (⭐ ${score})`;
+    tCtx.fillText(label, 150, 35);
+
+    avatar.tagSprite.material.map = new THREE.CanvasTexture(tagCanvas);
+    avatar.tagSprite.material.needsUpdate = true;
   }
 
   /**
@@ -628,21 +737,27 @@ class BPMPFarmGame {
       }
     }
 
-    // Kamera mengikuti karakter dari belakang
+    // Kamera mengikuti karakter dari belakang (Mendukung Zoom Jarak Dekat/Jauh)
     if (this.camMode === "follow") {
+      const zoom = this.cameraZoomDistance || 14;
       const targetCam = new THREE.Vector3(
         this.playerPos.x,
-        this.playerPos.y + 9,
-        this.playerPos.z + 13
+        this.playerPos.y + zoom * 0.65,
+        this.playerPos.z + zoom * 0.95
       );
       this.camera.position.lerp(targetCam, 0.08);
       this.camera.lookAt(this.playerPos.x, this.playerPos.y + 1.5, this.playerPos.z);
     }
 
+    // Update Panduan Arah Kompas / GPS ke Posko
+    if (this.guidedPoskoId) {
+      this.updateGPSGuide();
+    }
+
     // Periksa Kedekatan dengan 30 Posko
     this.checkNearbyPosko();
 
-    // Pergerakan Bot Siswa Lain (Mensimulasikan Siswa Lain Berlari ke Posko)
+    // Pergerakan Siswa Lain di Arena
     this.updateOtherPlayers(delta);
   }
 
@@ -709,18 +824,31 @@ class BPMPFarmGame {
   }
 
   broadcastMyPosition() {
+    const now = Date.now();
+    if (this.lastBroadcastTime && (now - this.lastBroadcastTime < 90)) return;
+    this.lastBroadcastTime = now;
+
+    const payload = {
+      id: window.gasService.playerId,
+      name: this.playerData.name,
+      avatar: this.playerData.avatar || "student_boy",
+      x: Math.round(this.playerPos.x * 100) / 100,
+      z: Math.round(this.playerPos.z * 100) / 100,
+      rotY: this.playerMesh ? Math.round(this.playerMesh.rotation.y * 100) / 100 : 0,
+      score: this.score,
+      solvedCount: Object.keys(this.answeredMap).length
+    };
+
     if (window.gasService && window.gasService.channel) {
       window.gasService.channel.postMessage({
         type: "PLAYER_MOVE",
-        id: window.gasService.playerId,
-        name: this.playerData.name,
-        avatar: this.playerData.avatar || "student_boy",
-        x: this.playerPos.x,
-        z: this.playerPos.z,
-        rotY: this.playerMesh.rotation.y,
-        score: this.score,
-        solvedCount: this.solvedPosko.length
+        ...payload
       });
+    }
+
+    if (this.mqttClient && this.mqttClient.connected) {
+      const topic = `snt/bpmp/arena/${this.playerData.roomId || "SMA-SNT-XA"}`;
+      this.mqttClient.publish(topic, JSON.stringify(payload));
     }
   }
 
@@ -860,6 +988,16 @@ class BPMPFarmGame {
 
     // Update floating badge 3D agar terlihat jelas statusnya dari kejauhan
     this.updatePosko3DBadge(posko);
+    this.updateAvatarTag(this.playerMesh, this.playerData.name, this.score, true);
+
+    const lastAnswer = {
+      poskoId: posko.id,
+      category: q.category || "Arduino & Wokwi",
+      userAnswer: selectedKey,
+      correctAnswer: q.answer,
+      isCorrect: isCorrect,
+      scoreGained: isCorrect ? 20 : 0
+    };
 
     nextBtn.style.display = "inline-block";
     nextBtn.textContent = "Selesai & Lanjut Eksplorasi Peta ➔";
@@ -868,7 +1006,8 @@ class BPMPFarmGame {
     };
 
     this.updateHUD();
-    this.syncScoreToGAS();
+    this.syncScoreToGAS(lastAnswer);
+    this.broadcastMyPosition();
 
     if (this.solvedPosko.length >= 30) {
       setTimeout(() => {
@@ -911,20 +1050,374 @@ class BPMPFarmGame {
    * HUD & Minimap Radar
    */
   updateHUD() {
-    document.getElementById("hud-score").textContent = this.score;
-    document.getElementById("hud-soal-stats").textContent = `${this.solvedPosko.length}/30 Posko`;
+    const answeredCount = Object.keys(this.answeredMap).length;
+    const remaining = 30 - answeredCount;
+
+    // Tampilkan Skor Saya
+    const scoreEl = document.getElementById("hud-score");
+    if (scoreEl) scoreEl.textContent = `${this.score} Poin`;
+
+    // Tampilkan Jumlah Soal yang Sudah Dijawab
+    const statsEl = document.getElementById("hud-soal-stats");
+    if (statsEl) statsEl.textContent = `${answeredCount} / 30 Terjawab`;
+
+    const remEl = document.getElementById("hud-soal-remaining");
+    if (remEl) remEl.textContent = `(Sisa: ${remaining})`;
+
+    // Akurasi Soal
+    const totalDone = this.correctCount + this.wrongCount;
+    const acc = totalDone > 0 ? Math.round((this.correctCount / totalDone) * 100) : 100;
+    const accEl = document.getElementById("hud-soal-accuracy");
+    if (accEl) accEl.textContent = `Akurasi: ${acc}% (${this.correctCount}B / ${this.wrongCount}S)`;
 
     const tag = document.getElementById("hud-current-tile");
     if (tag) {
-      tag.textContent = `Posisi: X: ${Math.round(this.playerPos.x)}, Z: ${Math.round(this.playerPos.z)} | ${this.solvedPosko.length} Posko Selesai`;
+      tag.textContent = `Posisi: X: ${Math.round(this.playerPos.x)}, Z: ${Math.round(this.playerPos.z)} | ${answeredCount}/30 Terjawab (${this.correctCount} Benar, ${this.wrongCount} Salah)`;
     }
 
     this.updateMinimap();
+    this.updateMapModalStats();
   }
 
   setupMinimap() {
     this.minimapCanvas = document.getElementById("minimap-canvas");
     if (this.minimapCanvas) this.minimapCtx = this.minimapCanvas.getContext("2d");
+  }
+
+  /**
+   * SISTEM PETA ARENA & DIREKTORI 30 POSKO (SCROLLABLE & STATUS LENGKAP)
+   */
+  setupFullMapModal() {
+    const btnOpen = document.getElementById("btn-open-map");
+    const minimapPanel = document.getElementById("minimap-panel");
+    const btnClose = document.getElementById("btn-close-map-modal");
+
+    if (btnOpen) btnOpen.addEventListener("click", () => this.openFullMapModal());
+    if (minimapPanel) minimapPanel.addEventListener("click", () => this.openFullMapModal());
+    if (btnClose) btnClose.addEventListener("click", () => this.closeFullMapModal());
+
+    const btnCancelGps = document.getElementById("btn-cancel-gps");
+    if (btnCancelGps) btnCancelGps.addEventListener("click", () => this.cancelGPSGuide());
+
+    // Filter Buttons
+    document.querySelectorAll(".map-filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".map-filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        this.activeMapFilter = btn.dataset.filter || "all";
+        this.renderPoskoDirectory(this.activeMapFilter);
+      });
+    });
+
+    // Zoom Kamera dengan Mouse Wheel (Scroll)
+    window.addEventListener("wheel", e => {
+      this.cameraZoomDistance = Math.max(6, Math.min(45, (this.cameraZoomDistance || 14) + e.deltaY * 0.02));
+    }, { passive: true });
+  }
+
+  openFullMapModal() {
+    const modal = document.getElementById("full-map-modal");
+    if (!modal) return;
+    this.updateMapModalStats();
+    this.renderLargeMap();
+    this.renderPoskoDirectory(this.activeMapFilter || "all");
+    modal.classList.add("active");
+  }
+
+  closeFullMapModal() {
+    const modal = document.getElementById("full-map-modal");
+    if (modal) modal.classList.remove("active");
+  }
+
+  updateMapModalStats() {
+    const answeredCount = Object.keys(this.answeredMap).length;
+    const remaining = 30 - answeredCount;
+    const correct = this.correctCount;
+    const wrong = this.wrongCount;
+
+    const statsText = document.getElementById("map-modal-stats-text");
+    if (statsText) {
+      statsText.innerHTML = `📊 <b>${answeredCount} / 30 Posko Terjawab</b> (${correct} Benar, ${wrong} Salah, ${remaining} Sisa)`;
+    }
+
+    const unEl = document.getElementById("count-unanswered");
+    const corEl = document.getElementById("count-correct");
+    const wrEl = document.getElementById("count-wrong");
+    if (unEl) unEl.textContent = remaining;
+    if (corEl) corEl.textContent = correct;
+    if (wrEl) wrEl.textContent = wrong;
+
+    const playersEl = document.getElementById("map-modal-active-players");
+    if (playersEl) {
+      playersEl.textContent = `👥 ${this.otherPlayers.size + 1} Pemain di Kelas`;
+    }
+  }
+
+  renderLargeMap() {
+    const canvas = document.getElementById("large-map-canvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const cx = w / 2;
+    const cy = h / 2 - 10;
+    const scale = 5.2;
+
+    // 1. Rumput dan Denah Dasar
+    ctx.fillStyle = "#e8f5e9";
+    ctx.fillRect(0, 0, w, h);
+
+    // Danau Limboto di Selatan
+    ctx.fillStyle = "#bae6fd";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 28 * scale, 120, 50, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#38bdf8";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = "#0369a1";
+    ctx.font = "bold 11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("🌊 Danau Limboto", cx, cy + 28 * scale + 4);
+
+    // Gedung BPMP Gorontalo di Tengah/Utara
+    const bpmpW = 160;
+    const bpmpH = 65;
+    ctx.fillStyle = "#5d4037";
+    ctx.roundRect(cx - bpmpW / 2, cy - 22 * scale - bpmpH / 2, bpmpW, bpmpH, 8);
+    ctx.fill();
+    ctx.strokeStyle = "#ffd54f";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("🏛️ GEDUNG BPMP GORONTALO", cx, cy - 22 * scale - 4);
+    ctx.font = "10px sans-serif";
+    ctx.fillStyle = "#ffecb3";
+    ctx.fillText("Plaza Utama", cx, cy - 22 * scale + 14);
+
+    // Kebun Jagung Barat & Timur
+    ctx.fillStyle = "#a7f3d0";
+    ctx.fillRect(cx - 30 * scale, cy - 10 * scale, 55, 100);
+    ctx.fillRect(cx + 18 * scale, cy - 10 * scale, 55, 100);
+    ctx.fillStyle = "#065f46";
+    ctx.font = "10px sans-serif";
+    ctx.fillText("🌽 Kebun Jagung", cx - 24 * scale, cy + 8 * scale);
+    ctx.fillText("🌽 Kebun Jagung", cx + 24 * scale, cy + 8 * scale);
+
+    // 2. Gambar ke-30 Posko
+    this.poskoList.forEach(p => {
+      const px = cx + p.x * scale;
+      const py = cy + p.z * scale;
+      const r = 12;
+
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, Math.PI * 2);
+
+      if (p.isAnswered) {
+        ctx.fillStyle = p.isCorrect ? "#10b981" : "#ef4444";
+      } else {
+        ctx.fillStyle = "#f59e0b";
+      }
+      ctx.fill();
+
+      // Border highlight jika posko ini sedang dipandu GPS
+      if (this.guidedPoskoId === p.id) {
+        ctx.strokeStyle = "#38bdf8";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(px, py, r + 5, 0, Math.PI * 2);
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 11px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(`${p.id}`, px, py);
+    });
+
+    // 3. Gambar Siswa Lain di Arena
+    this.otherPlayers.forEach(op => {
+      const px = cx + op.mesh.position.x * scale;
+      const py = cy + op.mesh.position.z * scale;
+
+      ctx.beginPath();
+      ctx.arc(px, py, 7, 0, Math.PI * 2);
+      ctx.fillStyle = "#ec4899";
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = "#1e293b";
+      ctx.font = "bold 9px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(op.name.split(" ")[0], px, py - 11);
+    });
+
+    // 4. Gambar Posisi Saya
+    const mx = cx + this.playerPos.x * scale;
+    const my = cy + this.playerPos.z * scale;
+
+    ctx.beginPath();
+    ctx.arc(mx, my, 12, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(2, 132, 199, 0.25)";
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(mx, my, 8, 0, Math.PI * 2);
+    ctx.fillStyle = "#0284c7";
+    ctx.fill();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("📍 SAYA", mx, my - 13);
+  }
+
+  renderPoskoDirectory(filter = "all") {
+    const listContainer = document.getElementById("posko-directory-list");
+    if (!listContainer) return;
+    listContainer.innerHTML = "";
+
+    let filtered = this.poskoList;
+    if (filter === "unanswered") {
+      filtered = this.poskoList.filter(p => !p.isAnswered);
+    } else if (filter === "correct") {
+      filtered = this.poskoList.filter(p => p.isAnswered && p.isCorrect);
+    } else if (filter === "wrong") {
+      filtered = this.poskoList.filter(p => p.isAnswered && !p.isCorrect);
+    }
+
+    if (filtered.length === 0) {
+      listContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: #795548; font-size: 13px;">Tidak ada posko pada kategori filter ini.</div>`;
+      return;
+    }
+
+    filtered.forEach(p => {
+      const card = document.createElement("div");
+      let statusClass = "status-unanswered";
+      let badgeHtml = `<span class="posko-card-badge badge-unanswered">⏳ BELUM DIJAWAB</span>`;
+
+      if (p.isAnswered) {
+        if (p.isCorrect) {
+          statusClass = "status-correct";
+          badgeHtml = `<span class="posko-card-badge badge-correct">✅ BENAR (+20 Poin) · Jawaban: ${p.userAnswer}</span>`;
+        } else {
+          statusClass = "status-wrong";
+          badgeHtml = `<span class="posko-card-badge badge-wrong">❌ SALAH (0 Poin) · Jawaban: ${p.userAnswer} (Kunci: ${p.question.answer})</span>`;
+        }
+      }
+
+      card.className = `posko-dir-card ${statusClass}`;
+
+      const dist = Math.hypot(p.x - this.playerPos.x, p.z - this.playerPos.z);
+      const isGuided = (this.guidedPoskoId === p.id);
+
+      card.innerHTML = `
+        <div style="flex: 1;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <strong style="color: #3e2723; font-size: 14px;">Posko #${p.id}</strong>
+            ${badgeHtml}
+          </div>
+          <div style="font-size: 12px; font-weight: 700; color: #5d4037; margin-bottom: 2px;">
+            ${p.question.category || "Arduino Uno & Wokwi"}
+          </div>
+          <div style="font-size: 11px; color: #78716c; line-height: 1.3;">
+            ${p.question.question ? p.question.question.substring(0, 95) + '...' : '-'}
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+          <span style="font-size: 11px; font-weight: 800; color: #0284c7;">~${Math.round(dist)} meter</span>
+          <button class="btn-guide-posko" style="${isGuided ? 'background: #059669;' : ''}">
+            ${isGuided ? '📍 Sedang Dipandu' : '🧭 Tunjukkan Arah'}
+          </button>
+        </div>
+      `;
+
+      const guideBtn = card.querySelector(".btn-guide-posko");
+      guideBtn.addEventListener("click", () => {
+        this.startGPSGuide(p.id);
+      });
+
+      listContainer.appendChild(card);
+    });
+  }
+
+  startGPSGuide(poskoId) {
+    const posko = this.poskoList.find(p => p.id === poskoId);
+    if (!posko) return;
+
+    this.guidedPoskoId = poskoId;
+    this.closeFullMapModal();
+
+    // Buat suar cahaya vertikal di langit 3D pada posisi posko
+    if (!this.guidedBeaconMesh) {
+      const geo = new THREE.CylinderGeometry(0.6, 0.6, 50, 16);
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0x38bdf8,
+        transparent: true,
+        opacity: 0.65,
+        side: THREE.DoubleSide
+      });
+      this.guidedBeaconMesh = new THREE.Mesh(geo, mat);
+      this.scene.add(this.guidedBeaconMesh);
+    }
+    this.guidedBeaconMesh.position.set(posko.x, 25, posko.z);
+    this.guidedBeaconMesh.visible = true;
+
+    const bar = document.getElementById("gps-guide-bar");
+    if (bar) bar.style.display = "flex";
+
+    this.showToast(`🧭 Kompas memandu Anda langsung menuju Posko #${poskoId}!`);
+  }
+
+  cancelGPSGuide() {
+    this.guidedPoskoId = null;
+    if (this.guidedBeaconMesh) this.guidedBeaconMesh.visible = false;
+    const bar = document.getElementById("gps-guide-bar");
+    if (bar) bar.style.display = "none";
+  }
+
+  updateGPSGuide() {
+    const posko = this.poskoList.find(p => p.id === this.guidedPoskoId);
+    if (!posko) return;
+
+    const dx = posko.x - this.playerPos.x;
+    const dz = posko.z - this.playerPos.z;
+    const dist = Math.hypot(dx, dz);
+
+    const angle = Math.atan2(dx, dz);
+    const arrows = ["⬆️", "↗️", "➡️", "↘️", "⬇️", "↙️", "⬅️", "↖️"];
+    let idx = Math.round((angle / (Math.PI * 2)) * 8) % 8;
+    if (idx < 0) idx += 8;
+    const arrow = arrows[idx] || "⬆️";
+
+    const targetEl = document.getElementById("gps-target-text");
+    const distEl = document.getElementById("gps-distance-text");
+    if (targetEl) targetEl.textContent = `🧭 Menuju Posko #${posko.id}`;
+    if (distEl) distEl.textContent = `${Math.round(dist)}m ${arrow}`;
+
+    if (dist < 4.0) {
+      this.showToast(`🎉 Anda telah sampai di Posko #${posko.id}!`);
+      this.cancelGPSGuide();
+    }
   }
 
   updateMinimap() {
@@ -1010,7 +1503,8 @@ class BPMPFarmGame {
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
 
-  async syncScoreToGAS() {
+  async syncScoreToGAS(lastAnswer = null) {
+    const answeredCount = Object.keys(this.answeredMap).length;
     const payload = {
       roomId: this.playerData.roomId || "SMA-SNT-XA",
       name: this.playerData.name,
@@ -1019,10 +1513,11 @@ class BPMPFarmGame {
       totalScore: this.score,
       correctAnswers: this.correctCount,
       wrongAnswers: this.wrongCount,
-      currentTile: this.solvedPosko.length,
+      currentTile: answeredCount,
       timeElapsed: this.getFormattedElapsedTime(),
       timeRemaining: this.getFormattedRemainingTime(),
-      isFinished: this.isGameOver
+      isFinished: this.isGameOver,
+      lastAnswer: lastAnswer
     };
 
     const res = await window.gasService.updateProgress(payload);
@@ -1101,9 +1596,13 @@ class BPMPFarmGame {
         if (msg.type === "PLAYER_MOVE" && msg.id !== window.gasService.playerId) {
           let peer = this.otherPlayers.get(msg.id);
           if (!peer) {
-            peer = this.addOrUpdateRealPlayer(msg.id, msg.name, msg.avatar || "student_boy", msg.x, msg.z);
+            peer = this.addOrUpdateRealPlayer(msg.id, msg.name, msg.avatar || "student_boy", msg.x, msg.z, msg.score || 0);
           } else {
             peer.targetPos.set(msg.x, 0, msg.z);
+            if (msg.score !== undefined && msg.score !== peer.score) {
+              peer.score = msg.score;
+              this.updateAvatarTag(peer.mesh, msg.name, msg.score, false);
+            }
           }
         }
       };
