@@ -1036,17 +1036,32 @@
 
     function initQuestionsEditor() {
       updateGSheetStatusUI();
-      // 1. Render paket template langsung secara instan (0 detik)
+      // 1. Cek apakah ada soal tersimpan sebelumnya di local storage room ini
+      try {
+        const curRoom = (teacherRoomInputEl ? teacherRoomInputEl.value.trim().toUpperCase() : "") || currentRoom || "ROOM-01";
+        const saved = localStorage.getItem("cached_room_questions_" + curRoom) || localStorage.getItem("cached_teacher_questions");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            teacherQuestions = parsed;
+          }
+        }
+      } catch (e) {}
+
+      // 2. Jika belum ada, render paket template
       if (teacherQuestions.length === 0) {
         loadPackageQuestions(currentTeacherPackage);
+      } else {
+        renderQuestionsEditor();
       }
       
-      // 2. Jika ada Google Sheet ID spesifik, coba tarik dari GViz secara background
+      // 3. Jika ada Google Sheet ID spesifik, coba tarik dari GViz secara background
       const curSheet = window.gasService ? window.gasService.spreadsheetId : "";
       if (curSheet) {
         window.gasService.fetchQuestions(curSheet).then((loaded) => {
           if (Array.isArray(loaded) && loaded.length > 0) {
             teacherQuestions = loaded;
+            saveTeacherQuestionsLocally();
             renderQuestionsEditor();
           }
         }).catch(() => {});
@@ -1348,6 +1363,36 @@
       teacherQuestions = list;
     }
 
+    // Fungsi Penyimpanan Soal Guru Otomatis ke Local Storage & Broadcast Channel
+    function saveTeacherQuestionsLocally() {
+      syncDOMToQuestions();
+      try {
+        const curRoom = (teacherRoomInputEl ? teacherRoomInputEl.value.trim().toUpperCase() : "") || "ROOM-01";
+        localStorage.setItem("cached_room_questions_" + curRoom, JSON.stringify(teacherQuestions));
+        localStorage.setItem("cached_teacher_questions", JSON.stringify(teacherQuestions));
+        if (window.gasService && window.gasService.channel) {
+          window.gasService.channel.postMessage({
+            type: "QUESTIONS_UPDATED",
+            roomId: curRoom,
+            questions: teacherQuestions
+          });
+        }
+      } catch (e) {}
+    }
+
+    // Auto-save debounce saat guru mengetik atau mengubah soal di editor
+    let editorDebounceTimer = null;
+    const questionsEditorContainer = document.getElementById("questions-editor-list");
+    if (questionsEditorContainer) {
+      questionsEditorContainer.addEventListener("input", () => {
+        clearTimeout(editorDebounceTimer);
+        editorDebounceTimer = setTimeout(saveTeacherQuestionsLocally, 400);
+      });
+      questionsEditorContainer.addEventListener("change", () => {
+        saveTeacherQuestionsLocally();
+      });
+    }
+
     document.getElementById("btn-add-new-question").addEventListener("click", () => {
       syncDOMToQuestions();
       teacherQuestions.push({
@@ -1501,6 +1546,8 @@
 
     // --- Salin Link Room Siswa (Siswa Cukup Masuk Menggunakan Kode Room) ---
     document.getElementById("btn-copy-game-share-link").addEventListener("click", () => {
+      saveTeacherQuestionsLocally();
+
       const inputEl = document.getElementById("input-teacher-gsheet-id");
       const rawVal = inputEl ? inputEl.value.trim() : "";
       if (rawVal) {

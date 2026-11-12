@@ -427,7 +427,29 @@ class GASService {
           const speed = parseFloat(getCell(11)) || 1.0;
           const maxPlays = parseInt(getCell(12), 10) || 2;
           const readingPassage = getCell(13);
-          const videoUrl = getCell(14);
+          let videoUrl = getCell(14);
+
+          // PENCARIAN CERDAS LINK VIDEO YOUTUBE / MP4:
+          // Jika kolom 14 (Kolom O) kosong, cari apakah guru menaruh link video di kolom lain
+          if (!videoUrl) {
+            const rowCount = (c && c.length) ? c.length : 25;
+            for (let k = 0; k < rowCount; k++) {
+              const val = getCell(k);
+              if (val && (val.includes("youtube.com") || val.includes("youtu.be") || val.match(/\.(mp4|webm|ogg)/i))) {
+                videoUrl = val;
+                break;
+              }
+            }
+          }
+
+          // Cek juga apakah ada URL YouTube di dalam teks pertanyaan atau bacaan
+          if (!videoUrl) {
+            const combinedText = `${questionText} ${readingPassage} ${audioText}`;
+            const ytMatch = combinedText.match(/(https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/)|youtu\.be\/)[\w-]{11}[^\s]*)/i);
+            if (ytMatch && ytMatch[1]) {
+              videoUrl = ytMatch[1];
+            }
+          }
 
           // Otomatis tentukan tipe jika kosong atau fleksibel
           let qType = rawType;

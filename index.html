@@ -656,7 +656,21 @@
           }
         }
 
-        // 2. Jika tidak ada sheet guru atau gagal, gunakan paket bank soal bawaan
+        // 2. Cek apakah ada soal tersimpan dari Guru di Room ini (Local Storage)
+        if (!questionsToUse || questionsToUse.length === 0) {
+          try {
+            const cachedRoomQ = localStorage.getItem("cached_room_questions_" + roomCodeVal) || localStorage.getItem("cached_teacher_questions");
+            if (cachedRoomQ) {
+              const parsed = JSON.parse(cachedRoomQ);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                questionsToUse = parsed;
+                console.log(`[Game Siswa] Menggunakan ${parsed.length} soal tersimpan dari Guru Room ${roomCodeVal}!`);
+              }
+            }
+          } catch (e) {}
+        }
+
+        // 3. Jika tidak ada sheet guru atau cache, gunakan paket bank soal bawaan
         if (!questionsToUse || questionsToUse.length === 0) {
           const pkg = window.QUESTION_PACKAGES ? window.QUESTION_PACKAGES[mapelVal] : null;
           if (pkg && Array.isArray(pkg.questions) && pkg.questions.length > 0) {
@@ -757,6 +771,22 @@
         if (window.ttsManager) window.ttsManager.stop();
         document.getElementById("posko-quiz-modal").classList.remove("active");
       });
+
+      // Sinkronisasi Live jika Guru Mengupdate Soal dari Dashboard
+      if (window.gasService && window.gasService.channel) {
+        window.gasService.channel.onmessage = (e) => {
+          if (e.data && e.data.type === "QUESTIONS_UPDATED") {
+            const currentRoomId = (roomInput ? roomInput.value.trim().toUpperCase() : "") || (game.playerData ? game.playerData.roomId : "");
+            if (!e.data.roomId || e.data.roomId === currentRoomId) {
+              if (Array.isArray(e.data.questions) && e.data.questions.length > 0) {
+                game.questions = e.data.questions;
+                if (game.rebuildPoskos) game.rebuildPoskos();
+                console.log("[BroadcastChannel] Soal game berhasil diperbarui seketika oleh Guru!");
+              }
+            }
+          }
+        };
+      }
 
       // Inisialisasi Game 3D Open World
       game.init();

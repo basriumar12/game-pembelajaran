@@ -1110,15 +1110,28 @@ class BPMPFarmGame {
   }
 
   /**
+   * Helper Ekstraksi ID YouTube dari Berbagai Bentuk URL atau Teks (Watch, Short, Embed, Live, Mobile, Iframe)
+   */
+  extractYouTubeId(rawUrl) {
+    if (!rawUrl) return null;
+    const str = String(rawUrl).trim();
+    const iframeMatch = str.match(/src=["']([^"']+)["']/i);
+    const target = iframeMatch ? iframeMatch[1] : str;
+    const regExp = /(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts|live)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i;
+    const match = target.match(regExp);
+    return (match && match[1]) ? match[1] : null;
+  }
+
+  /**
    * Helper Pengubah URL Video Menjadi Embed Aman (YouTube / Google Drive / Direct Video)
    */
   formatVideoEmbedUrl(rawUrl) {
     if (!rawUrl) return "";
-    const str = String(rawUrl).trim();
-    const ytMatch = str.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/|watch\?.+&v=))([\w-]{11})/i);
-    if (ytMatch && ytMatch[1]) {
-      return `https://www.youtube.com/embed/${ytMatch[1]}`;
+    const ytId = this.extractYouTubeId(rawUrl);
+    if (ytId) {
+      return `https://www.youtube-nocookie.com/embed/${ytId}?rel=0&enablejsapi=1`;
     }
+    const str = String(rawUrl).trim();
     if (str.includes("drive.google.com/file/d/")) {
       return str.replace(/\/view(\?.*)?$/, "/preview");
     }
@@ -1145,35 +1158,53 @@ class BPMPFarmGame {
     // 1. Wadah Video Player (Khusus Menyimak Video / Video Comprehension)
     const videoBox = document.getElementById("posko-video-container");
     if (videoBox) {
-      const vidUrl = q.videoUrl;
-      if (vidUrl || q.type === "video_listening" || q.type === "video_essay") {
+      let vidUrl = q.videoUrl;
+      // Jika q.videoUrl kosong, coba ekstrak otomatis dari question atau readingPassage
+      if (!vidUrl) {
+        const potential = `${q.question || ""} ${q.readingPassage || ""} ${q.audioText || ""}`;
+        const autoYtId = this.extractYouTubeId(potential);
+        if (autoYtId) {
+          vidUrl = `https://www.youtube.com/watch?v=${autoYtId}`;
+          q.videoUrl = vidUrl;
+        }
+      }
+
+      const isVideoType = Boolean(vidUrl || q.type === "video_listening" || q.type === "video_essay");
+      if (isVideoType) {
         videoBox.style.display = "block";
         const embedUrl = this.formatVideoEmbedUrl(vidUrl);
+        const ytId = this.extractYouTubeId(vidUrl);
+        const directYtWatchUrl = ytId ? `https://www.youtube.com/watch?v=${ytId}` : vidUrl;
         const isDirectVideo = vidUrl && vidUrl.match(/\.(mp4|webm|ogg)(\?.*)?$/i);
 
         if (isDirectVideo) {
           videoBox.innerHTML = `
-            <div style="background: rgba(15, 23, 42, 0.95); border: 2px solid #38bdf8; border-radius: 12px; padding: 10px; margin-bottom: 6px;">
-              <div style="font-size: 11.5px; font-weight: 800; color: #38bdf8; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                🎥 MENYIMAK VIDEO PEMBELAJARAN
+            <div style="background: rgba(15, 23, 42, 0.95); border: 2px solid #38bdf8; border-radius: 12px; padding: 10px; margin-bottom: 8px;">
+              <div style="font-size: 11.5px; font-weight: 800; color: #38bdf8; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                <span>🎥 MENYIMAK VIDEO PEMBELAJARAN</span>
+                ${vidUrl ? `<a href="${vidUrl}" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; text-decoration: underline; font-weight: 600; font-size: 11px;">▶️ Buka Video Fullscreen</a>` : ''}
               </div>
               <video src="${vidUrl}" controls playsinline style="width: 100%; max-height: 240px; border-radius: 8px; background: #000;"></video>
             </div>
           `;
         } else if (embedUrl) {
           videoBox.innerHTML = `
-            <div style="background: rgba(15, 23, 42, 0.95); border: 2px solid #38bdf8; border-radius: 12px; padding: 10px; margin-bottom: 6px;">
-              <div style="font-size: 11.5px; font-weight: 800; color: #38bdf8; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                🎥 MENYIMAK VIDEO PEMBELAJARAN (SIMAK DENGAN SEKSAMA)
+            <div style="background: rgba(15, 23, 42, 0.95); border: 2px solid #38bdf8; border-radius: 12px; padding: 10px; margin-bottom: 8px;">
+              <div style="font-size: 11.5px; font-weight: 800; color: #38bdf8; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                <span>🎥 MENYIMAK VIDEO PEMBELAJARAN (SIMAK DENGAN SEKSAMA)</span>
+                ${directYtWatchUrl ? `<a href="${directYtWatchUrl}" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; text-decoration: underline; font-weight: 600; font-size: 11px;">▶️ Buka di YouTube ↗</a>` : ''}
               </div>
               <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background: #000;">
-                <iframe src="${embedUrl}" style="position: absolute; top:0; left:0; width: 100%; height: 100%; border: 0;" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                <iframe src="${embedUrl}" style="position: absolute; top:0; left:0; width: 100%; height: 100%; border: 0;" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" loading="lazy"></iframe>
               </div>
             </div>
           `;
         } else {
-          videoBox.style.display = "none";
-          videoBox.innerHTML = "";
+          videoBox.innerHTML = `
+            <div style="background: rgba(245, 158, 11, 0.15); border: 1.5px dashed #f59e0b; border-radius: 10px; padding: 10px; margin-bottom: 8px; font-size: 11.5px; color: #fbbf24;">
+              ⚠️ <b>Tautan Video Belum Dimasukkan:</b> Guru belum memasukkan URL video untuk posko ini. Silakan baca instruksi pertanyaan di bawah ini untuk menjawab.
+            </div>
+          `;
         }
       } else {
         videoBox.style.display = "none";
