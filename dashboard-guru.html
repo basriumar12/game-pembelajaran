@@ -872,6 +872,44 @@
       const data = await window.gasService.fetchTeacherDashboard(currentRoom);
       latestData = data;
       renderDashboard(data);
+      if (typeof syncStudentAnswersData === "function") {
+        await syncStudentAnswersData(data);
+      }
+    }
+
+    async function syncStudentAnswersData(dashData) {
+      let remoteAnswers = [];
+      if (dashData && Array.isArray(dashData.answers) && dashData.answers.length > 0) {
+        remoteAnswers = dashData.answers;
+      } else if (window.gasService && typeof window.gasService.fetchStudentAnswers === "function") {
+        const curSheet = window.gasService.spreadsheetId || "";
+        try {
+          remoteAnswers = await window.gasService.fetchStudentAnswers(currentRoom, curSheet);
+        } catch(e) {}
+      }
+
+      if (Array.isArray(remoteAnswers) && remoteAnswers.length > 0) {
+        let hasNew = false;
+        remoteAnswers.forEach(item => {
+          const exists = studentAnswersList.some(a => 
+            String(a.name).toLowerCase() === String(item.name).toLowerCase() && 
+            String(a.poskoId) === String(item.poskoId) && 
+            String(a.userAnswer) === String(item.userAnswer)
+          );
+          if (!exists) {
+            studentAnswersList.unshift(item);
+            hasNew = true;
+          }
+        });
+
+        if (hasNew || studentAnswersList.length === 0) {
+          if (studentAnswersList.length > 300) studentAnswersList = studentAnswersList.slice(0, 300);
+          try {
+            localStorage.setItem("cached_student_answers_" + currentRoom, JSON.stringify(studentAnswersList));
+          } catch(e) {}
+          renderStudentAnswers();
+        }
+      }
     }
 
     function renderDashboard(data) {

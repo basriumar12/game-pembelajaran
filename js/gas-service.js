@@ -351,6 +351,91 @@ class GASService {
   }
 
   /**
+   * 3b. Ambil Rekapitulasi Jawaban Siswa (Writing, Menyimak Video & Pilihan Ganda)
+   * Mendukung Google Apps Script Backend & Pembacaan Langsung Google Sheets via GViz Tab 'Jawaban_Siswa'
+   */
+  async fetchStudentAnswers(roomId = this.roomId, sheetId = this.spreadsheetId) {
+    const cleanId = this.cleanSpreadsheetId(sheetId);
+    let answers = [];
+
+    // 1. Coba fetch dari endpoint GAS Backend
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), GAS_CONFIG.TIMEOUT_MS || 5000);
+      const sheetParam = cleanId ? `&sheetId=${encodeURIComponent(cleanId)}` : "";
+      const url = `${this.endpoint}?action=getStudentAnswers&roomId=${encodeURIComponent(roomId)}${sheetParam}&t=${Date.now()}`;
+      
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.answers) && data.answers.length > 0) {
+          return data.answers;
+        }
+      }
+    } catch (err) {
+      // GAS timeout/error, lanjut ke GViz fallback
+    }
+
+    // 2. Coba pembacaan langsung via GViz Google Sheets (Tab 'Jawaban_Siswa')
+    if (cleanId) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const url = `https://docs.google.com/spreadsheets/d/${cleanId}/gviz/tq?tqx=out:json&sheet=Jawaban_Siswa&t=${Date.now()}`;
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const text = await res.text();
+          const startIdx = text.indexOf("{");
+          const endIdx = text.lastIndexOf("}");
+          if (startIdx !== -1 && endIdx !== -1) {
+            const jsonStr = text.substring(startIdx, endIdx + 1);
+            const data = JSON.parse(jsonStr);
+
+            if (data && data.table && Array.isArray(data.table.rows) && data.table.rows.length > 0) {
+              const rows = data.table.rows;
+              for (let i = rows.length - 1; i >= 0; i--) {
+                const c = rows[i].c || [];
+                const val = (idx) => {
+                  if (!c[idx]) return "";
+                  return c[idx].f !== undefined ? c[idx].f : (c[idx].v !== null && c[idx].v !== undefined ? c[idx].v : "");
+                };
+
+                const rowRoom = String(val(1) || "").trim();
+                if (!roomId || rowRoom === roomId || roomId === "ALL" || !rowRoom) {
+                  const studentName = String(val(2) || "").trim();
+                  if (studentName) {
+                    answers.push({
+                      time: String(val(0) || "-"),
+                      roomId: rowRoom || roomId,
+                      name: studentName,
+                      nim: String(val(3) || "-"),
+                      poskoId: String(val(4) || "").replace(/^Posko\s*#?/i, "").trim(),
+                      category: String(val(5) || "Materi Asesmen"),
+                      userAnswer: String(val(6) || "-"),
+                      correctAnswer: String(val(7) || "-"),
+                      isCorrect: String(val(8) || "").toUpperCase() === "BENAR",
+                      scoreGained: Number(val(9)) || 0,
+                      totalScore: Number(val(10)) || 0
+                    });
+                  }
+                }
+              }
+              if (answers.length > 0) return answers;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("[GAS] Gagal GViz tab Jawaban_Siswa:", err.message);
+      }
+    }
+
+    return answers;
+  }
+
+  /**
    * Pembaca Langsung Google Sheets via GViz Query (Super Cepat, Tanpa Butuh Deploy GAS)
    * Bekerja selama Google Sheet diatur: "Anyone with the link can view"
    */

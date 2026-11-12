@@ -63,6 +63,8 @@ function handleIncomingData(e) {
       return handleUpdatePlayerProgress(data);
     } else if (action === "getTeacherDashboard" || action === "getRoomPlayers") {
       return handleGetTeacherDashboard(roomId, data);
+    } else if (action === "getStudentAnswers" || action === "getAnswers") {
+      return handleGetStudentAnswers(roomId, data);
     } else if (action === "getLeaderboard") {
       return handleGetLeaderboard(roomId, data);
     } else if (action === "getQuestions") {
@@ -338,6 +340,32 @@ function handleGetTeacherDashboard(roomId, data) {
     return b.correct - a.correct;
   });
 
+  // Baca Detail Jawaban Siswa dari sheet "Jawaban_Siswa"
+  var studentAnswers = [];
+  var ansSheet = ss.getSheetByName("Jawaban_Siswa");
+  if (ansSheet && ansSheet.getLastRow() > 1) {
+    var ansValues = ansSheet.getRange(2, 1, ansSheet.getLastRow() - 1, 11).getValues();
+    for (var j = ansValues.length - 1; j >= 0; j--) {
+      var aRow = ansValues[j];
+      var aRoom = aRow[1];
+      if (!roomId || aRoom === roomId || roomId === "ALL") {
+        studentAnswers.push({
+          time: aRow[0] ? (typeof aRow[0] === "object" ? Utilities.formatDate(aRow[0], Session.getScriptTimeZone() || "GMT+8", "HH:mm:ss") : String(aRow[0])) : "-",
+          roomId: aRow[1],
+          name: aRow[2],
+          nim: aRow[3],
+          poskoId: String(aRow[4] || "").replace(/^Posko\s*#?/i, "").trim(),
+          category: aRow[5] || "Materi Asesmen",
+          userAnswer: aRow[6] || "-",
+          correctAnswer: aRow[7] || "-",
+          isCorrect: String(aRow[8] || "").toUpperCase() === "BENAR",
+          scoreGained: Number(aRow[9]) || 0,
+          totalScore: Number(aRow[10]) || 0
+        });
+      }
+    }
+  }
+
   return jsonResponse({
     roomId: roomId,
     serverTime: new Date().toLocaleTimeString("id-ID"),
@@ -345,8 +373,38 @@ function handleGetTeacherDashboard(roomId, data) {
     activeNow: roomPlayers.filter(function(p) { return p.status !== "OFFLINE"; }).length,
     leader: sortedLeaderboard.length > 0 ? sortedLeaderboard[0] : null,
     players: roomPlayers,
-    leaderboard: sortedLeaderboard
+    leaderboard: sortedLeaderboard,
+    answers: studentAnswers
   });
+}
+
+function handleGetStudentAnswers(roomId, data) {
+  var ss = getTargetSpreadsheet(data);
+  if (!ss) return jsonResponse({ status: "error", answers: [] });
+  var ansSheet = ss.getSheetByName("Jawaban_Siswa");
+  if (!ansSheet || ansSheet.getLastRow() < 2) return jsonResponse({ status: "success", answers: [] });
+  var ansValues = ansSheet.getRange(2, 1, ansSheet.getLastRow() - 1, 11).getValues();
+  var answers = [];
+  for (var j = ansValues.length - 1; j >= 0; j--) {
+    var aRow = ansValues[j];
+    var aRoom = aRow[1];
+    if (!roomId || aRoom === roomId || roomId === "ALL") {
+      answers.push({
+        time: aRow[0] ? (typeof aRow[0] === "object" ? Utilities.formatDate(aRow[0], Session.getScriptTimeZone() || "GMT+8", "HH:mm:ss") : String(aRow[0])) : "-",
+        roomId: aRow[1],
+        name: aRow[2],
+        nim: aRow[3],
+        poskoId: String(aRow[4] || "").replace(/^Posko\s*#?/i, "").trim(),
+        category: aRow[5] || "Materi Asesmen",
+        userAnswer: aRow[6] || "-",
+        correctAnswer: aRow[7] || "-",
+        isCorrect: String(aRow[8] || "").toUpperCase() === "BENAR",
+        scoreGained: Number(aRow[9]) || 0,
+        totalScore: Number(aRow[10]) || 0
+      });
+    }
+  }
+  return jsonResponse({ status: "success", answers: answers });
 }
 
 function handleGetLeaderboard(roomId, data) {
