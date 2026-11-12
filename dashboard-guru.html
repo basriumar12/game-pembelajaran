@@ -434,9 +434,9 @@
 
     <!-- Controls -->
     <div class="controls-group">
-      <div class="live-indicator">
+      <div id="indicator-sync" class="live-indicator" style="cursor: pointer;" title="Klik untuk membuka Konfigurasi Server / Sheets">
         <span class="pulse-dot"></span>
-        <span id="live-status-text">LIVE SYNC AKTIF</span>
+        <span id="live-status-text">MENGECEK KONEKSI...</span>
       </div>
 
       <select id="select-room-id" class="room-selector">
@@ -722,6 +722,29 @@
     }
 
     function renderDashboard(data) {
+      // 0. Update Status Koneksi Google Sheets
+      const statusText = document.getElementById("live-status-text");
+      const pulseDot = document.querySelector(".pulse-dot");
+      const liveIndicator = document.getElementById("indicator-sync");
+
+      if (data && data._source === "google_sheets") {
+        if (statusText) statusText.textContent = "GSHEET TERHUBUNG ✅";
+        if (liveIndicator) {
+          liveIndicator.style.background = "rgba(16, 185, 129, 0.2)";
+          liveIndicator.style.borderColor = "var(--bpmp-green)";
+          liveIndicator.style.color = "var(--bpmp-green)";
+        }
+        if (pulseDot) pulseDot.style.backgroundColor = "var(--bpmp-green)";
+      } else {
+        if (statusText) statusText.textContent = "GSHEET BELUM SYNC ⚠️ (Klik Atur)";
+        if (liveIndicator) {
+          liveIndicator.style.background = "rgba(245, 158, 11, 0.2)";
+          liveIndicator.style.borderColor = "var(--bpmp-gold)";
+          liveIndicator.style.color = "#fbbf24";
+        }
+        if (pulseDot) pulseDot.style.backgroundColor = "var(--bpmp-gold)";
+      }
+
       // 1. Metric Stat Cards
       document.getElementById("metric-total-joined").textContent = data.totalJoined || 0;
       document.getElementById("metric-active-now").textContent = data.activeNow || 0;
@@ -1146,12 +1169,16 @@
       cfgShareLink.value = url.toString();
     }
 
-    document.getElementById("btn-open-config-modal").addEventListener("click", () => {
+    const openCfgModal = () => {
       cfgSheetInput.value = window.gasService.spreadsheetId || "";
       cfgDepInput.value = window.gasService.deploymentId || "";
       updateShareLinkPreview();
       configModal.style.display = "flex";
-    });
+    };
+
+    document.getElementById("btn-open-config-modal").addEventListener("click", openCfgModal);
+    const indicatorSyncEl = document.getElementById("indicator-sync");
+    if (indicatorSyncEl) indicatorSyncEl.addEventListener("click", openCfgModal);
 
     const closeCfg = () => { configModal.style.display = "none"; };
     document.getElementById("btn-close-config-modal").addEventListener("click", closeCfg);

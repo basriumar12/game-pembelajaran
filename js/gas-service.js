@@ -324,14 +324,19 @@ class GASService {
       if (res.ok) {
         const data = await res.json();
         if (data && Array.isArray(data.players)) {
+          data._source = "google_sheets";
+          data._connected = true;
           return data;
         }
       }
     } catch (err) {
-      console.warn("[GAS] Membaca data pemantauan dari penyimpanan lokal:", err.message);
+      console.warn("[GAS] Gagal fetch pemantauan dari Google Sheets:", err.message);
     }
 
-    return this.getLocalTeacherDashboard(roomId);
+    const localData = this.getLocalTeacherDashboard(roomId);
+    localData._source = "local_cache";
+    localData._connected = false;
+    return localData;
   }
 
   /**

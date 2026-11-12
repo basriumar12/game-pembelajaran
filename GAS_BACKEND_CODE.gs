@@ -1,14 +1,16 @@
 /**
  * ============================================================================
- * GOOGLE APPS SCRIPT (GAS) BACKEND: BPMP FARM QUEST - SMA SNT KELAS X
+ * GOOGLE APPS SCRIPT (GAS) BACKEND: BPMP FARM QUEST - MULTI-MAPEL UNIVERSAL
  * ============================================================================
- * Salin SELURUH kode ini ke Extensions > Apps Script pada Google Sheets Anda.
- * 
- * [PENTING] AGAR DATA PASTI TERCATAT:
- * Saat Deploy (Deploy > New deployment):
- * 1. Select type: "Web app"
- * 2. Execute as: "Me" (email Anda)
- * 3. Who has access: "Anyone" (Siapa saja / Bahkan anonim) -> WAJIB!
+ * Salin SELURUH kode ini ke Google Apps Script Anda (Code.gs).
+ *
+ * CARA DEPLOY DENGAN BENAR (AGAR BISA SYNC KE CLOUDFLARE PAGES):
+ * 1. Simpan script (Ctrl+S / Save).
+ * 2. Klik Deploy > New deployment.
+ * 3. Pilih tipe: "Web app".
+ * 4. Execute as: "Me" (email Anda).
+ * 5. Who has access: "Anyone" (Siapa saja / Anonim) -> WAJIB!
+ * 6. Klik Deploy -> Salin Deployment ID (AKfy...) ke Dashboard Guru.
  * ============================================================================
  */
 
@@ -20,15 +22,20 @@ function doPost(e) {
   return handleIncomingData(e);
 }
 
+function jsonResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 /**
- * Handle Baik GET maupun POST secara terpadu (100% Anti-Gagal)
+ * Handle GET dan POST Secara Terpadu (Anti-Gagal & Kebal CORS)
  */
 function handleIncomingData(e) {
   try {
-    const params = (e && e.parameter) || {};
-    let data = {};
+    var params = (e && e.parameter) || {};
+    var data = {};
 
-    // 1. Ekstrak dari postData (JSON Fetch)
+    // 1. Ekstrak data dari POST JSON
     if (e && e.postData && e.postData.contents) {
       try {
         data = JSON.parse(e.postData.contents);
@@ -39,16 +46,16 @@ function handleIncomingData(e) {
       data = params;
     }
 
-    // 2. Ekstrak jika dibungkus dalam parameter data
+    // 2. Ekstrak jika dikirim via payload string 'data'
     if (data.data && typeof data.data === "string") {
       try {
-        const parsed = JSON.parse(data.data);
+        var parsed = JSON.parse(data.data);
         data = Object.assign({}, data, parsed);
       } catch (err) {}
     }
 
-    const action = data.action || params.action || "getTeacherDashboard";
-    const roomId = data.roomId || params.roomId || "SMA-SNT-XA";
+    var action = data.action || params.action || "getTeacherDashboard";
+    var roomId = data.roomId || params.roomId || "ALL";
 
     if (action === "registerPlayer") {
       return handleRegisterPlayer(data);
@@ -76,8 +83,7 @@ function handleIncomingData(e) {
 
 /**
  * MENDAPATKAN SPREADSHEET TARGET SECARA DINAMIS
- * Guru/Admin dapat mengganti Google Sheets kapan saja hanya dengan menyertakan spreadsheetId.
- * Jika tidak disertakan, backend otomatis menggunakan Active Spreadsheet tempat script dipasang.
+ * Guru cukup memasukkan Spreadsheet ID, sistem akan membuka Google Sheet tersebut.
  */
 function getTargetSpreadsheet(data) {
   var targetId = data && (data.spreadsheetId || data.sheetId);
@@ -85,24 +91,28 @@ function getTargetSpreadsheet(data) {
     try {
       return SpreadsheetApp.openById(String(targetId).trim());
     } catch (err) {
-      console.warn("Gagal membuka sheet by ID (" + targetId + "), fallback ke Active Spreadsheet:", err);
+      console.warn("Gagal membuka spreadsheet ID: " + targetId + ", coba active:", err);
     }
   }
+
   try {
-    return SpreadsheetApp.getActiveSpreadsheet();
-  } catch (err) {
-    console.error("Gagal getActiveSpreadsheet:", err);
-    throw new Error("Spreadsheet tidak ditemukan. Pastikan Spreadsheet ID valid dan email pembuat Web App memiliki akses View/Edit ke Spreadsheet tersebut!");
-  }
+    var active = SpreadsheetApp.getActiveSpreadsheet();
+    if (active) return active;
+  } catch (err) {}
+
+  return null;
 }
 
 /**
  * 1. SIMPAN PESERTA BARU KE SHEET "Peserta"
  */
 function handleRegisterPlayer(data) {
-  const ss = getTargetSpreadsheet(data);
-  let sheet = ss.getSheetByName("Peserta");
-  
+  var ss = getTargetSpreadsheet(data);
+  if (!ss) {
+    return jsonResponse({ status: "error", message: "Spreadsheet target belum terhubung." });
+  }
+
+  var sheet = ss.getSheetByName("Peserta");
   if (!sheet) {
     sheet = ss.insertSheet("Peserta");
     sheet.appendRow([
@@ -112,43 +122,41 @@ function handleRegisterPlayer(data) {
     sheet.getRange(1, 1, 1, 14).setFontWeight("bold").setBackground("#c8e6c9");
   }
 
-  const now = new Date();
-  const roomId = data.roomId || "SMA-SNT-XA";
-  const playerId = data.playerId || ("PL_" + Utilities.getUuid().slice(0, 8));
-  const name = data.name || "Siswa Baru";
-  const nim = data.nim || "-";
-  const inst = data.institution || "Peserta Didik";
-  const avatar = data.avatar || "student_boy";
-  const tabSwitches = Number(data.tabSwitchCount) || 0;
+  var now = new Date();
+  var roomId = data.roomId || "ALL";
+  var playerId = data.playerId || ("PL_" + Utilities.getUuid().slice(0, 8));
+  var name = data.name || "Siswa Baru";
+  var nim = data.nim || "-";
+  var inst = data.institution || "Peserta Didik";
+  var avatar = data.avatar || "student_boy";
+  var tabSwitches = Number(data.tabSwitchCount) || 0;
 
-  // Cek apakah siswa sudah ada di sheet
-  const lastRow = sheet.getLastRow();
-  let existingRow = -1;
+  var lastRow = sheet.getLastRow();
+  var existingRow = -1;
   if (lastRow > 1) {
-    const ids = sheet.getRange(2, 3, lastRow - 1, 1).getValues();
-    const names = sheet.getRange(2, 4, lastRow - 1, 1).getValues();
-    const rooms = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
-    for (let i = 0; i < ids.length; i++) {
-      if (rooms[i][0] === roomId && (ids[i][0] === playerId || names[i][0].toString().toLowerCase() === name.toLowerCase())) {
+    var ids = sheet.getRange(2, 3, lastRow - 1, 1).getValues();
+    var names = sheet.getRange(2, 4, lastRow - 1, 1).getValues();
+    var rooms = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+    for (var i = 0; i < ids.length; i++) {
+      if ((!roomId || rooms[i][0] === roomId || roomId === "ALL") && 
+          (ids[i][0] === playerId || names[i][0].toString().toLowerCase() === name.toLowerCase())) {
         existingRow = i + 2;
         break;
       }
     }
   }
 
+  var rowData = [
+    now, roomId, playerId, name, nim, inst, avatar, "ONLINE", 0, 0, 0, 0, tabSwitches, now.toLocaleTimeString("id-ID")
+  ];
+
   if (existingRow > 0) {
-    sheet.getRange(existingRow, 1, 1, 14).setValues([[
-      now, roomId, playerId, name, nim, inst, avatar, "ONLINE", 0, 0, 0, 0, tabSwitches, now.toLocaleTimeString("id-ID")
-    ]]);
+    sheet.getRange(existingRow, 1, 1, 14).setValues([rowData]);
   } else {
-    sheet.appendRow([
-      now, roomId, playerId, name, nim, inst, avatar, "ONLINE", 0, 0, 0, 0, tabSwitches, now.toLocaleTimeString("id-ID")
-    ]);
+    sheet.appendRow(rowData);
   }
 
-  // Paksa simpan seketika ke Google Sheets
   SpreadsheetApp.flush();
-
   return jsonResponse({
     status: "registered",
     roomId: roomId,
@@ -158,45 +166,47 @@ function handleRegisterPlayer(data) {
 }
 
 /**
- * 2. UPDATE PROGRESS & CATAT DI SHEET "Scoreboard"
+ * 2. UPDATE PROGRESS & CATAT DI SHEET "Scoreboard" & "Jawaban_Siswa"
  */
 function handleUpdatePlayerProgress(data) {
-  const ss = getTargetSpreadsheet(data);
-  let sheet = ss.getSheetByName("Peserta");
-  const now = new Date();
-  const roomId = data.roomId || "SMA-SNT-XA";
-  const name = data.name || "";
-  const playerId = data.playerId || "";
-  const tabSwitches = Number(data.tabSwitchCount) || 0;
+  var ss = getTargetSpreadsheet(data);
+  if (!ss) {
+    return jsonResponse({ status: "error", message: "Spreadsheet target belum terhubung." });
+  }
 
-  const incomingScore = Number(data.totalScore) || 0;
-  const incomingCorrect = Number(data.correctAnswers) || 0;
-  const incomingWrong = Number(data.wrongAnswers) || 0;
-  const incomingTile = Number(data.currentTile) || 0;
+  var sheet = ss.getSheetByName("Peserta");
+  var now = new Date();
+  var roomId = data.roomId || "ALL";
+  var name = data.name || "";
+  var playerId = data.playerId || "";
+  var tabSwitches = Number(data.tabSwitchCount) || 0;
+
+  var incomingScore = Number(data.totalScore) || 0;
+  var incomingCorrect = Number(data.correctAnswers) || 0;
+  var incomingWrong = Number(data.wrongAnswers) || 0;
+  var incomingTile = Number(data.currentTile) || 0;
 
   if (sheet && sheet.getLastRow() > 1) {
-    const values = sheet.getRange(2, 1, sheet.getLastRow() - 1, 14).getValues();
-    for (let i = 0; i < values.length; i++) {
-      const rowRoom = values[i][1];
-      const rowId = values[i][2];
-      const rowName = values[i][3];
+    var values = sheet.getRange(2, 1, sheet.getLastRow() - 1, 14).getValues();
+    for (var i = 0; i < values.length; i++) {
+      var rowRoom = values[i][1];
+      var rowId = values[i][2];
+      var rowName = values[i][3];
 
-      if (rowRoom === roomId && (rowId === playerId || rowName.toString().toLowerCase() === name.toLowerCase())) {
-        const rowNum = i + 2;
-        const currentScore = Number(values[i][8]) || 0;
-        const currentCorrect = Number(values[i][9]) || 0;
-        const currentWrong = Number(values[i][10]) || 0;
-        const currentTile = Number(values[i][11]) || 0;
+      if ((!roomId || rowRoom === roomId || roomId === "ALL") && 
+          (rowId === playerId || rowName.toString().toLowerCase() === name.toLowerCase())) {
+        var rowNum = i + 2;
+        var currentScore = Number(values[i][8]) || 0;
+        var currentCorrect = Number(values[i][9]) || 0;
+        var currentWrong = Number(values[i][10]) || 0;
+        var currentTile = Number(values[i][11]) || 0;
 
-        // Anti-Drop & Anti-Race Condition:
-        // Gunakan Math.max agar request lama yang terlambat tidak menimpa skor/jawaban benar yang lebih tinggi!
-        const finalScore = Math.max(currentScore, incomingScore);
-        const finalCorrect = Math.max(currentCorrect, incomingCorrect);
-        const finalWrong = Math.max(currentWrong, incomingWrong);
-        const finalTile = Math.max(currentTile, incomingTile);
-        const finalStatus = data.isFinished ? "FINISHED" : (values[i][7] === "FINISHED" ? "FINISHED" : "PLAYING");
+        var finalScore = Math.max(currentScore, incomingScore);
+        var finalCorrect = Math.max(currentCorrect, incomingCorrect);
+        var finalWrong = Math.max(currentWrong, incomingWrong);
+        var finalTile = Math.max(currentTile, incomingTile);
+        var finalStatus = data.isFinished ? "FINISHED" : (values[i][7] === "FINISHED" ? "FINISHED" : "PLAYING");
 
-        // Tulis sekaligus dalam satu pemanggilan rentang (cepat dan bebas korupsi data)
         sheet.getRange(rowNum, 8, 1, 7).setValues([[
           finalStatus,
           finalScore,
@@ -211,8 +221,8 @@ function handleUpdatePlayerProgress(data) {
     }
   }
 
-  // Simpan ke Sheet Scoreboard
-  let scoreSheet = ss.getSheetByName("Scoreboard");
+  // Simpan Log ke Sheet Scoreboard
+  var scoreSheet = ss.getSheetByName("Scoreboard");
   if (!scoreSheet) {
     scoreSheet = ss.insertSheet("Scoreboard");
     scoreSheet.appendRow([
@@ -224,13 +234,13 @@ function handleUpdatePlayerProgress(data) {
 
   scoreSheet.appendRow([
     now, roomId, data.name || "Anonim", data.nim || "-", data.institution || "Peserta Didik",
-    Number(data.totalScore) || 0, Number(data.correctAnswers) || 0, Number(data.wrongAnswers) || 0,
+    incomingScore, incomingCorrect, incomingWrong,
     tabSwitches, data.timeElapsed || "00:00:00", data.timeRemaining || "00:00:00"
   ]);
 
-  // Simpan Detail Jawaban Per Posko ke Sheet "Jawaban_Siswa"
+  // Simpan Detail Jawaban ke Sheet "Jawaban_Siswa"
   if (data.lastAnswer) {
-    let ansSheet = ss.getSheetByName("Jawaban_Siswa");
+    var ansSheet = ss.getSheetByName("Jawaban_Siswa");
     if (!ansSheet) {
       ansSheet = ss.insertSheet("Jawaban_Siswa");
       ansSheet.appendRow([
@@ -239,39 +249,50 @@ function handleUpdatePlayerProgress(data) {
       ]);
       ansSheet.getRange(1, 1, 1, 11).setFontWeight("bold").setBackground("#b2dfdb");
     }
-    let ans = data.lastAnswer;
+    var ans = data.lastAnswer;
     if (typeof ans === "string") {
       try { ans = JSON.parse(ans); } catch (e) {}
     }
     ansSheet.appendRow([
       now, roomId, data.name || "Anonim", data.nim || "-",
       "Posko #" + (ans.poskoId || "-"),
-      ans.category || "Arduino & Wokwi",
+      ans.category || "Materi Asesmen",
       ans.userAnswer || "-",
       ans.correctAnswer || "-",
       ans.isCorrect ? "BENAR" : "SALAH",
       ans.scoreGained || (ans.isCorrect ? 20 : 0),
-      Number(data.totalScore) || 0
+      incomingScore
     ]);
   }
 
   SpreadsheetApp.flush();
-
   return jsonResponse({
     status: "progress_updated",
     name: data.name,
-    score: data.totalScore,
-    correct: data.correctAnswers
+    score: incomingScore,
+    correct: incomingCorrect
   });
 }
 
 /**
- * 3. DASHBOARD GURU
+ * 3. DASHBOARD PEMANTAUAN GURU (LEADERBOARD & PRESENSI LIVE)
  */
 function handleGetTeacherDashboard(roomId, data) {
-  const ss = getTargetSpreadsheet(data);
-  const sheet = ss.getSheetByName("Peserta");
-  
+  var ss = getTargetSpreadsheet(data);
+  if (!ss) {
+    return jsonResponse({
+      roomId: roomId,
+      status: "warning",
+      message: "Spreadsheet belum terhubung. Silakan atur Spreadsheet ID di Dashboard Guru.",
+      totalJoined: 0,
+      activeNow: 0,
+      leader: null,
+      players: [],
+      leaderboard: []
+    });
+  }
+
+  var sheet = ss.getSheetByName("Peserta");
   if (!sheet || sheet.getLastRow() < 2) {
     return jsonResponse({
       roomId: roomId,
@@ -283,11 +304,11 @@ function handleGetTeacherDashboard(roomId, data) {
     });
   }
 
-  const values = sheet.getRange(2, 1, sheet.getLastRow() - 1, 14).getValues();
-  const roomPlayers = [];
+  var values = sheet.getRange(2, 1, sheet.getLastRow() - 1, 14).getValues();
+  var roomPlayers = [];
 
-  for (let i = 0; i < values.length; i++) {
-    const row = values[i];
+  for (var i = 0; i < values.length; i++) {
+    var row = values[i];
     if (!roomId || row[1] === roomId || roomId === "ALL") {
       roomPlayers.push({
         registeredAt: row[0],
@@ -308,7 +329,7 @@ function handleGetTeacherDashboard(roomId, data) {
     }
   }
 
-  const sortedLeaderboard = [...roomPlayers].sort((a, b) => {
+  var sortedLeaderboard = [].concat(roomPlayers).sort(function(a, b) {
     if (b.score !== a.score) return b.score - a.score;
     return b.correct - a.correct;
   });
@@ -317,7 +338,7 @@ function handleGetTeacherDashboard(roomId, data) {
     roomId: roomId,
     serverTime: new Date().toLocaleTimeString("id-ID"),
     totalJoined: roomPlayers.length,
-    activeNow: roomPlayers.filter(p => p.status !== "OFFLINE").length,
+    activeNow: roomPlayers.filter(function(p) { return p.status !== "OFFLINE"; }).length,
     leader: sortedLeaderboard.length > 0 ? sortedLeaderboard[0] : null,
     players: roomPlayers,
     leaderboard: sortedLeaderboard
@@ -328,43 +349,52 @@ function handleGetLeaderboard(roomId, data) {
   return handleGetTeacherDashboard(roomId, data);
 }
 
+/**
+ * 4. BANK SOAL DARI SHEET "Soal"
+ */
 function handleGetQuestions(data) {
-  const ss = getTargetSpreadsheet(data);
-  const sheet = ss.getSheetByName("Soal");
+  var ss = getTargetSpreadsheet(data);
+  if (!ss) return jsonResponse([]);
+  var sheet = ss.getSheetByName("Soal");
   if (!sheet || sheet.getLastRow() < 2) {
     return jsonResponse([]);
   }
-  
-  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 9).getValues();
-  const questions = rows.map((r, i) => ({
-    id: r[0] || (i + 1),
-    category: r[1] || "Materi Asesmen",
-    question: r[2],
-    options: [
-      { key: "A", text: r[3] },
-      { key: "B", text: r[4] },
-      { key: "C", text: r[5] },
-      { key: "D", text: r[6] }
-    ],
-    answer: String(r[7]).toUpperCase().trim(),
-    explanation: r[8] || "",
-    type: r[9] || (r[10] ? "listening" : (r[13] ? "reading" : "standard")),
-    audioText: r[10] || "",
-    audioSpeed: parseFloat(r[11]) || 1.0,
-    maxPlays: parseInt(r[12]) || 2,
-    readingPassage: r[13] || ""
-  }));
-  
+
+  var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 14).getValues();
+  var questions = rows.map(function(r, i) {
+    return {
+      id: r[0] || (i + 1),
+      category: r[1] || "Materi Asesmen",
+      question: r[2],
+      options: [
+        { key: "A", text: r[3] },
+        { key: "B", text: r[4] },
+        { key: "C", text: r[5] },
+        { key: "D", text: r[6] }
+      ],
+      answer: String(r[7]).toUpperCase().trim(),
+      explanation: r[8] || "",
+      type: r[9] || (r[10] ? "listening" : (r[13] ? "reading" : "standard")),
+      audioText: r[10] || "",
+      audioSpeed: parseFloat(r[11]) || 1.0,
+      maxPlays: parseInt(r[12]) || 2,
+      readingPassage: r[13] || ""
+    };
+  });
+
   return jsonResponse(questions);
 }
 
 /**
- * 4. GURU: SIMPAN / GANTI SOAL BARU KE GOOGLE SHEETS
- * Mendukung Tipe Soal Standard, Reading Passage, dan Audio TTS Listening
+ * 5. GURU: SIMPAN SOAL BARU KE GOOGLE SHEETS
  */
 function handleSaveQuestions(data) {
-  const ss = getTargetSpreadsheet(data);
-  let sheet = ss.getSheetByName("Soal");
+  var ss = getTargetSpreadsheet(data);
+  if (!ss) {
+    return jsonResponse({ status: "error", message: "Spreadsheet target belum terhubung." });
+  }
+
+  var sheet = ss.getSheetByName("Soal");
   if (!sheet) {
     sheet = ss.insertSheet("Soal");
   } else {
@@ -372,20 +402,21 @@ function handleSaveQuestions(data) {
   }
 
   sheet.appendRow([
-    "ID Soal", "Kategori / Topik", "Pertanyaan", "Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D", "Kunci Jawaban", "Pembahasan", "Tipe", "Audio TTS", "Speed Audio", "Batas Putar", "Reading Passage"
+    "ID Soal", "Kategori / Topik", "Pertanyaan", "Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D",
+    "Kunci Jawaban", "Pembahasan", "Tipe", "Audio TTS", "Speed Audio", "Batas Putar", "Reading Passage"
   ]);
   sheet.getRange(1, 1, 1, 14).setFontWeight("bold").setBackground("#c8e6c9");
 
-  let qList = data.questions || [];
+  var qList = data.questions || [];
   if (typeof qList === "string") {
     try { qList = JSON.parse(qList); } catch (e) {}
   }
 
-  const rows = [];
-  qList.forEach((q, idx) => {
-    let optA = "", optB = "", optC = "", optD = "";
+  var rows = [];
+  qList.forEach(function(q, idx) {
+    var optA = "", optB = "", optC = "", optD = "";
     if (Array.isArray(q.options)) {
-      q.options.forEach(o => {
+      q.options.forEach(function(o) {
         if (typeof o === "object") {
           if (o.key === "A") optA = o.text || "";
           else if (o.key === "B") optB = o.text || "";
@@ -425,16 +456,17 @@ function handleSaveQuestions(data) {
   return jsonResponse({
     status: "success",
     count: rows.length,
-    message: `${rows.length} soal berhasil disimpan ke Google Sheets!`
+    message: rows.length + " soal berhasil disimpan ke Google Sheets!"
   });
 }
 
 function handleResetRoom(roomId, data) {
-  const ss = getTargetSpreadsheet(data);
-  const sheet = ss.getSheetByName("Peserta");
+  var ss = getTargetSpreadsheet(data);
+  if (!ss) return jsonResponse({ status: "error", message: "Spreadsheet target belum terhubung." });
+  var sheet = ss.getSheetByName("Peserta");
   if (sheet && sheet.getLastRow() > 1) {
-    const values = sheet.getRange(2, 2, sheet.getLastRow() - 1, 1).getValues();
-    for (let i = values.length - 1; i >= 0; i--) {
+    var values = sheet.getRange(2, 2, sheet.getLastRow() - 1, 1).getValues();
+    for (var i = values.length - 1; i >= 0; i--) {
       if (!roomId || values[i][0] === roomId || roomId === "ALL") {
         sheet.deleteRow(i + 2);
       }
@@ -445,14 +477,15 @@ function handleResetRoom(roomId, data) {
 }
 
 function handleClearOfflinePlayers(roomId, data) {
-  const ss = getTargetSpreadsheet(data);
-  const sheet = ss.getSheetByName("Peserta");
-  let deletedCount = 0;
+  var ss = getTargetSpreadsheet(data);
+  if (!ss) return jsonResponse({ status: "error", message: "Spreadsheet target belum terhubung." });
+  var sheet = ss.getSheetByName("Peserta");
+  var deletedCount = 0;
   if (sheet && sheet.getLastRow() > 1) {
-    const values = sheet.getRange(2, 1, sheet.getLastRow() - 1, 14).getValues();
-    for (let i = values.length - 1; i >= 0; i--) {
-      const rowRoom = values[i][1];
-      const rowStatus = values[i][7];
+    var values = sheet.getRange(2, 1, sheet.getLastRow() - 1, 14).getValues();
+    for (var i = values.length - 1; i >= 0; i--) {
+      var rowRoom = values[i][1];
+      var rowStatus = values[i][7];
       if (!roomId || rowRoom === roomId || roomId === "ALL") {
         if (rowStatus === "FINISHED" || rowStatus === "OFFLINE") {
           sheet.deleteRow(i + 2);
@@ -463,9 +496,4 @@ function handleClearOfflinePlayers(roomId, data) {
   }
   SpreadsheetApp.flush();
   return jsonResponse({ status: "success", deletedCount: deletedCount });
-}
-
-function jsonResponse(data) {
-  return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
 }
