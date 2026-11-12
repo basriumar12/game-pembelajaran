@@ -966,11 +966,8 @@ const ENGLISH_PRACTICE_QUESTIONS = [
     answer: "B",
     explanation: "The speaker explicitly stated: 'The bus will leave at one thirty sharp.'"
   },
-    answer: "B",
-    explanation: "The speaker explicitly stated: 'The bus will leave at one thirty sharp (1:30).'"
-  },
   {
-    id: 2,
+    id: 3,
     type: "listening",
     category: "Listening: Public Announcement",
     audioText: "Attention all passengers of flight Garuda Indonesia GA 420 to Gorontalo. Please proceed to gate number four immediately as boarding has just commenced.",
@@ -987,7 +984,7 @@ const ENGLISH_PRACTICE_QUESTIONS = [
     explanation: "The announcement clearly states: 'Please proceed to gate number four immediately.'"
   },
   {
-    id: 3,
+    id: 4,
     type: "listening",
     category: "Listening: Short Monologue",
     audioText: "Bacharuddin Jusuf Habibie was the third President of Indonesia. He was internationally renowned as a brilliant aeronautical engineer who designed modern aircraft.",
@@ -1004,7 +1001,7 @@ const ENGLISH_PRACTICE_QUESTIONS = [
     explanation: "The audio described him as a 'brilliant aeronautical engineer who designed modern aircraft.'"
   },
   {
-    id: 4,
+    id: 5,
     type: "listening",
     category: "Listening: Instructions",
     audioText: "Before operating the blender, make sure the lid is firmly locked. Next, plug in the power cord and select speed level two for smooth juice.",
@@ -1021,7 +1018,7 @@ const ENGLISH_PRACTICE_QUESTIONS = [
     explanation: "The audio says: 'Before operating the blender, make sure the lid is firmly locked.'"
   },
   {
-    id: 5,
+    id: 6,
     type: "listening",
     category: "Listening: Dialogue at the Library",
     audioText: "Excuse me, sir. May I borrow this English grammar handbook for three days? Yes, you can, but make sure to return it before Friday afternoon.",
@@ -1038,7 +1035,7 @@ const ENGLISH_PRACTICE_QUESTIONS = [
     explanation: "The librarian replies: 'make sure to return it before Friday afternoon.'"
   },
   {
-    id: 6,
+    id: 7,
     type: "listening",
     category: "Listening: Weather Forecast",
     audioText: "Good morning! Here is the Gorontalo weather report. Expect scattered rain showers in the afternoon, with a maximum temperature reaching twenty-nine degrees Celsius. Don't forget to bring your umbrella.",
@@ -1055,7 +1052,7 @@ const ENGLISH_PRACTICE_QUESTIONS = [
     explanation: "The speaker advises bringing an umbrella because of 'scattered rain showers in the afternoon.'"
   },
   {
-    id: 7,
+    id: 8,
     type: "listening",
     category: "Listening: Restaurant Dialogue",
     audioText: "Welcome to Green Cafe! Would you like to order now? Yes, please. I would like a fresh avocado salad and an iced lemon tea without extra sugar.",
@@ -1072,7 +1069,7 @@ const ENGLISH_PRACTICE_QUESTIONS = [
     explanation: "The customer clearly states: 'an iced lemon tea without extra sugar.'"
   },
   {
-    id: 8,
+    id: 9,
     type: "listening",
     category: "Listening: School Directions",
     audioText: "If you are looking for the new computer laboratory, walk straight down the main corridor, pass the principal's office, and take the stairs to the second floor. It is right next to the school library.",
@@ -1089,7 +1086,7 @@ const ENGLISH_PRACTICE_QUESTIONS = [
     explanation: "The speaker clarifies: 'take the stairs to the second floor. It is right next to the school library.'"
   },
   {
-    id: 9,
+    id: 10,
     type: "listening",
     category: "Listening: Health & Doctor Advice",
     audioText: "Take this vitamin capsule twice a day after meals. Furthermore, remember to drink at least eight glasses of clean water daily to stay hydrated.",
@@ -1104,23 +1101,6 @@ const ENGLISH_PRACTICE_QUESTIONS = [
     ],
     answer: "B",
     explanation: "The instruction says: 'Take this vitamin capsule twice a day after meals.'"
-  },
-  {
-    id: 10,
-    type: "listening",
-    category: "Listening: Telephone Message",
-    audioText: "Hi Rizky, this is David calling. Don't forget that our group project discussion is moved from room three to the multimedia room on the second floor at three o'clock.",
-    audioSpeed: 1.0,
-    maxPlays: 2,
-    question: "Where is the group project discussion moved to?",
-    options: [
-      { key: "A", text: "The school canteen" },
-      { key: "B", text: "Room three" },
-      { key: "C", text: "The multimedia room on the second floor" },
-      { key: "D", text: "The library backyard" }
-    ],
-    answer: "C",
-    explanation: "David mentions: 'our group project discussion is moved ... to the multimedia room on the second floor.'"
   },
 
   // --- SECTION 2: READING COMPREHENSION ---

@@ -951,6 +951,9 @@
       }
     }
 
+    // Render instan awal dari data lokal (0 detik tanpa menunggu network)
+    renderDashboard(window.gasService.getLocalTeacherDashboard(currentRoom));
+
     // Auto-refresh loop every 4 seconds
     fetchDashboardData();
     refreshTimer = setInterval(fetchDashboardData, 4000);
@@ -1031,21 +1034,23 @@
       });
     }
 
-    async function initQuestionsEditor() {
+    function initQuestionsEditor() {
       updateGSheetStatusUI();
-      try {
-        const data = await window.gasService.fetchQuestions();
-        if (Array.isArray(data) && data.length > 0) {
-          teacherQuestions = data;
-        } else {
-          loadPackageQuestions(currentTeacherPackage);
-          return;
-        }
-      } catch (e) {
+      // 1. Render paket template langsung secara instan (0 detik)
+      if (teacherQuestions.length === 0) {
         loadPackageQuestions(currentTeacherPackage);
-        return;
       }
-      renderQuestionsEditor();
+      
+      // 2. Jika ada Google Sheet ID spesifik, coba tarik dari GViz secara background
+      const curSheet = window.gasService ? window.gasService.spreadsheetId : "";
+      if (curSheet) {
+        window.gasService.fetchQuestions(curSheet).then((loaded) => {
+          if (Array.isArray(loaded) && loaded.length > 0) {
+            teacherQuestions = loaded;
+            renderQuestionsEditor();
+          }
+        }).catch(() => {});
+      }
     }
 
     function renderQuestionsEditor() {
@@ -1303,7 +1308,6 @@
       });
       teacherQuestions = list;
     }
-    }
 
     document.getElementById("btn-add-new-question").addEventListener("click", () => {
       syncDOMToQuestions();
@@ -1538,7 +1542,10 @@
       }
     });
 
-    // Inisialisasi Bank Soal saat Tab dibuka
+    // Inisialisasi Bank Soal langsung saat startup (0 detik instan)
+    initQuestionsEditor();
+
+    // Pastikan Bank Soal ter-render saat Tab dibuka
     document.querySelector('[data-tab="tab-questions"]').addEventListener("click", () => {
       if (teacherQuestions.length === 0) {
         initQuestionsEditor();
