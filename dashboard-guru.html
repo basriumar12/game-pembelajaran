@@ -637,12 +637,20 @@
               🏫 Jenjang Kelas:
             </label>
             <select id="select-teacher-school-level" style="width: 100%; background: #0f172a; border: 1.5px solid #a855f7; color: #c084fc; font-size: 13px; font-weight: 800; padding: 10px 10px; border-radius: 8px; outline: none; cursor: pointer;">
+              <optgroup label="Sekolah Dasar (SD)">
+                <option value="sd_1">🎒 Kelas I SD</option>
+                <option value="sd_2">🎒 Kelas II SD</option>
+                <option value="sd_3">🎒 Kelas III SD</option>
+                <option value="sd_4">🎒 Kelas IV SD</option>
+                <option value="sd_5">🎒 Kelas V SD</option>
+                <option value="sd_6">🎒 Kelas VI SD</option>
+              </optgroup>
               <optgroup label="Sekolah Menengah Pertama (SMP)">
                 <option value="smp_7" selected>📘 Kelas VII SMP</option>
                 <option value="smp_8">📗 Kelas VIII SMP</option>
                 <option value="smp_9">📙 Kelas IX SMP</option>
               </optgroup>
-              <optgroup label="Sekolah Menengah Atas (SMA)">
+              <optgroup label="Sekolah Menengah Atas (SMA / SMK)">
                 <option value="sma_10">💻 Kelas X SMA</option>
                 <option value="sma_11">🔬 Kelas XI SMA</option>
                 <option value="sma_12">🎓 Kelas XII SMA</option>
@@ -653,19 +661,26 @@
             <label style="display: block; font-size: 11.5px; font-weight: 800; color: #34d399; margin-bottom: 5px;">
               🔑 Kode Room Kelas (Untuk Siswa):
             </label>
-            <input type="text" id="input-teacher-room-id" value="SMP-7A" placeholder="Contoh: SMP-7A, SMA-10A" style="width: 100%; background: #0f172a; border: 1.5px solid #10b981; color: #34d399; font-size: 13px; font-weight: 800; padding: 10px 12px; border-radius: 8px; outline: none; box-sizing: border-box; text-transform: uppercase;">
+            <input type="text" id="input-teacher-room-id" value="SMP-7A" placeholder="Contoh: SD-4A, SMP-7A, SMA-10A" style="width: 100%; background: #0f172a; border: 1.5px solid #10b981; color: #34d399; font-size: 13px; font-weight: 800; padding: 10px 12px; border-radius: 8px; outline: none; box-sizing: border-box; text-transform: uppercase;">
           </div>
           <div style="flex: 1.4; min-width: 240px;">
             <label style="display: block; font-size: 11.5px; font-weight: 800; color: var(--bpmp-gold); margin-bottom: 5px;">
-              🏷️ Soal Mapel Apa? (Pilih / Tulis Mata Pelajaran):
+              🏷️ Soal Mapel Apa? (Pilih / Tulis Bebas):
             </label>
             <div style="display: flex; gap: 6px;">
-              <select id="select-teacher-mapel-preset" style="background: #0f172a; border: 1.5px solid var(--bpmp-gold); color: #fbbf24; font-size: 12.5px; font-weight: 800; padding: 10px 8px; border-radius: 8px; outline: none; cursor: pointer; max-width: 150px;">
+              <select id="select-teacher-mapel-preset" style="background: #0f172a; border: 1.5px solid var(--bpmp-gold); color: #fbbf24; font-size: 12.5px; font-weight: 800; padding: 10px 8px; border-radius: 8px; outline: none; cursor: pointer; max-width: 160px;">
                 <option value="Bahasa Inggris — Reading, Writing & Listening" selected>🎧 B. Inggris</option>
+                <option value="Bahasa Indonesia — Literasi Membaca & Menulis">🇮🇩 B. Indonesia</option>
+                <option value="Matematika — Numerasi & Logika">📐 Matematika</option>
+                <option value="IPAS (Ilmu Pengetahuan Alam & Sosial)">🌱 IPAS (SD)</option>
+                <option value="Ilmu Pengetahuan Alam (IPA)">🔬 IPA</option>
+                <option value="Ilmu Pengetahuan Sosial (IPS)">🌏 IPS</option>
+                <option value="Pendidikan Pancasila & PKn">🦅 Pancasila / PKn</option>
                 <option value="Informatika & IoT (Arduino Wokwi)">💻 Informatika</option>
                 <option value="KKA (Poster Kampanye Digital)">📘 KKA</option>
-                <option value="Ilmu Pengetahuan Alam (IPA)">🔬 IPA</option>
-                <option value="Matematika">📐 Matematika</option>
+                <option value="Pendidikan Agama & Budi Pekerti">🕌 Pend. Agama</option>
+                <option value="PJOK (Pendidikan Jasmani)">⚽ PJOK</option>
+                <option value="Seni Budaya & Prakarya">🎨 Seni Budaya</option>
                 <option value="custom">✍️ Tulis Sendiri...</option>
               </select>
               <input type="text" id="input-teacher-mapel-name" value="Bahasa Inggris — Reading, Writing & Listening" placeholder="Nama Mapel" style="flex: 1; background: #0f172a; border: 1.5px solid var(--bpmp-gold); color: #fff; font-size: 13px; font-weight: 700; padding: 10px 12px; border-radius: 8px; outline: none; box-sizing: border-box;">
@@ -1262,6 +1277,12 @@
       schoolLevelSelectEl.addEventListener("change", (e) => {
         const val = e.target.value;
         const defaults = {
+          "sd_1": "SD-1A",
+          "sd_2": "SD-2A",
+          "sd_3": "SD-3A",
+          "sd_4": "SD-4A",
+          "sd_5": "SD-5A",
+          "sd_6": "SD-6A",
           "smp_7": "SMP-7A",
           "smp_8": "SMP-8A",
           "smp_9": "SMP-9A",
@@ -1269,7 +1290,7 @@
           "sma_11": "SMA-11A",
           "sma_12": "SMA-12A"
         };
-        if (defaults[val] && (!teacherRoomInputEl.value || teacherRoomInputEl.value.startsWith("SMP-") || teacherRoomInputEl.value.startsWith("SMA-") || teacherRoomInputEl.value.startsWith("INGGRIS-"))) {
+        if (defaults[val] && (!teacherRoomInputEl.value || teacherRoomInputEl.value.startsWith("SD-") || teacherRoomInputEl.value.startsWith("SMP-") || teacherRoomInputEl.value.startsWith("SMA-") || teacherRoomInputEl.value.startsWith("INGGRIS-"))) {
           teacherRoomInputEl.value = defaults[val];
         }
       });

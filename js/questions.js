@@ -1401,22 +1401,40 @@ const ENGLISH_PRACTICE_QUESTIONS = [
 ];
 
 // ============================================================================
-// DAFTAR RESMI MATA PELAJARAN (MAPEL) & JENJANG KELAS (SMP VII-IX & SMA X-XII)
+// DAFTAR RESMI MATA PELAJARAN (MAPEL) & JENJANG KELAS (SD, SMP & SMA)
 // ============================================================================
 const SUBJECT_LIST = [
   { id: "english_all", name: "🎧 Bahasa Inggris (Listening TTS, Reading, Writing)", short: "Bahasa Inggris", icon: "🎧" },
+  { id: "bahasa_indonesia", name: "🇮🇩 Bahasa Indonesia (Literasi & Tata Bahasa)", short: "Bahasa Indonesia", icon: "🇮🇩" },
+  { id: "matematika", name: "📐 Matematika (Numerasi & Logika)", short: "Matematika", icon: "📐" },
+  { id: "ipas_sd", name: "🌱 IPAS (Ilmu Pengetahuan Alam & Sosial SD)", short: "IPAS", icon: "🌱" },
+  { id: "ipa", name: "🔬 Ilmu Pengetahuan Alam (IPA)", short: "IPA", icon: "🔬" },
+  { id: "ips", name: "🌏 Ilmu Pengetahuan Sosial (IPS)", short: "IPS", icon: "🌏" },
+  { id: "pancasila", name: "🦅 Pendidikan Pancasila & PKn", short: "Pancasila/PKn", icon: "🦅" },
   { id: "sma_iot_10", name: "💻 Informatika & IoT (Arduino Wokwi)", short: "Informatika & IoT", icon: "💻" },
   { id: "smp_kka_7", name: "📘 KKA (Poster Kampanye Digital)", short: "KKA Digital", icon: "📘" },
-  { id: "ipa", name: "🔬 Ilmu Pengetahuan Alam (IPA)", short: "IPA", icon: "🔬" },
-  { id: "matematika", name: "📐 Matematika", short: "Matematika", icon: "📐" },
+  { id: "pjok", name: "⚽ PJOK (Pendidikan Jasmani & Kesehatan)", short: "PJOK", icon: "⚽" },
+  { id: "seni_budaya", name: "🎨 Seni Budaya & Prakarya", short: "Seni Budaya", icon: "🎨" },
+  { id: "agama", name: "🕌 Pendidikan Agama & Budi Pekerti", short: "Pendidikan Agama", icon: "🕌" },
   { id: "custom_gsheet", name: "📊 Soal Khusus Google Sheet Guru", short: "Google Sheet", icon: "📊" }
 ];
 window.SUBJECT_LIST = SUBJECT_LIST;
 
 const GRADE_LEVELS = [
+  // SEKOLAH DASAR (SD)
+  { id: "sd_1", name: "Kelas I SD", group: "SD", defaultRoom: "SD-1A", classes: ["Kelas 1-A", "Kelas 1-B"] },
+  { id: "sd_2", name: "Kelas II SD", group: "SD", defaultRoom: "SD-2A", classes: ["Kelas 2-A", "Kelas 2-B"] },
+  { id: "sd_3", name: "Kelas III SD", group: "SD", defaultRoom: "SD-3A", classes: ["Kelas 3-A", "Kelas 3-B"] },
+  { id: "sd_4", name: "Kelas IV SD", group: "SD", defaultRoom: "SD-4A", classes: ["Kelas 4-A", "Kelas 4-B"] },
+  { id: "sd_5", name: "Kelas V SD", group: "SD", defaultRoom: "SD-5A", classes: ["Kelas 5-A", "Kelas 5-B"] },
+  { id: "sd_6", name: "Kelas VI SD", group: "SD", defaultRoom: "SD-6A", classes: ["Kelas 6-A", "Kelas 6-B"] },
+
+  // SEKOLAH MENENGAH PERTAMA (SMP)
   { id: "smp_7", name: "Kelas VII SMP", group: "SMP", defaultRoom: "SMP-7A", classes: ["Kelas VII-A", "Kelas VII-B", "Kelas VII-C", "Kelas VII-D"] },
   { id: "smp_8", name: "Kelas VIII SMP", group: "SMP", defaultRoom: "SMP-8A", classes: ["Kelas VIII-A", "Kelas VIII-B", "Kelas VIII-C", "Kelas VIII-D"] },
   { id: "smp_9", name: "Kelas IX SMP", group: "SMP", defaultRoom: "SMP-9A", classes: ["Kelas IX-A", "Kelas IX-B", "Kelas IX-C", "Kelas IX-D"] },
+
+  // SEKOLAH MENENGAH ATAS (SMA / SMK)
   { id: "sma_10", name: "Kelas X SMA", group: "SMA", defaultRoom: "SMA-10A", classes: ["Kelas X-A", "Kelas X-B", "Kelas X-MIPA", "Kelas X-IPS"] },
   { id: "sma_11", name: "Kelas XI SMA", group: "SMA", defaultRoom: "SMA-11A", classes: ["Kelas XI-MIPA-1", "Kelas XI-MIPA-2", "Kelas XI-IPS", "Kelas XI-A"] },
   { id: "sma_12", name: "Kelas XII SMA", group: "SMA", defaultRoom: "SMA-12A", classes: ["Kelas XII-MIPA-1", "Kelas XII-MIPA-2", "Kelas XII-IPS", "Kelas XII-A"] }

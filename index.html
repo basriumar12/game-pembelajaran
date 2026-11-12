@@ -206,24 +206,36 @@
             <label class="form-label">Pilih Jenis Soal Mata Pelajaran (Mapel) *</label>
             <select id="select-student-mapel" class="form-input" style="font-weight: 800; color: #0284c7; font-size: 13.5px;" required>
               <option value="english_all" selected>🎧 Bahasa Inggris (Listening TTS, Reading & Writing)</option>
+              <option value="bahasa_indonesia">🇮🇩 Bahasa Indonesia (Literasi & Tata Bahasa)</option>
+              <option value="matematika">📐 Matematika (Numerasi & Logika)</option>
+              <option value="ipas_sd">🌱 IPAS (Ilmu Pengetahuan Alam & Sosial SD)</option>
+              <option value="ipa">🔬 Ilmu Pengetahuan Alam (IPA)</option>
+              <option value="ips">🌏 Ilmu Pengetahuan Sosial (IPS)</option>
+              <option value="pancasila">🦅 Pendidikan Pancasila & PKn</option>
               <option value="sma_iot_10">💻 Informatika & IoT (Arduino Wokwi)</option>
               <option value="smp_kka_7">📘 KKA (Poster Kampanye Digital)</option>
-              <option value="ipa">🔬 Ilmu Pengetahuan Alam (IPA)</option>
-              <option value="matematika">📐 Matematika</option>
               <option value="custom_gsheet">📊 Soal Google Sheet Guru (Via Room)</option>
             </select>
           </div>
 
-          <!-- 3. Pilihan Jenjang Kelas Siswa (Kelas VII, VIII, IX SMP & X, XI, XII SMA) -->
+          <!-- 3. Pilihan Jenjang Kelas Siswa (SD, SMP & SMA) -->
           <div class="form-group">
             <label class="form-label">Pilih Jenjang Kelas Siswa *</label>
             <select id="select-student-level" class="form-input" style="font-weight: 800; color: #7c3aed; font-size: 13.5px;" required>
+              <optgroup label="Sekolah Dasar (SD)">
+                <option value="sd_1">🎒 Kelas I SD</option>
+                <option value="sd_2">🎒 Kelas II SD</option>
+                <option value="sd_3">🎒 Kelas III SD</option>
+                <option value="sd_4">🎒 Kelas IV SD</option>
+                <option value="sd_5">🎒 Kelas V SD</option>
+                <option value="sd_6">🎒 Kelas VI SD</option>
+              </optgroup>
               <optgroup label="Sekolah Menengah Pertama (SMP)">
                 <option value="smp_7" selected>📘 Kelas VII SMP</option>
                 <option value="smp_8">📗 Kelas VIII SMP</option>
                 <option value="smp_9">📙 Kelas IX SMP</option>
               </optgroup>
-              <optgroup label="Sekolah Menengah Atas (SMA)">
+              <optgroup label="Sekolah Menengah Atas (SMA / SMK)">
                 <option value="sma_10">💻 Kelas X SMA</option>
                 <option value="sma_11">🔬 Kelas XI SMA</option>
                 <option value="sma_12">🎓 Kelas XII SMA</option>
@@ -517,8 +529,22 @@
               selectMapel.value = "custom_gsheet";
             }
 
-            // Sesuaikan jenjang kelas jika cocok
-            if (clean.startsWith("SMP-7") || clean.includes("VII")) {
+            // Sesuaikan jenjang kelas jika disimpan di config room atau dari pola kode
+            if (cfg.gradeLevel && selectLevel && selectLevel.querySelector(`option[value="${cfg.gradeLevel}"]`)) {
+              selectLevel.value = cfg.gradeLevel;
+            } else if (clean.startsWith("SD-1") || clean.includes("SD-I")) {
+              if (selectLevel) selectLevel.value = "sd_1";
+            } else if (clean.startsWith("SD-2") || clean.includes("SD-II")) {
+              if (selectLevel) selectLevel.value = "sd_2";
+            } else if (clean.startsWith("SD-3") || clean.includes("SD-III")) {
+              if (selectLevel) selectLevel.value = "sd_3";
+            } else if (clean.startsWith("SD-4") || clean.includes("SD-IV")) {
+              if (selectLevel) selectLevel.value = "sd_4";
+            } else if (clean.startsWith("SD-5") || clean.includes("SD-V")) {
+              if (selectLevel) selectLevel.value = "sd_5";
+            } else if (clean.startsWith("SD-6") || clean.includes("SD-VI")) {
+              if (selectLevel) selectLevel.value = "sd_6";
+            } else if (clean.startsWith("SMP-7") || clean.includes("VII")) {
               if (selectLevel) selectLevel.value = "smp_7";
             } else if (clean.startsWith("SMP-8") || clean.includes("VIII")) {
               if (selectLevel) selectLevel.value = "smp_8";
