@@ -370,29 +370,42 @@ function handleGetQuestions(data) {
     }
   }
 
-  var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 14).getValues();
+  var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 15).getValues();
   var questions = rows.map(function(r, i) {
     var rawType = String(r[9] || "").toLowerCase().trim();
     var audio = String(r[10] || "").trim();
     var passage = String(r[13] || "").trim();
+    var videoUrl = String(r[14] || "").trim();
     var detectedType = rawType;
-    if (!detectedType || detectedType === "standard") {
+    var isVideo = (rawType.indexOf("video") !== -1 || videoUrl !== "");
+    var isEssay = (rawType.indexOf("essay") !== -1 || rawType.indexOf("uraian") !== -1 || rawType.indexOf("menulis") !== -1 || (!r[3] && !r[4] && !r[5] && !r[6] && String(r[7]).trim().length > 1));
+
+    if (isVideo) {
+      detectedType = isEssay ? "video_essay" : "video_listening";
+    } else if (isEssay) {
+      detectedType = "essay";
+    } else if (!detectedType || detectedType === "standard") {
       if (audio) detectedType = "listening";
       else if (passage) detectedType = "reading";
       else if (String(r[1]).toLowerCase().indexOf("writing") !== -1 || String(r[1]).toLowerCase().indexOf("grammar") !== -1) detectedType = "writing";
       else detectedType = "standard";
     }
 
+    var optionsList = [];
+    if (!isEssay) {
+      optionsList.push(
+        { key: "A", text: r[3] || "Pilihan A" },
+        { key: "B", text: r[4] || "Pilihan B" },
+        { key: "C", text: r[5] || "Pilihan C" },
+        { key: "D", text: r[6] || "Pilihan D" }
+      );
+    }
+
     return {
       id: r[0] || (i + 1),
-      category: r[1] || (detectedType === "listening" ? "Listening Comprehension" : (detectedType === "reading" ? "Reading Comprehension" : "Writing & Grammar")),
+      category: r[1] || (detectedType === "video_listening" ? "Menyimak Video (Pilihan Ganda)" : (detectedType === "video_essay" ? "Menyimak Video (Uraian)" : (detectedType === "essay" ? "Soal Essay / Uraian" : (detectedType === "listening" ? "Listening Comprehension" : (detectedType === "reading" ? "Reading Comprehension" : "Writing & Grammar"))))),
       question: r[2],
-      options: [
-        { key: "A", text: r[3] },
-        { key: "B", text: r[4] },
-        { key: "C", text: r[5] },
-        { key: "D", text: r[6] }
-      ],
+      options: optionsList,
       answer: String(r[7]).trim(),
       explanation: r[8] || "",
       type: detectedType,
@@ -400,7 +413,7 @@ function handleGetQuestions(data) {
       audioSpeed: parseFloat(r[11]) || 1.0,
       maxPlays: parseInt(r[12]) || 2,
       readingPassage: passage,
-      videoUrl: r[14] || ""
+      videoUrl: videoUrl
     };
   });
 

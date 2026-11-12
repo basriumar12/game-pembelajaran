@@ -1071,8 +1071,9 @@
         const optC = (q.options && q.options[2]) ? (q.options[2].text || q.options[2]) : "";
         const optD = (q.options && q.options[3]) ? (q.options[3].text || q.options[3]) : "";
         const currentAns = (q.answer || "A").toString().trim();
-        const qType = q.type || (q.videoUrl ? "video_listening" : (q.audioText ? "listening" : (q.readingPassage ? "reading" : "standard")));
-        const isEssay = (qType === "essay");
+        const qType = q.type || (q.videoUrl ? (q.options && q.options.length > 0 ? "video_listening" : "video_essay") : (q.audioText ? "listening" : (q.readingPassage ? "reading" : "standard")));
+        const isEssay = (qType === "essay" || qType === "video_essay");
+        const isVideo = (qType === "video_listening" || qType === "video_essay" || Boolean(q.videoUrl));
 
         card.innerHTML = `
           <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; flex-wrap: wrap; gap: 8px;">
@@ -1084,8 +1085,9 @@
                 <label style="font-size: 11px; color: #94a3b8;">Tipe Soal:</label>
                 <select class="q-type-select" style="background: #0f172a; border: 1.5px solid #0284c7; color: #38bdf8; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 3px 6px;">
                   <option value="standard" ${qType === 'standard' ? 'selected' : ''}>🔘 Standard (Pilihan Ganda)</option>
+                  <option value="video_listening" ${qType === 'video_listening' ? 'selected' : ''}>🎥 Menyimak Video (Pilihan Ganda A-D)</option>
+                  <option value="video_essay" ${qType === 'video_essay' ? 'selected' : ''}>🎥 Menyimak Video (Isian Menulis / Essay)</option>
                   <option value="listening" ${qType === 'listening' ? 'selected' : ''}>🎧 Menyimak Suara (Audio TTS)</option>
-                  <option value="video_listening" ${qType === 'video_listening' ? 'selected' : ''}>🎥 Menyimak Video (YouTube / MP4)</option>
                   <option value="reading" ${qType === 'reading' ? 'selected' : ''}>📖 Reading (Bacaan)</option>
                   <option value="writing" ${qType === 'writing' ? 'selected' : ''}>✍️ Writing (Tata Bahasa)</option>
                   <option value="essay" ${qType === 'essay' ? 'selected' : ''}>📝 Soal Essay / Uraian Bebas</option>
@@ -1096,13 +1098,26 @@
           </div>
 
           <!-- Bagian Khusus Menyimak Video (YouTube / Link Video) -->
-          <div class="q-video-block" style="display: ${qType === 'video_listening' ? 'block' : 'none'}; background: rgba(56, 189, 248, 0.08); border: 1.5px dashed #38bdf8; border-radius: 8px; padding: 10px;">
+          <div class="q-video-block" style="display: ${isVideo ? 'block' : 'none'}; background: rgba(56, 189, 248, 0.08); border: 1.5px dashed #38bdf8; border-radius: 8px; padding: 10px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
               <label style="font-size: 11px; font-weight: 800; color: #38bdf8;">🎥 Link Video Pembelajaran (YouTube / Direct MP4 / Google Drive):</label>
               <button type="button" class="btn-preview-video" style="background: #0284c7; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 800; cursor: pointer;">▶️ Uji Video</button>
             </div>
             <input type="text" class="q-video-url-input" value="${q.videoUrl || ''}" placeholder="Paste URL Video (contoh: https://www.youtube.com/watch?v=... atau https://youtu.be/...)" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 7px 10px; font-size: 12px; font-family: inherit; box-sizing: border-box;">
-            <div style="font-size: 10.5px; color: #94a3b8; margin-top: 4px;">💡 <i>Siswa akan menyimak video ini langsung di dalam posko game sebelum menjawab pertanyaan.</i></div>
+            
+            <!-- Pilihan Format Jawaban Khusus Soal Video -->
+            <div style="margin-top: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: rgba(15,23,42,0.65); border: 1px solid rgba(56,189,248,0.3); border-radius: 6px; padding: 6px 10px;">
+              <span style="font-size: 11px; font-weight: 800; color: #38bdf8;">Format Jawaban Siswa:</span>
+              <label style="display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #e2e8f0; cursor: pointer; font-weight: 600;">
+                <input type="radio" name="video_ans_mode_${idx}" value="mcq" ${!isEssay ? 'checked' : ''} class="video-mode-radio">
+                <span>🔘 Pilihan Ganda (Opsi A, B, C, D)</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #c084fc; cursor: pointer; font-weight: 600;">
+                <input type="radio" name="video_ans_mode_${idx}" value="essay" ${isEssay ? 'checked' : ''} class="video-mode-radio">
+                <span>✍️ Isian Menulis (Siswa Mengetik Uraian/Jawaban)</span>
+              </label>
+            </div>
+            <div style="font-size: 10.5px; color: #94a3b8; margin-top: 4px;">💡 <i>Siswa akan menyimak video di atas, kemudian menjawab melalui opsi pilihan ganda atau mengetik uraian tulisan langsung.</i></div>
           </div>
 
           <!-- Bagian Khusus Audio Listening TTS -->
@@ -1197,17 +1212,40 @@
         const mcqKeyBlock = card.querySelector(".q-mcq-key-block");
         const essayKeyBlock = card.querySelector(".q-essay-key-block");
 
-        typeSelect.addEventListener("change", (e) => {
-          const val = e.target.value;
-          videoBlock.style.display = (val === "video_listening") ? "block" : "none";
+        const updateCardLayout = () => {
+          const val = typeSelect.value;
+          const isVid = (val === "video_listening" || val === "video_essay");
+          const isNowEssay = (val === "essay" || val === "video_essay");
+
+          videoBlock.style.display = isVid ? "block" : "none";
           listeningBlock.style.display = (val === "listening") ? "block" : "none";
           readingBlock.style.display = (val === "reading") ? "block" : "none";
           
-          const isNowEssay = (val === "essay");
           optionsGrid.style.display = isNowEssay ? "none" : "grid";
           essayInfoBlock.style.display = isNowEssay ? "block" : "none";
           mcqKeyBlock.style.display = isNowEssay ? "none" : "flex";
           essayKeyBlock.style.display = isNowEssay ? "block" : "none";
+
+          const vRadios = card.querySelectorAll(".video-mode-radio");
+          vRadios.forEach(r => {
+            if (r.value === "essay") r.checked = isNowEssay;
+            if (r.value === "mcq") r.checked = !isNowEssay;
+          });
+        };
+
+        typeSelect.addEventListener("change", updateCardLayout);
+
+        // Listener Radio Button Format Jawaban Video (Pilihan Ganda vs Isian Menulis)
+        const videoRadios = card.querySelectorAll(".video-mode-radio");
+        videoRadios.forEach(r => {
+          r.addEventListener("change", (e) => {
+            if (e.target.value === "essay") {
+              typeSelect.value = "video_essay";
+            } else {
+              typeSelect.value = "video_listening";
+            }
+            updateCardLayout();
+          });
         });
 
         // Tombol Tes Video
@@ -1261,6 +1299,7 @@
       cards.forEach((card, idx) => {
         const cat = card.querySelector(".q-category-input").value;
         const qType = card.querySelector(".q-type-select").value;
+        const isEssay = (qType === "essay" || qType === "video_essay");
         const qText = card.querySelector(".q-text-input").value;
         const optA = card.querySelector(".q-opt-a") ? card.querySelector(".q-opt-a").value : "";
         const optB = card.querySelector(".q-opt-b") ? card.querySelector(".q-opt-b").value : "";
@@ -1268,8 +1307,8 @@
         const optD = card.querySelector(".q-opt-d") ? card.querySelector(".q-opt-d").value : "";
         
         let key = "A";
-        if (qType === "essay") {
-          key = card.querySelector(".q-essay-key-input") ? card.querySelector(".q-essay-key-input").value.trim() : "Rubrik Essay";
+        if (isEssay) {
+          key = card.querySelector(".q-essay-key-input") ? card.querySelector(".q-essay-key-input").value.trim() : "Rubrik Jawaban";
         } else {
           key = card.querySelector(".q-key-select") ? card.querySelector(".q-key-select").value : "A";
         }
@@ -1282,7 +1321,7 @@
         const readingPassage = card.querySelector(".q-reading-passage-input") ? card.querySelector(".q-reading-passage-input").value : "";
 
         const optionsArray = [];
-        if (qType !== "essay") {
+        if (!isEssay) {
           optionsArray.push(
             { key: "A", text: optA },
             { key: "B", text: optB },
@@ -1722,7 +1761,7 @@
             <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>G</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Pilihan D</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Teks jawaban opsi D</td></tr>
             <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>H</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Kunci Jawaban</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Untuk Pilihan Ganda: <code>A</code>, <code>B</code>, <code>C</code>, atau <code>D</code>. Untuk Essay: Pedoman / Kunci acuan penilaian guru</td></tr>
             <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>I</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Pembahasan</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Penjelasan / rubrik penilaian yang muncul saat posko selesai dikerjakan</td></tr>
-            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>J</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Tipe Soal</td><td style="padding:6px 10px; border-bottom:1px solid #334155;"><code>video_listening</code> (menyimak video), <code>essay</code> (uraian bebas), <code>listening</code> (audio TTS), <code>reading</code> (bacaan), <code>writing</code>, atau <code>standard</code></td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>J</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Tipe Soal</td><td style="padding:6px 10px; border-bottom:1px solid #334155;"><code>video_listening</code> (menyimak video pilihan ganda A-D), <code>video_essay</code> (menyimak video isian menulis/essay), <code>essay</code> (uraian bebas), <code>listening</code> (audio TTS), <code>reading</code> (bacaan), <code>writing</code>, atau <code>standard</code></td></tr>
             <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>K</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Audio TTS</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Teks dialog / narasi yang akan dibacakan mesin suara di posko Listening TTS</td></tr>
             <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>L</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Speed Audio</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Kecepatan suara: <code>0.75</code>, <code>1.0</code>, atau <code>1.25</code></td></tr>
             <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>M</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Batas Putar</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Kuota putar tombol audio siswa (misal: <code>2</code> atau <code>3</code> kali)</td></tr>

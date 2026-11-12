@@ -431,9 +431,17 @@ class GASService {
 
           // Otomatis tentukan tipe jika kosong atau fleksibel
           let qType = rawType;
-          if (rawType.includes("video") || videoUrl) {
-            qType = "video_listening";
-          } else if (rawType.includes("essay") || rawType.includes("uraian")) {
+          const hasVideo = Boolean(rawType.includes("video") || videoUrl);
+          const hasEssayIndicator = Boolean(
+            rawType.includes("essay") || 
+            rawType.includes("uraian") || 
+            rawType.includes("menulis") || 
+            (!optA && !optB && !optC && !optD && ans.length > 1)
+          );
+
+          if (hasVideo) {
+            qType = (hasEssayIndicator || rawType === "video_essay") ? "video_essay" : "video_listening";
+          } else if (hasEssayIndicator || rawType === "essay") {
             qType = "essay";
           } else if (!qType || qType === "standard") {
             if (audioText) qType = "listening";
@@ -442,8 +450,10 @@ class GASService {
             else qType = "standard";
           }
 
+          const isEssayMode = (qType === "essay" || qType === "video_essay");
+
           const optionsList = [];
-          if (qType !== "essay") {
+          if (!isEssayMode) {
             optionsList.push(
               { key: "A", text: optA || "Pilihan A" },
               { key: "B", text: optB || "Pilihan B" },
@@ -454,7 +464,7 @@ class GASService {
 
           questions.push({
             id: questions.length + 1,
-            category: col1 || (qType === "video_listening" ? "Video Comprehension" : (qType === "essay" ? "Soal Essay / Uraian" : (qType === "listening" ? "Listening Comprehension" : (qType === "reading" ? "Reading Comprehension" : "Writing & Grammar")))),
+            category: col1 || (qType === "video_listening" ? "Menyimak Video (Pilihan Ganda)" : (qType === "video_essay" ? "Menyimak Video (Uraian)" : (qType === "essay" ? "Soal Essay / Uraian" : (qType === "listening" ? "Listening Comprehension" : (qType === "reading" ? "Reading Comprehension" : "Writing & Grammar"))))),
             question: questionText,
             options: optionsList,
             answer: ans,

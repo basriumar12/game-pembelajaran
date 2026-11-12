@@ -1146,7 +1146,7 @@ class BPMPFarmGame {
     const videoBox = document.getElementById("posko-video-container");
     if (videoBox) {
       const vidUrl = q.videoUrl;
-      if (vidUrl || q.type === "video_listening") {
+      if (vidUrl || q.type === "video_listening" || q.type === "video_essay") {
         videoBox.style.display = "block";
         const embedUrl = this.formatVideoEmbedUrl(vidUrl);
         const isDirectVideo = vidUrl && vidUrl.match(/\.(mp4|webm|ogg)(\?.*)?$/i);
@@ -1301,11 +1301,12 @@ class BPMPFarmGame {
     }
 
     const totalInList = this.poskoList.length || 30;
-    const isEssay = (q.type === "essay");
+    const isEssay = (q.type === "essay" || q.type === "video_essay" || (!q.options || q.options.length === 0));
+    const isVideoMode = Boolean(q.videoUrl || q.type === "video_listening" || q.type === "video_essay");
 
     // 🔒 JIKA SOAL INI SUDAH DIJAWAB: KUNCI TOTAL! HANYA BISA LIHAT PEMBAHASAN
     if (posko.isAnswered) {
-      const statusTitle = isEssay ? "✅ ESSAY SELESAI" : (posko.isCorrect ? "✅ TERJAWAB BENAR" : "❌ TERJAWAB SALAH");
+      const statusTitle = isEssay ? "✅ JAWABAN TERSIMPAN" : (posko.isCorrect ? "✅ TERJAWAB BENAR" : "❌ TERJAWAB SALAH");
       document.getElementById("modal-posko-badge").textContent = `Posko #${posko.id} dari ${totalInList} (🔒 SUDAH SELESAI)`;
       document.getElementById("modal-posko-topic").textContent = `${q.category || "Materi Asesmen"} — ${statusTitle}`;
       document.getElementById("modal-posko-question").textContent = q.question;
@@ -1316,13 +1317,13 @@ class BPMPFarmGame {
           essayContainer.style.display = "block";
           essayContainer.innerHTML = `
             <div style="background: rgba(15, 23, 42, 0.85); border: 1.5px solid #10b981; border-radius: 10px; padding: 12px;">
-              <div style="font-size: 11.5px; font-weight: 800; color: #34d399; margin-bottom: 6px;">📝 JAWABAN ESSAY ANDA (TERSIMPAN):</div>
+              <div style="font-size: 11.5px; font-weight: 800; color: #34d399; margin-bottom: 6px;">📝 JAWABAN TULISAN ANDA (TERSIMPAN):</div>
               <div style="font-size: 13px; color: #fff; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; white-space: pre-wrap; font-style: italic;">"${posko.userEssayAnswer || posko.userAnswer || '-'}"</div>
             </div>
           `;
         }
         feedbackBox.className = "quiz-explanation correct";
-        feedbackBox.innerHTML = `<strong>🔒 SOAL ESSAY TELAH DIKERJAKAN (+20 Poin):</strong><br>Jawaban Anda telah dicatat ke rekapitulasi penilaian guru.<br><br><strong>Pedoman / Kunci Acuan:</strong> ${q.answer || 'Tercatat'}<br><em>Pembahasan / Rubrik:</em> ${q.explanation || '-'}`;
+        feedbackBox.innerHTML = `<strong>🔒 SOAL INI TELAH DIKERJAKAN (+20 Poin):</strong><br>Jawaban Anda telah dicatat ke rekapitulasi penilaian guru.<br><br><strong>Pedoman / Kunci Acuan:</strong> ${q.answer || 'Tercatat'}<br><em>Pembahasan / Rubrik:</em> ${q.explanation || '-'}`;
         feedbackBox.style.display = "block";
       } else {
         if (essayContainer) essayContainer.style.display = "none";
@@ -1375,14 +1376,20 @@ class BPMPFarmGame {
       if (optContainer) optContainer.style.display = "none";
       if (essayContainer) {
         essayContainer.style.display = "block";
+        const essayTitle = isVideoMode ? "✍️ Tuliskan Uraian Jawaban Berdasarkan Video:" : "✍️ Tuliskan Jawaban / Uraian Essay Anda:";
+        const essayPlaceholder = isVideoMode 
+          ? "Simak video di atas dengan cermat, lalu ketik penjelasan atau jawaban Anda di sini..." 
+          : "Ketik uraian jawaban Anda secara jelas dan lengkap di sini...";
+        const essayButtonText = isVideoMode ? "📤 Kirim & Simpan Jawaban Video" : "📤 Kirim & Simpan Jawaban Essay";
+
         essayContainer.innerHTML = `
           <div style="background: rgba(15, 23, 42, 0.85); border: 1.5px solid #a855f7; border-radius: 10px; padding: 12px;">
             <label style="display: block; font-size: 12px; font-weight: 800; color: #c084fc; margin-bottom: 6px;">
-              ✍️ Tuliskan Jawaban / Uraian Essay Anda:
+              ${essayTitle}
             </label>
-            <textarea id="input-essay-${posko.id}" style="width: 100%; min-height: 90px; background: #0f172a; border: 1.5px solid #a855f7; color: #fff; border-radius: 8px; padding: 10px; font-size: 13px; font-family: inherit; resize: vertical; box-sizing: border-box;" placeholder="Ketik uraian jawaban Anda secara jelas dan lengkap di sini..."></textarea>
+            <textarea id="input-essay-${posko.id}" style="width: 100%; min-height: 90px; background: #0f172a; border: 1.5px solid #a855f7; color: #fff; border-radius: 8px; padding: 10px; font-size: 13px; font-family: inherit; resize: vertical; box-sizing: border-box;" placeholder="${essayPlaceholder}"></textarea>
             <button id="btn-submit-essay-${posko.id}" class="btn-rpg-primary" style="margin-top: 10px; width: 100%; font-size: 13.5px; padding: 10px; background: linear-gradient(135deg, #a855f7, #7e22ce); border-color: #c084fc;">
-              📤 Kirim & Simpan Jawaban Essay
+              ${essayButtonText}
             </button>
           </div>
         `;
@@ -1446,17 +1453,19 @@ class BPMPFarmGame {
     const nextBtn = document.getElementById("btn-modal-close");
     const essayContainer = document.getElementById("posko-essay-container");
 
+    const isVideoQuestion = Boolean(q.videoUrl || q.type === "video_listening" || q.type === "video_essay");
+
     if (essayContainer) {
       essayContainer.innerHTML = `
         <div style="background: rgba(15, 23, 42, 0.85); border: 1.5px solid #10b981; border-radius: 10px; padding: 12px;">
-          <div style="font-size: 11.5px; font-weight: 800; color: #34d399; margin-bottom: 6px;">✅ JAWABAN ESSAY BERHASIL DISIMPAN:</div>
+          <div style="font-size: 11.5px; font-weight: 800; color: #34d399; margin-bottom: 6px;">${isVideoQuestion ? '✅ JAWABAN MENYIMAK VIDEO BERHASIL DISIMPAN:' : '✅ JAWABAN ESSAY BERHASIL DISIMPAN:'}</div>
           <div style="font-size: 13px; color: #fff; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; white-space: pre-wrap; font-style: italic;">"${essayText}"</div>
         </div>
       `;
     }
 
     feedbackBox.className = "quiz-explanation correct";
-    feedbackBox.innerHTML = `<strong>📝 JAWABAN ESSAY TERSIMPAN (+20 Poin):</strong><br>Jawaban Anda telah dicatat ke rekapitulasi penilaian guru.<br><br><strong>Pedoman / Kunci Acuan:</strong> ${q.answer || 'Tercatat'}<br><em>Pembahasan / Rubrik:</em> ${q.explanation || '-'}`;
+    feedbackBox.innerHTML = `<strong>📝 JAWABAN TERSIMPAN (+20 Poin):</strong><br>Jawaban Anda telah dicatat ke rekapitulasi penilaian guru.<br><br><strong>Pedoman / Kunci Acuan:</strong> ${q.answer || 'Tercatat'}<br><em>Pembahasan / Rubrik:</em> ${q.explanation || '-'}`;
     feedbackBox.style.display = "block";
 
     this.updatePosko3DBadge(posko);
@@ -1464,9 +1473,9 @@ class BPMPFarmGame {
 
     const lastAnswer = {
       poskoId: posko.id,
-      category: q.category || "Soal Essay",
+      category: q.category || (isVideoQuestion ? "Menyimak Video (Uraian)" : "Soal Essay"),
       userAnswer: essayText,
-      correctAnswer: q.answer || "Pedoman Essay",
+      correctAnswer: q.answer || "Pedoman / Rubrik Acuan",
       isCorrect: true,
       scoreGained: 20,
       isEssay: true
