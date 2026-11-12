@@ -4,7 +4,7 @@
  * ============================================================================
  * Salin SELURUH kode ini ke Extensions > Apps Script pada Google Sheets Anda.
  * 
- * ⚠️ PENTING AGAR DATA PASTI TERCATAT:
+ * [PENTING] AGAR DATA PASTI TERCATAT:
  * Saat Deploy (Deploy > New deployment):
  * 1. Select type: "Web app"
  * 2. Execute as: "Me" (email Anda)
