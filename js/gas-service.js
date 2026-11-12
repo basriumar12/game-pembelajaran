@@ -463,6 +463,8 @@ class GASService {
 
           if (hasVideo) {
             qType = (hasEssayIndicator || rawType === "video_essay") ? "video_essay" : "video_listening";
+          } else if (rawType.includes("writing") && (hasEssayIndicator || rawType.includes("essay"))) {
+            qType = "writing_essay";
           } else if (hasEssayIndicator || rawType === "essay") {
             qType = "essay";
           } else if (!qType || qType === "standard") {
@@ -472,7 +474,7 @@ class GASService {
             else qType = "standard";
           }
 
-          const isEssayMode = (qType === "essay" || qType === "video_essay");
+          const isEssayMode = (qType === "essay" || qType === "video_essay" || qType === "writing_essay");
 
           const optionsList = [];
           if (!isEssayMode) {

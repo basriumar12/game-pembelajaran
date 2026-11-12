@@ -1182,7 +1182,7 @@ class BPMPFarmGame {
             <div style="background: rgba(15, 23, 42, 0.95); border: 2px solid #38bdf8; border-radius: 12px; padding: 10px; margin-bottom: 8px;">
               <div style="font-size: 11.5px; font-weight: 800; color: #38bdf8; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
                 <span>🎥 MENYIMAK VIDEO PEMBELAJARAN</span>
-                ${vidUrl ? `<a href="${vidUrl}" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; text-decoration: underline; font-weight: 600; font-size: 11px;">▶️ Buka Video Fullscreen</a>` : ''}
+                ${vidUrl ? `<a href="${vidUrl}" target="_blank" rel="noopener noreferrer" onclick="if(window.setWatchingAllowedVideo) window.setWatchingAllowedVideo(true);" style="color: #38bdf8; text-decoration: underline; font-weight: 600; font-size: 11px;">▶️ Buka Video Fullscreen</a>` : ''}
               </div>
               <video src="${vidUrl}" controls playsinline style="width: 100%; max-height: 240px; border-radius: 8px; background: #000;"></video>
             </div>
@@ -1192,7 +1192,7 @@ class BPMPFarmGame {
             <div style="background: rgba(15, 23, 42, 0.95); border: 2px solid #38bdf8; border-radius: 12px; padding: 10px; margin-bottom: 8px;">
               <div style="font-size: 11.5px; font-weight: 800; color: #38bdf8; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
                 <span>🎥 MENYIMAK VIDEO PEMBELAJARAN (SIMAK DENGAN SEKSAMA)</span>
-                ${directYtWatchUrl ? `<a href="${directYtWatchUrl}" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; text-decoration: underline; font-weight: 600; font-size: 11px;">▶️ Buka di YouTube ↗</a>` : ''}
+                ${directYtWatchUrl ? `<a href="${directYtWatchUrl}" target="_blank" rel="noopener noreferrer" onclick="if(window.setWatchingAllowedVideo) window.setWatchingAllowedVideo(true);" style="color: #38bdf8; text-decoration: underline; font-weight: 600; font-size: 11px;">▶️ Buka di YouTube ↗</a>` : ''}
               </div>
               <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background: #000;">
                 <iframe src="${embedUrl}" style="position: absolute; top:0; left:0; width: 100%; height: 100%; border: 0;" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" loading="lazy"></iframe>
@@ -1332,7 +1332,8 @@ class BPMPFarmGame {
     }
 
     const totalInList = this.poskoList.length || 30;
-    const isEssay = (q.type === "essay" || q.type === "video_essay" || (!q.options || q.options.length === 0));
+    const isWritingMode = Boolean(q.type === "writing" || q.type === "writing_essay" || (q.category && q.category.toLowerCase().includes("writing")));
+    const isEssay = (q.type === "essay" || q.type === "video_essay" || q.type === "writing_essay" || (!q.options || q.options.length === 0));
     const isVideoMode = Boolean(q.videoUrl || q.type === "video_listening" || q.type === "video_essay");
 
     // 🔒 JIKA SOAL INI SUDAH DIJAWAB: KUNCI TOTAL! HANYA BISA LIHAT PEMBAHASAN
@@ -1387,6 +1388,7 @@ class BPMPFarmGame {
       nextBtn.style.display = "inline-block";
       nextBtn.textContent = "Tutup & Lanjut Jelajahi Posko Lain ➔";
       nextBtn.onclick = () => {
+        if (window.setWatchingAllowedVideo) window.setWatchingAllowedVideo(false);
         if (window.ttsManager) window.ttsManager.stop();
         modal.classList.remove("active");
       };
@@ -1407,11 +1409,19 @@ class BPMPFarmGame {
       if (optContainer) optContainer.style.display = "none";
       if (essayContainer) {
         essayContainer.style.display = "block";
-        const essayTitle = isVideoMode ? "✍️ Tuliskan Uraian Jawaban Berdasarkan Video:" : "✍️ Tuliskan Jawaban / Uraian Essay Anda:";
-        const essayPlaceholder = isVideoMode 
-          ? "Simak video di atas dengan cermat, lalu ketik penjelasan atau jawaban Anda di sini..." 
-          : "Ketik uraian jawaban Anda secara jelas dan lengkap di sini...";
-        const essayButtonText = isVideoMode ? "📤 Kirim & Simpan Jawaban Video" : "📤 Kirim & Simpan Jawaban Essay";
+        let essayTitle = "✍️ Tuliskan Jawaban / Uraian Essay Anda:";
+        let essayPlaceholder = "Ketik uraian jawaban Anda secara jelas dan lengkap di sini...";
+        let essayButtonText = "📤 Kirim & Simpan Jawaban Essay";
+
+        if (isVideoMode) {
+          essayTitle = "✍️ Tuliskan Uraian Jawaban Berdasarkan Video:";
+          essayPlaceholder = "Simak video di atas dengan cermat, lalu ketik penjelasan atau jawaban Anda di sini...";
+          essayButtonText = "📤 Kirim & Simpan Jawaban Video";
+        } else if (isWritingMode) {
+          essayTitle = "✍️ Tuliskan Kalimat / Paragraf Writing Bahasa Inggris Anda:";
+          essayPlaceholder = "Tuliskan hasil susunan kalimat atau teks paragraf bahasa Inggris Anda di sini...";
+          essayButtonText = "📤 Kirim & Simpan Jawaban Writing";
+        }
 
         essayContainer.innerHTML = `
           <div style="background: rgba(15, 23, 42, 0.85); border: 1.5px solid #a855f7; border-radius: 10px; padding: 12px;">
@@ -1485,11 +1495,16 @@ class BPMPFarmGame {
     const essayContainer = document.getElementById("posko-essay-container");
 
     const isVideoQuestion = Boolean(q.videoUrl || q.type === "video_listening" || q.type === "video_essay");
+    const isWritingQuestion = Boolean(q.type === "writing" || q.type === "writing_essay" || (q.category && q.category.toLowerCase().includes("writing")));
 
     if (essayContainer) {
+      let badgeLabel = '✅ JAWABAN ESSAY BERHASIL DISIMPAN:';
+      if (isVideoQuestion) badgeLabel = '✅ JAWABAN MENYIMAK VIDEO BERHASIL DISIMPAN:';
+      else if (isWritingQuestion) badgeLabel = '✅ JAWABAN WRITING BERHASIL DISIMPAN:';
+
       essayContainer.innerHTML = `
         <div style="background: rgba(15, 23, 42, 0.85); border: 1.5px solid #10b981; border-radius: 10px; padding: 12px;">
-          <div style="font-size: 11.5px; font-weight: 800; color: #34d399; margin-bottom: 6px;">${isVideoQuestion ? '✅ JAWABAN MENYIMAK VIDEO BERHASIL DISIMPAN:' : '✅ JAWABAN ESSAY BERHASIL DISIMPAN:'}</div>
+          <div style="font-size: 11.5px; font-weight: 800; color: #34d399; margin-bottom: 6px;">${badgeLabel}</div>
           <div style="font-size: 13px; color: #fff; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; white-space: pre-wrap; font-style: italic;">"${essayText}"</div>
         </div>
       `;
@@ -1502,9 +1517,13 @@ class BPMPFarmGame {
     this.updatePosko3DBadge(posko);
     this.updateAvatarTag(this.playerMesh, this.playerData.name, this.score, true);
 
+    let answerCategory = q.category || "Soal Essay";
+    if (isVideoQuestion) answerCategory = "Menyimak Video (Uraian)";
+    else if (isWritingQuestion) answerCategory = "Writing Essay / Uraian";
+
     const lastAnswer = {
       poskoId: posko.id,
-      category: q.category || (isVideoQuestion ? "Menyimak Video (Uraian)" : "Soal Essay"),
+      category: answerCategory,
       userAnswer: essayText,
       correctAnswer: q.answer || "Pedoman / Rubrik Acuan",
       isCorrect: true,
@@ -1515,6 +1534,7 @@ class BPMPFarmGame {
     nextBtn.style.display = "inline-block";
     nextBtn.textContent = "Selesai & Lanjut Eksplorasi Peta ➔";
     nextBtn.onclick = () => {
+      if (window.setWatchingAllowedVideo) window.setWatchingAllowedVideo(false);
       if (window.ttsManager) window.ttsManager.stop();
       document.getElementById("posko-quiz-modal").classList.remove("active");
     };

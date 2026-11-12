@@ -739,9 +739,32 @@
         game.showToast(`Selamat datang ${name}! Silakan jelajahi ${game.poskoList.length} Posko Soal! 🏃`);
       });
 
-      // Deteksi Pindah Tab (Anti-Curang)
+      // Deteksi Pindah Tab (Anti-Curang) dengan Toleransi Khusus Menonton Video Pembelajaran
+      let isWatchingAllowedVideo = false;
+      window.setWatchingAllowedVideo = function(state) {
+        isWatchingAllowedVideo = Boolean(state);
+      };
+
       function handleTabSwitch() {
         if (!isSessionStarted || game.isGameOver) return;
+
+        // 1. Cek apakah modal kuis sedang terbuka dan menampilkan video pembelajaran
+        const quizModal = document.getElementById("posko-quiz-modal");
+        const videoBox = document.getElementById("posko-video-container");
+        const isQuizOpen = quizModal && quizModal.classList.contains("active");
+        const hasActiveVideo = videoBox && videoBox.style.display !== "none" && videoBox.innerHTML.trim() !== "";
+
+        if (isWatchingAllowedVideo || (isQuizOpen && hasActiveVideo)) {
+          console.log("[Anti-Cheat] Pindah fokus diizinkan untuk menyimak video materi pembelajaran.");
+          return;
+        }
+
+        // 2. Cek apakah elemen aktif adalah iframe (misalnya interaksi kontrol pemutar YouTube)
+        if (document.activeElement && document.activeElement.tagName === "IFRAME") {
+          console.log("[Anti-Cheat] Interaksi dengan iframe YouTube, bukan pindah tab.");
+          return;
+        }
+
         window.gasService.tabSwitchCount++;
         const count = window.gasService.tabSwitchCount;
 
@@ -757,10 +780,24 @@
       }
 
       document.addEventListener("visibilitychange", () => {
-        if (document.hidden) handleTabSwitch();
+        if (document.hidden) {
+          if (!isWatchingAllowedVideo) {
+            handleTabSwitch();
+          }
+        }
       });
+
       window.addEventListener("blur", () => {
-        handleTabSwitch();
+        setTimeout(() => {
+          if (document.activeElement && document.activeElement.tagName === "IFRAME") return;
+          if (isWatchingAllowedVideo) return;
+          const quizModal = document.getElementById("posko-quiz-modal");
+          const videoBox = document.getElementById("posko-video-container");
+          if (quizModal && quizModal.classList.contains("active") && videoBox && videoBox.style.display !== "none") {
+            return;
+          }
+          handleTabSwitch();
+        }, 200);
       });
 
       document.getElementById("btn-close-cheat-warning").addEventListener("click", () => {

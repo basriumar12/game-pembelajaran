@@ -558,6 +558,9 @@
       <button class="tab-btn" data-tab="tab-attendance">
         📋 Daftar Siswa yang Sudah Masuk (Presensi Masuk)
       </button>
+      <button class="tab-btn" data-tab="tab-answers">
+        📝 Rekap Jawaban Siswa (Writing & Uraian)
+      </button>
       <button class="tab-btn" data-tab="tab-questions">
         ✏️ Kelola Bank Soal (Edit / Ganti Soal Guru)
       </button>
@@ -609,7 +612,53 @@
       </table>
     </div>
 
-    <!-- TAB 3: KELOLA BANK SOAL (GURU) -->
+    <!-- TAB 3: REKAP JAWABAN SISWA (WRITING, MENYIMAK VIDEO, & ESSAY) -->
+    <div id="tab-answers" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h3 style="margin: 0; font-size: 15px; color: #38bdf8; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+            📝 Rekapitulasi Tulisan & Jawaban Siswa Live
+          </h3>
+          <p style="margin: 4px 0 0 0; font-size: 11.5px; color: #94a3b8;">
+            Memantau hasil ketikan jawaban <b>Writing Essay</b>, uraian <b>Menyimak Video</b>, dan pilihan jawaban per posko siswa secara langsung.
+          </p>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <input type="text" id="filter-answers-search" placeholder="🔍 Cari siswa / posko..." style="background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 8px; padding: 7px 12px; font-size: 12px; outline: none; width: 180px;">
+          <button id="btn-export-answers-csv" class="btn-action" style="padding: 7px 12px; font-size: 11.5px; background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399;">
+            📥 Download CSV Jawaban
+          </button>
+          <a id="btn-open-sheet-answers" href="#" target="_blank" class="btn-action" style="background: #0284c7; color: #fff; font-size: 11.5px; text-decoration: none; padding: 7px 12px; display: inline-flex; align-items: center; gap: 5px;">
+            📊 Buka Tab "Jawaban_Siswa" di Google Sheets ↗
+          </a>
+        </div>
+      </div>
+
+      <table class="styled-table">
+        <thead>
+          <tr>
+            <th style="width: 50px;">No</th>
+            <th style="width: 90px;">Waktu</th>
+            <th>Nama Siswa</th>
+            <th style="width: 90px;">Posko</th>
+            <th>Kategori Soal</th>
+            <th style="min-width: 250px;">Jawaban / Tulisan Siswa</th>
+            <th>Pedoman Acuan Guru</th>
+            <th style="width: 90px;">Status</th>
+            <th style="width: 80px;">Poin</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-student-answers">
+          <tr>
+            <td colspan="9" style="text-align: center; padding: 24px; color: var(--text-muted);">
+              Belum ada jawaban masuk dari siswa untuk sesi room ini. Jawaban writing & uraian siswa akan tampil otomatis di sini seketika siswa menekan kirim di posko game.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TAB 4: KELOLA BANK SOAL (GURU) -->
     <div id="tab-questions" class="tab-content">
       <!-- PANEL KONEKSI GOOGLE SHEETS GURU -->
       <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9)); border: 2px solid var(--bpmp-blue); border-radius: 16px; padding: 18px 22px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
@@ -951,8 +1000,131 @@
       }
     }
 
-    // Render instan awal dari data lokal (0 detik tanpa menunggu network)
-    renderDashboard(window.gasService.getLocalTeacherDashboard(currentRoom));
+    // ========================================================================
+    // TAB 3: REKAPITULASI JAWABAN SISWA (WRITING, MENYIMAK VIDEO & PILIHAN GANDA)
+    // ========================================================================
+    let studentAnswersList = [];
+    try {
+      const cachedAns = localStorage.getItem("cached_student_answers_" + currentRoom);
+      if (cachedAns) studentAnswersList = JSON.parse(cachedAns) || [];
+    } catch(e) {}
+
+    function renderStudentAnswers() {
+      const tbAnswers = document.getElementById("tbody-student-answers");
+      if (!tbAnswers) return;
+
+      const filterVal = (document.getElementById("filter-answers-search") ? document.getElementById("filter-answers-search").value : "").toLowerCase().trim();
+      const filtered = studentAnswersList.filter(item => {
+        if (!filterVal) return true;
+        return (
+          String(item.name || "").toLowerCase().includes(filterVal) ||
+          String(item.category || "").toLowerCase().includes(filterVal) ||
+          String(item.poskoId || "").toLowerCase().includes(filterVal) ||
+          String(item.userAnswer || "").toLowerCase().includes(filterVal)
+        );
+      });
+
+      if (filtered.length === 0) {
+        tbAnswers.innerHTML = `
+          <tr>
+            <td colspan="9" style="text-align: center; padding: 24px; color: var(--text-muted);">
+              ${filterVal ? 'Tidak ada jawaban yang sesuai dengan pencarian.' : 'Belum ada jawaban masuk dari siswa. Jawaban tulisan writing & uraian video akan tampil otomatis di sini secara live!'}
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbAnswers.innerHTML = "";
+      filtered.forEach((ans, idx) => {
+        const tr = document.createElement("tr");
+        const isEssayType = ans.isEssay || String(ans.category).toLowerCase().includes("essay") || String(ans.category).toLowerCase().includes("writing") || String(ans.category).toLowerCase().includes("video");
+        const statusBadge = ans.isCorrect 
+          ? `<span style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800;">${isEssayType ? '📝 TERSIMPAN' : '✅ BENAR'}</span>`
+          : `<span style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800;">❌ SALAH</span>`;
+
+        tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td style="color: #94a3b8; font-size: 11px;">${ans.time || '-'}</td>
+          <td><strong>${ans.name}</strong><br><small style="color: #64748b;">${ans.nim || ''}</small></td>
+          <td><span style="background: #1e293b; color: #38bdf8; font-weight: 800; padding: 2px 8px; border-radius: 6px; font-size: 11px;">Posko #${ans.poskoId}</span></td>
+          <td style="font-size: 12px; font-weight: 700; color: #cbd5e1;">${ans.category || 'Materi Asesmen'}</td>
+          <td>
+            <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; color: #fff; line-height: 1.4; white-space: pre-wrap; max-height: 120px; overflow-y: auto;">
+              ${ans.userAnswer || '-'}
+            </div>
+          </td>
+          <td style="font-size: 11.5px; color: #a7f3d0; max-width: 180px;">${ans.correctAnswer || '-'}</td>
+          <td>${statusBadge}</td>
+          <td><strong style="color: var(--bpmp-gold); font-size: 13px;">+${ans.scoreGained || (ans.isCorrect ? 20 : 0)}</strong></td>
+        `;
+        tbAnswers.appendChild(tr);
+      });
+    }
+
+    // Listener Live Sinkronisasi Jawaban Siswa dari BroadcastChannel
+    if (window.gasService && window.gasService.channel) {
+      window.gasService.channel.addEventListener("message", (e) => {
+        if (e.data && e.data.type === "PLAYER_PROGRESS" && e.data.player) {
+          const p = e.data.player;
+          if (p.lastAnswer) {
+            const item = {
+              time: p.timestamp || new Date().toLocaleTimeString("id-ID"),
+              name: p.name || "Anonim",
+              nim: p.nim || "-",
+              poskoId: p.lastAnswer.poskoId || "-",
+              category: p.lastAnswer.category || "Materi Asesmen",
+              userAnswer: p.lastAnswer.userAnswer || "-",
+              correctAnswer: p.lastAnswer.correctAnswer || "-",
+              isCorrect: p.lastAnswer.isCorrect,
+              isEssay: p.lastAnswer.isEssay,
+              scoreGained: p.lastAnswer.scoreGained || 20
+            };
+            const exists = studentAnswersList.some(a => a.name === item.name && a.poskoId === item.poskoId && a.userAnswer === item.userAnswer);
+            if (!exists) {
+              studentAnswersList.unshift(item);
+              if (studentAnswersList.length > 200) studentAnswersList.pop();
+              try {
+                localStorage.setItem("cached_student_answers_" + currentRoom, JSON.stringify(studentAnswersList));
+              } catch(err) {}
+              renderStudentAnswers();
+            }
+          }
+        }
+      });
+    }
+
+    // Filter pencarian jawaban siswa
+    const filterAnswersInput = document.getElementById("filter-answers-search");
+    if (filterAnswersInput) {
+      filterAnswersInput.addEventListener("input", renderStudentAnswers);
+    }
+
+    // Tombol Export CSV Jawaban Siswa
+    const btnExportAnswersCSV = document.getElementById("btn-export-answers-csv");
+    if (btnExportAnswersCSV) {
+      btnExportAnswersCSV.addEventListener("click", () => {
+        if (studentAnswersList.length === 0) {
+          alert("Belum ada data jawaban siswa untuk diekspor.");
+          return;
+        }
+        let csv = "No,Waktu,Nama Siswa,NISN,Posko,Kategori Soal,Jawaban Siswa,Pedoman Acuan,Status,Poin\n";
+        studentAnswersList.forEach((a, i) => {
+          const clean = (str) => `"${String(str || '').replace(/"/g, '""')}"`;
+          csv += `${i+1},${clean(a.time)},${clean(a.name)},${clean(a.nim)},Posko #${a.poskoId},${clean(a.category)},${clean(a.userAnswer)},${clean(a.correctAnswer)},${a.isCorrect ? 'BENAR' : 'SALAH'},${a.scoreGained || 20}\n`;
+        });
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Rekap_Jawaban_Siswa_${currentRoom}_${Date.now()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    // Render awal tabel jawaban
+    renderStudentAnswers();
 
     // Auto-refresh loop every 4 seconds
     fetchDashboardData();
@@ -969,6 +1141,7 @@
       const gsheetInput = document.getElementById("input-teacher-gsheet-id");
       const statusBadge = document.getElementById("gsheet-status-badge");
       const openSheetBtn = document.getElementById("btn-open-active-gsheet");
+      const sheetAnswersBtn = document.getElementById("btn-open-sheet-answers");
       const curSheet = window.gasService ? window.gasService.spreadsheetId : "";
 
       if (curSheet) {
@@ -983,6 +1156,10 @@
           openSheetBtn.style.display = "inline-flex";
           openSheetBtn.href = `https://docs.google.com/spreadsheets/d/${curSheet}/edit`;
         }
+        if (sheetAnswersBtn) {
+          sheetAnswersBtn.style.display = "inline-flex";
+          sheetAnswersBtn.href = `https://docs.google.com/spreadsheets/d/${curSheet}/edit`;
+        }
       } else {
         if (statusBadge) {
           statusBadge.innerHTML = "⚪ Template Bawaan (Belum Terhubung Sheet)";
@@ -992,6 +1169,9 @@
         }
         if (openSheetBtn) {
           openSheetBtn.style.display = "none";
+        }
+        if (sheetAnswersBtn) {
+          sheetAnswersBtn.style.display = "none";
         }
       }
     }
@@ -1087,7 +1267,7 @@
         const optD = (q.options && q.options[3]) ? (q.options[3].text || q.options[3]) : "";
         const currentAns = (q.answer || "A").toString().trim();
         const qType = q.type || (q.videoUrl ? (q.options && q.options.length > 0 ? "video_listening" : "video_essay") : (q.audioText ? "listening" : (q.readingPassage ? "reading" : "standard")));
-        const isEssay = (qType === "essay" || qType === "video_essay");
+        const isEssay = (qType === "essay" || qType === "video_essay" || qType === "writing_essay");
         const isVideo = (qType === "video_listening" || qType === "video_essay" || Boolean(q.videoUrl));
 
         card.innerHTML = `
@@ -1104,7 +1284,8 @@
                   <option value="video_essay" ${qType === 'video_essay' ? 'selected' : ''}>🎥 Menyimak Video (Isian Menulis / Essay)</option>
                   <option value="listening" ${qType === 'listening' ? 'selected' : ''}>🎧 Menyimak Suara (Audio TTS)</option>
                   <option value="reading" ${qType === 'reading' ? 'selected' : ''}>📖 Reading (Bacaan)</option>
-                  <option value="writing" ${qType === 'writing' ? 'selected' : ''}>✍️ Writing (Tata Bahasa)</option>
+                  <option value="writing" ${qType === 'writing' ? 'selected' : ''}>✍️ Writing (Tata Bahasa Pilihan Ganda)</option>
+                  <option value="writing_essay" ${qType === 'writing_essay' ? 'selected' : ''}>✍️ Writing (Menulis Kalimat / Paragraf Essay)</option>
                   <option value="essay" ${qType === 'essay' ? 'selected' : ''}>📝 Soal Essay / Uraian Bebas</option>
                 </select>
               </div>
@@ -1120,19 +1301,29 @@
             </div>
             <input type="text" class="q-video-url-input" value="${q.videoUrl || ''}" placeholder="Paste URL Video (contoh: https://www.youtube.com/watch?v=... atau https://youtu.be/...)" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 7px 10px; font-size: 12px; font-family: inherit; box-sizing: border-box;">
             
-            <!-- Pilihan Format Jawaban Khusus Soal Video -->
+            <!-- Pengaturan Aturan Putar Video dari Sisi Guru & Format Jawaban -->
             <div style="margin-top: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: rgba(15,23,42,0.65); border: 1px solid rgba(56,189,248,0.3); border-radius: 6px; padding: 6px 10px;">
-              <span style="font-size: 11px; font-weight: 800; color: #38bdf8;">Format Jawaban Siswa:</span>
+              <span style="font-size: 11px; font-weight: 800; color: #38bdf8;">Format Jawaban:</span>
               <label style="display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #e2e8f0; cursor: pointer; font-weight: 600;">
                 <input type="radio" name="video_ans_mode_${idx}" value="mcq" ${!isEssay ? 'checked' : ''} class="video-mode-radio">
-                <span>🔘 Pilihan Ganda (Opsi A, B, C, D)</span>
+                <span>🔘 Pilihan Ganda (A-D)</span>
               </label>
               <label style="display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #c084fc; cursor: pointer; font-weight: 600;">
                 <input type="radio" name="video_ans_mode_${idx}" value="essay" ${isEssay ? 'checked' : ''} class="video-mode-radio">
-                <span>✍️ Isian Menulis (Siswa Mengetik Uraian/Jawaban)</span>
+                <span>✍️ Isian Menulis (Uraian/Essay)</span>
               </label>
+
+              <div style="margin-left: auto; display: flex; align-items: center; gap: 6px;">
+                <label style="font-size: 11px; color: #94a3b8; font-weight: 700;">Batas Tonton Siswa:</label>
+                <select class="q-max-video-plays-select" style="background: #0f172a; border: 1px solid var(--card-border); color: #38bdf8; font-size: 11px; border-radius: 6px; padding: 2px 6px;">
+                  <option value="0" ${(!q.maxVideoPlays || q.maxVideoPlays == 0) ? 'selected' : ''}>♾️ Bebas (Tanpa Batas)</option>
+                  <option value="1" ${q.maxVideoPlays == 1 ? 'selected' : ''}>1x Tonton</option>
+                  <option value="2" ${q.maxVideoPlays == 2 ? 'selected' : ''}>2x Tonton Maksimal</option>
+                  <option value="3" ${q.maxVideoPlays == 3 ? 'selected' : ''}>3x Tonton Maksimal</option>
+                </select>
+              </div>
             </div>
-            <div style="font-size: 10.5px; color: #94a3b8; margin-top: 4px;">💡 <i>Siswa akan menyimak video di atas, kemudian menjawab melalui opsi pilihan ganda atau mengetik uraian tulisan langsung.</i></div>
+            <div style="font-size: 10.5px; color: #94a3b8; margin-top: 4px;">💡 <i>Siswa akan menyimak video di atas, kemudian menjawab melalui opsi pilihan ganda atau mengetik tulisan langsung.</i></div>
           </div>
 
           <!-- Bagian Khusus Audio Listening TTS -->
@@ -1230,7 +1421,7 @@
         const updateCardLayout = () => {
           const val = typeSelect.value;
           const isVid = (val === "video_listening" || val === "video_essay");
-          const isNowEssay = (val === "essay" || val === "video_essay");
+          const isNowEssay = (val === "essay" || val === "video_essay" || val === "writing_essay");
 
           videoBlock.style.display = isVid ? "block" : "none";
           listeningBlock.style.display = (val === "listening") ? "block" : "none";
@@ -1314,7 +1505,7 @@
       cards.forEach((card, idx) => {
         const cat = card.querySelector(".q-category-input").value;
         const qType = card.querySelector(".q-type-select").value;
-        const isEssay = (qType === "essay" || qType === "video_essay");
+        const isEssay = (qType === "essay" || qType === "video_essay" || qType === "writing_essay");
         const qText = card.querySelector(".q-text-input").value;
         const optA = card.querySelector(".q-opt-a") ? card.querySelector(".q-opt-a").value : "";
         const optB = card.querySelector(".q-opt-b") ? card.querySelector(".q-opt-b").value : "";
@@ -1330,6 +1521,7 @@
         
         const exp = card.querySelector(".q-explanation-input").value;
         const videoUrl = card.querySelector(".q-video-url-input") ? card.querySelector(".q-video-url-input").value.trim() : "";
+        const maxVideoPlays = card.querySelector(".q-max-video-plays-select") ? parseInt(card.querySelector(".q-max-video-plays-select").value, 10) : 0;
         const audioText = card.querySelector(".q-audio-text-input") ? card.querySelector(".q-audio-text-input").value : "";
         const audioSpeed = card.querySelector(".q-audio-speed-select") ? parseFloat(card.querySelector(".q-audio-speed-select").value) : 1.0;
         const maxPlays = card.querySelector(".q-max-plays-input") ? parseInt(card.querySelector(".q-max-plays-input").value) : 2;
@@ -1351,6 +1543,7 @@
           category: cat,
           question: qText,
           videoUrl: videoUrl,
+          maxVideoPlays: maxVideoPlays,
           audioText: audioText,
           audioSpeed: audioSpeed,
           maxPlays: maxPlays,
