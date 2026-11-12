@@ -64,6 +64,8 @@ function handleIncomingData(e) {
       return handleSaveQuestions(data);
     } else if (action === "resetRoom") {
       return handleResetRoom(roomId, data);
+    } else if (action === "clearOfflinePlayers") {
+      return handleClearOfflinePlayers(roomId, data);
     }
 
     return jsonResponse({ status: "success", message: "API Active", received: data });
@@ -433,13 +435,34 @@ function handleResetRoom(roomId, data) {
   if (sheet && sheet.getLastRow() > 1) {
     const values = sheet.getRange(2, 2, sheet.getLastRow() - 1, 1).getValues();
     for (let i = values.length - 1; i >= 0; i--) {
-      if (values[i][0] === roomId) {
+      if (!roomId || values[i][0] === roomId || roomId === "ALL") {
         sheet.deleteRow(i + 2);
       }
     }
   }
   SpreadsheetApp.flush();
   return jsonResponse({ status: "reset_done", roomId: roomId });
+}
+
+function handleClearOfflinePlayers(roomId, data) {
+  const ss = getTargetSpreadsheet(data);
+  const sheet = ss.getSheetByName("Peserta");
+  let deletedCount = 0;
+  if (sheet && sheet.getLastRow() > 1) {
+    const values = sheet.getRange(2, 1, sheet.getLastRow() - 1, 14).getValues();
+    for (let i = values.length - 1; i >= 0; i--) {
+      const rowRoom = values[i][1];
+      const rowStatus = values[i][7];
+      if (!roomId || rowRoom === roomId || roomId === "ALL") {
+        if (rowStatus === "FINISHED" || rowStatus === "OFFLINE") {
+          sheet.deleteRow(i + 2);
+          deletedCount++;
+        }
+      }
+    }
+  }
+  SpreadsheetApp.flush();
+  return jsonResponse({ status: "success", deletedCount: deletedCount });
 }
 
 function jsonResponse(data) {

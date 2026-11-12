@@ -449,6 +449,10 @@
         ⚙️ Server & ID Sheets
       </button>
 
+      <button id="btn-clear-offline" class="btn-action" style="border: 1px solid #f59e0b; color: #fbbf24;" title="Hapus nama siswa yang sudah selesai atau tidak aktif">
+        🧹 Bersihkan Offline
+      </button>
+
       <button id="btn-manual-refresh" class="btn-action">
         🔄 Refresh
       </button>
@@ -669,6 +673,17 @@
     // Manual Refresh
     document.getElementById("btn-manual-refresh").addEventListener("click", () => {
       fetchDashboardData();
+    });
+
+    // Bersihkan Siswa Selesai / Offline
+    document.getElementById("btn-clear-offline").addEventListener("click", async () => {
+      if (confirm(`Bersihkan nama siswa yang berstatus FINISHED / OFFLINE di ruangan "${currentRoom}"?`)) {
+        document.getElementById("btn-clear-offline").textContent = "⏳ Membersihkan...";
+        await window.gasService.clearOfflinePlayers(currentRoom);
+        fetchDashboardData();
+        document.getElementById("btn-clear-offline").textContent = "🧹 Bersihkan Offline";
+        alert("✅ Pemain offline telah dibersihkan dari daftar!");
+      }
     });
 
     // Export to CSV

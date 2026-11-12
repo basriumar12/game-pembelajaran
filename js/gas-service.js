@@ -380,11 +380,56 @@ class GASService {
     }
   }
 
+  /**
+   * 6. GURU: Bersihkan Siswa Selesai / Offline dari Sheet & Arena
+   */
+  async clearOfflinePlayers(roomId = this.roomId) {
+    this.clearLocalPlayers();
+    const payload = {
+      action: "clearOfflinePlayers",
+      roomId: roomId,
+      spreadsheetId: this.spreadsheetId || ""
+    };
+    this.submitViaHiddenForm(payload);
+    try {
+      await fetch(this.endpoint, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {}
+    return { success: true };
+  }
+
+  /**
+   * 7. GURU: Reset Seluruh Peserta di Kelas Ini
+   */
+  async resetRoom(roomId = this.roomId) {
+    this.clearLocalPlayers();
+    const payload = {
+      action: "resetRoom",
+      roomId: roomId,
+      spreadsheetId: this.spreadsheetId || ""
+    };
+    this.submitViaHiddenForm(payload);
+    try {
+      await fetch(this.endpoint, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {}
+    return { success: true };
+  }
+
   // --- Local Storage / Fallback Database ---
 
   saveLocalPlayer(player) {
     let players = this.getLocalPlayers();
     const idx = players.findIndex(p => p.playerId === player.playerId || p.name === player.name);
+    const now = Date.now();
     const entry = {
       roomId: player.roomId,
       playerId: player.playerId,
@@ -399,7 +444,8 @@ class GASService {
       currentTile: 0,
       tabSwitches: player.tabSwitchCount || 0,
       registeredAt: new Date().toLocaleTimeString("id-ID"),
-      lastPing: new Date().toLocaleTimeString("id-ID")
+      lastPing: new Date().toLocaleTimeString("id-ID"),
+      lastPingTime: now
     };
     if (idx >= 0) players[idx] = entry;
     else players.push(entry);
@@ -409,22 +455,41 @@ class GASService {
   getLocalPlayers() {
     const s = localStorage.getItem("bpmp_room_players");
     if (s) {
-      try { return JSON.parse(s); } catch (e) {}
+      try {
+        const list = JSON.parse(s);
+        if (Array.isArray(list)) {
+          const now = Date.now();
+          // Filter hanya pemain aktif dalam 5 menit terakhir yang belum selesai
+          const activeList = list.filter(p => {
+            if (p.status === "FINISHED" || p.status === "OFFLINE") return false;
+            if (p.lastPingTime && (now - p.lastPingTime > 5 * 60 * 1000)) return false;
+            return true;
+          });
+          return activeList;
+        }
+      } catch (e) {}
     }
-    return []; // Murni hanya siswa asli yang telah mencatatkan nama
+    return [];
+  }
+
+  clearLocalPlayers() {
+    localStorage.removeItem("bpmp_room_players");
   }
 
   updateLocalScoreboard(name, score, correct, wrong, duration, inst, tile = 0, pid = null, tabSwitches = 0) {
     let players = this.getLocalPlayers();
     let p = players.find(x => (pid && x.playerId === pid) || x.name === name);
+    const now = Date.now();
+    const isFinished = (correct + wrong >= 30);
     if (p) {
       p.score = score;
       p.correct = correct;
       p.wrong = wrong;
       p.currentTile = tile;
       p.tabSwitches = tabSwitches;
-      p.status = (correct + wrong >= 30) ? "FINISHED" : "PLAYING";
+      p.status = isFinished ? "FINISHED" : "PLAYING";
       p.lastPing = new Date().toLocaleTimeString("id-ID");
+      p.lastPingTime = now;
     } else {
       players.push({
         roomId: this.roomId,
@@ -433,13 +498,14 @@ class GASService {
         nim: "-",
         institution: inst || "SMA SNT (Kelas X)",
         avatar: "student_boy",
-        status: "PLAYING",
+        status: isFinished ? "FINISHED" : "PLAYING",
         score: score,
         correct: correct,
         wrong: wrong,
         currentTile: tile,
         tabSwitches: tabSwitches,
-        lastPing: new Date().toLocaleTimeString("id-ID")
+        lastPing: new Date().toLocaleTimeString("id-ID"),
+        lastPingTime: now
       });
     }
     localStorage.setItem("bpmp_room_players", JSON.stringify(players));

@@ -450,22 +450,62 @@ class BPMPFarmGame {
   setupRealMultiplayer() {
     this.otherPlayers.clear();
 
-    // 1. Ambil daftar siswa dari penyimpanan lokal
+    // 1. Ambil daftar siswa dari penyimpanan lokal (hanya yang aktif baru-baru ini)
     const localRoster = window.gasService.getLocalPlayers();
     localRoster.forEach(p => {
       if (p.playerId !== window.gasService.playerId && p.roomId === this.playerData.roomId) {
-        this.addOrUpdateRealPlayer(p.playerId, p.name, p.avatar || "student_boy", p.x || -4, p.z || 6);
+        if (p.status !== "FINISHED" && p.status !== "OFFLINE") {
+          this.addOrUpdateRealPlayer(p.playerId, p.name, p.avatar || "student_boy", p.x || -4, p.z || 6);
+        }
       }
     });
 
     // 2. Hubungkan ke Broker Real-time Cross-Device (MQTT over WebSocket)
     this.initRealtimeMQTT();
 
-    // 3. Sinkronisasi berkala dari Google Sheets agar semua murid yang login muncul di arena
+    // 3. Sinkronisasi berkala dari Google Sheets agar murid baru yang login muncul di arena
     this.syncOnlineRosterFromGAS();
     setInterval(() => {
       this.syncOnlineRosterFromGAS();
     }, 4000);
+
+    // 4. HEARTBEAT / AUTO-DESPAWN: Hapus otomatis pemain yang sudah keluar/DC (> 20 detik tanpa sinyal)
+    setInterval(() => {
+      this.cleanupInactivePlayers();
+    }, 3000);
+
+    // 5. Broadcast saat pemain menutup tab atau browser HP/Laptop
+    window.addEventListener("beforeunload", () => { this.broadcastLeave(); });
+    window.addEventListener("pagehide", () => { this.broadcastLeave(); });
+  }
+
+  broadcastLeave() {
+    try {
+      const payload = {
+        type: "PLAYER_LEAVE",
+        id: window.gasService.playerId,
+        name: this.playerData.name,
+        isFinished: true
+      };
+      if (this.mqttClient && this.mqttClient.connected) {
+        const topic = `snt/bpmp/arena/${this.playerData.roomId || "SMA-SNT-XA"}`;
+        this.mqttClient.publish(topic, JSON.stringify(payload));
+      }
+      if (window.gasService && window.gasService.channel) {
+        window.gasService.channel.postMessage(payload);
+      }
+    } catch (e) {}
+  }
+
+  cleanupInactivePlayers() {
+    const now = Date.now();
+    const TIMEOUT_MS = 20000; // 20 detik tidak ada aktivitas = otomatis despawn dari arena
+    for (const [id, peer] of this.otherPlayers.entries()) {
+      if (peer.lastSeen && (now - peer.lastSeen > TIMEOUT_MS)) {
+        console.log(`[Multiplayer] Siswa ${peer.name} (${id}) tidak aktif > 20s, menghapus dari arena.`);
+        this.removeRealPlayer(id);
+      }
+    }
   }
 
   initRealtimeMQTT() {
@@ -490,13 +530,16 @@ class BPMPFarmGame {
           try {
             const data = JSON.parse(msg.toString());
             if (data.id && data.id !== window.gasService.playerId) {
-              // Jika siswa ini sudah selesai, langsung hilangkan dari arena 3D
-              if (data.type === "PLAYER_FINISH" || data.isFinished || data.status === "FINISHED") {
+              // Jika siswa ini keluar atau sudah selesai, langsung hilangkan dari arena 3D
+              if (data.type === "PLAYER_LEAVE" || data.type === "PLAYER_FINISH" || data.isFinished || data.status === "FINISHED" || data.status === "OFFLINE") {
                 this.removeRealPlayer(data.id);
                 return;
               }
               const peer = this.addOrUpdateRealPlayer(data.id, data.name, data.avatar || "student_boy", data.x, data.z, data.score || 0);
-              if (peer) peer.hasRealtimeMQTT = true;
+              if (peer) {
+                peer.hasRealtimeMQTT = true;
+                peer.lastSeen = Date.now();
+              }
             }
           } catch (e) {}
         });
@@ -513,8 +556,8 @@ class BPMPFarmGame {
       if (data && data.players && Array.isArray(data.players)) {
         data.players.forEach((p, idx) => {
           if (p.playerId !== window.gasService.playerId && (p.roomId === this.playerData.roomId || !p.roomId)) {
-            // Jika siswa sudah selesai mengerjakan (status FINISHED atau isFinished), despawn dari arena
-            if (p.status === "FINISHED" || p.isFinished) {
+            // Jika siswa sudah selesai mengerjakan atau offline, despawn dari arena
+            if (p.status === "FINISHED" || p.status === "OFFLINE" || p.isFinished) {
               this.removeRealPlayer(p.playerId);
               return;
             }
@@ -522,7 +565,7 @@ class BPMPFarmGame {
             let peer = this.otherPlayers.get(p.playerId);
             if (!peer) {
               // Siswa baru yang masuk dari HP / laptop lain!
-              const tileIdx = (p.currentTile && p.currentTile > 0 && p.currentTile <= 30) 
+              const tileIdx = (p.currentTile && p.currentTile > 0 && p.currentTile <= 40) 
                 ? (p.currentTile - 1) 
                 : (idx % 6);
               const posko = this.poskoList[tileIdx];
@@ -530,6 +573,7 @@ class BPMPFarmGame {
               const startZ = posko ? posko.z + (Math.random() - 0.5) * 4 : 4 + (Math.random() - 0.5) * 8;
               this.addOrUpdateRealPlayer(p.playerId, p.name, p.avatar || "student_boy", startX, startZ, p.score || 0);
             } else {
+              peer.lastSeen = Date.now();
               if (p.score !== undefined) {
                 peer.score = p.score;
                 this.updateAvatarTag(peer.mesh, peer.name, peer.score, false);
@@ -563,16 +607,18 @@ class BPMPFarmGame {
 
   addOrUpdateRealPlayer(id, name, avatarType, x, z, score = 0) {
     let peer = this.otherPlayers.get(id);
+    const now = Date.now();
     if (!peer) {
       const color = (avatarType === "student_girl") ? 0xe91e63 : 0x0284c7;
       const mesh = this.createChibiAvatar(color, avatarType, false, name, score);
       mesh.position.set(x, 0, z);
       this.scene.add(mesh);
-      peer = { name: name, mesh: mesh, targetPos: new THREE.Vector3(x, 0, z), speed: 0.18, score: score };
+      peer = { name: name, mesh: mesh, targetPos: new THREE.Vector3(x, 0, z), speed: 0.18, score: score, lastSeen: now };
       this.otherPlayers.set(id, peer);
       this.updateMinimap();
       this.updateMapModalStats();
     } else {
+      peer.lastSeen = now;
       peer.targetPos.set(x, 0, z);
       if (score !== undefined && score !== peer.score) {
         peer.score = score;
