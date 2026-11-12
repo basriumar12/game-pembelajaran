@@ -337,12 +337,22 @@ class BPMPFarmGame {
       [shuffledQuestions[j], shuffledQuestions[k]] = [shuffledQuestions[k], shuffledQuestions[j]];
     }
 
-    const count = Math.min(positions.length, this.questions.length);
+    const count = this.questions.length || 30;
     this.totalQuestions = count;
 
     for (let i = 0; i < count; i++) {
       const q = shuffledQuestions[i] || { id: i + 1, category: "Materi Asesmen", question: `Soal nomor ${i + 1}` };
-      const pos = positions[i] || { x: (i % 5) * 8 - 16, z: Math.floor(i / 5) * 8 - 10 };
+      let pos = positions[i];
+      if (!pos) {
+        // Titik posko tambahan dinamis jika soal lebih dari 40
+        const extraIdx = i - positions.length;
+        const angle = extraIdx * 0.55;
+        const radius = 24 + (extraIdx % 6) * 3.5;
+        pos = {
+          x: Math.round(Math.cos(angle) * radius),
+          z: Math.round(Math.sin(angle) * radius)
+        };
+      }
 
       const poskoGroup = new THREE.Group();
       poskoGroup.name = "posko_group_" + (i + 1);

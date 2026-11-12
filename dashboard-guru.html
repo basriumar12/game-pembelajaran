@@ -750,8 +750,8 @@
           <button id="btn-save-questions-to-gas" class="header-btn" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 800; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
             💾 Simpan ke GSheet
           </button>
-          <button id="btn-quick-copy-tsv" class="header-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #0f172a; font-weight: 800; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;" title="Salin seluruh 30 soal ke clipboard, lalu paste di sel A1 Google Sheet Anda">
-            📋 Salin 30 Soal ke Sheet
+          <button id="btn-quick-copy-tsv" class="header-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #0f172a; font-weight: 800; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;" title="Salin seluruh soal yang ada ke clipboard, lalu paste di sel A1 Google Sheet Anda">
+            📋 Salin Bank Soal ke Sheet (Paste ke A1)
           </button>
           <button id="btn-copy-game-share-link" class="header-btn" style="background: rgba(168, 85, 247, 0.2); border: 1px solid #a855f7; color: #c084fc; font-weight: 700; padding: 10px 14px; border-radius: 10px; cursor: pointer;">
             🔗 Salin Link Game Siswa
@@ -1252,6 +1252,8 @@
       const container = document.getElementById("questions-editor-list");
       const countBadge = document.getElementById("badge-question-count");
       if (countBadge) countBadge.textContent = `${teacherQuestions.length} Soal Aktif`;
+      const quickBtn = document.getElementById("btn-quick-copy-tsv");
+      if (quickBtn) quickBtn.innerHTML = `📋 Salin Bank Soal ke Sheet (${teacherQuestions.length} Soal)`;
       if (!container) return;
       container.innerHTML = "";
 
@@ -1729,7 +1731,7 @@
         if (window.gasService && typeof window.gasService.exportQuestionsToTSV === "function") {
           const tsv = window.gasService.exportQuestionsToTSV(teacherQuestions);
           navigator.clipboard.writeText(tsv).then(() => {
-            alert(`✅ ${teacherQuestions.length} SOAL BERHASIL DISALIN KE CLIPBOARD!\n\nLangkah mengisi Google Sheet Anda:\n1. Buka Google Sheet Anda\n2. Klik pada sel A1 (paling pojok kiri atas)\n3. Tekan tombol Paste (Ctrl+V di Windows atau Cmd+V di Mac)\n\nSemua kolom A sampai N (Listening TTS, Reading & Writing) akan otomatis terisi rapi!`);
+            alert(`✅ ${teacherQuestions.length} SOAL BERHASIL DISALIN KE CLIPBOARD!\n\nLangkah mengisi Google Sheet Anda:\n1. Buka Google Sheet Anda\n2. Klik pada sel A1 (paling pojok kiri atas)\n3. Tekan tombol Paste (Ctrl+V di Windows atau Cmd+V di Mac)\n\nSemua kolom A sampai O (Menyimak Video, Listening TTS, Reading & Writing) akan otomatis terisi rapi!`);
           }).catch(() => {
             prompt("Salin seluruh teks soal berikut, lalu paste di sel A1 Google Sheet Anda:", tsv);
           });
