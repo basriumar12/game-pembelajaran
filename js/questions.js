@@ -930,9 +930,10 @@ const SMA_IOT_QUESTIONS = [
 
 // ============================================================================
 // PAKET 3: BAHASA INGGRIS - READING, WRITING & LISTENING (TEXT-TO-SPEECH TTS)
+// 30 SOAL LENGKAP: 10 LISTENING (TTS AUDIO), 10 READING, 10 WRITING/GRAMMAR
 // ============================================================================
 const ENGLISH_PRACTICE_QUESTIONS = [
-  // --- LISTENING SECTION (Menggunakan TTS Audio Interaktif) ---
+  // --- SECTION 1: LISTENING COMPREHENSION (AUDIO TTS INTERAKTIF) ---
   {
     id: 1,
     type: "listening",
@@ -965,7 +966,7 @@ const ENGLISH_PRACTICE_QUESTIONS = [
       { key: "D", text: "Baggage counter" }
     ],
     answer: "B",
-    explanation: "The announcement clearly announces: 'Please proceed to gate number four immediately.'"
+    explanation: "The announcement clearly states: 'Please proceed to gate number four immediately.'"
   },
   {
     id: 3,
@@ -1018,10 +1019,95 @@ const ENGLISH_PRACTICE_QUESTIONS = [
     answer: "A",
     explanation: "The librarian replies: 'make sure to return it before Friday afternoon.'"
   },
-
-  // --- READING COMPREHENSION SECTION ---
   {
     id: 6,
+    type: "listening",
+    category: "Listening: Weather Forecast",
+    audioText: "Good morning! Here is the Gorontalo weather report. Expect scattered rain showers in the afternoon, with a maximum temperature reaching twenty-nine degrees Celsius. Don't forget to bring your umbrella.",
+    audioSpeed: 0.95,
+    maxPlays: 2,
+    question: "What weather condition is expected in the afternoon according to the report?",
+    options: [
+      { key: "A", text: "Heavy snowstorm" },
+      { key: "B", text: "Scattered rain showers" },
+      { key: "C", text: "Extreme heatwave" },
+      { key: "D", text: "Tornado" }
+    ],
+    answer: "B",
+    explanation: "The speaker advises bringing an umbrella because of 'scattered rain showers in the afternoon.'"
+  },
+  {
+    id: 7,
+    type: "listening",
+    category: "Listening: Restaurant Dialogue",
+    audioText: "Welcome to Green Cafe! Would you like to order now? Yes, please. I would like a fresh avocado salad and an iced lemon tea without extra sugar.",
+    audioSpeed: 1.0,
+    maxPlays: 2,
+    question: "What drink did the customer order?",
+    options: [
+      { key: "A", text: "Hot black coffee" },
+      { key: "B", text: "Iced lemon tea without extra sugar" },
+      { key: "C", text: "Chocolate milkshake" },
+      { key: "D", text: "Mineral soda" }
+    ],
+    answer: "B",
+    explanation: "The customer clearly states: 'an iced lemon tea without extra sugar.'"
+  },
+  {
+    id: 8,
+    type: "listening",
+    category: "Listening: School Directions",
+    audioText: "If you are looking for the new computer laboratory, walk straight down the main corridor, pass the principal's office, and take the stairs to the second floor. It is right next to the school library.",
+    audioSpeed: 0.95,
+    maxPlays: 2,
+    question: "Where is the new computer laboratory situated?",
+    options: [
+      { key: "A", text: "In the school canteen" },
+      { key: "B", text: "On the ground floor near the football field" },
+      { key: "C", text: "On the second floor, right next to the school library" },
+      { key: "D", text: "Behind the parking lot" }
+    ],
+    answer: "C",
+    explanation: "The speaker clarifies: 'take the stairs to the second floor. It is right next to the school library.'"
+  },
+  {
+    id: 9,
+    type: "listening",
+    category: "Listening: Health & Doctor Advice",
+    audioText: "Take this vitamin capsule twice a day after meals. Furthermore, remember to drink at least eight glasses of clean water daily to stay hydrated.",
+    audioSpeed: 1.0,
+    maxPlays: 2,
+    question: "How often should the patient consume the vitamin capsule?",
+    options: [
+      { key: "A", text: "Once a week" },
+      { key: "B", text: "Twice a day after meals" },
+      { key: "C", text: "Every two hours before meals" },
+      { key: "D", text: "Only at night" }
+    ],
+    answer: "B",
+    explanation: "The instruction says: 'Take this vitamin capsule twice a day after meals.'"
+  },
+  {
+    id: 10,
+    type: "listening",
+    category: "Listening: Telephone Message",
+    audioText: "Hi Rizky, this is David calling. Don't forget that our group project discussion is moved from room three to the multimedia room on the second floor at three o'clock.",
+    audioSpeed: 1.0,
+    maxPlays: 2,
+    question: "Where is the group project discussion moved to?",
+    options: [
+      { key: "A", text: "The school canteen" },
+      { key: "B", text: "Room three" },
+      { key: "C", text: "The multimedia room on the second floor" },
+      { key: "D", text: "The library backyard" }
+    ],
+    answer: "C",
+    explanation: "David mentions: 'our group project discussion is moved ... to the multimedia room on the second floor.'"
+  },
+
+  // --- SECTION 2: READING COMPREHENSION ---
+  {
+    id: 11,
     type: "reading",
     category: "Reading: Descriptive Text",
     readingPassage: "Lake Limboto is a prominent wetland located in Gorontalo Regency, Sulawesi. It serves as an essential habitat for numerous migratory bird species and supports local freshwater fisheries. In recent years, local communities and authorities have collaborated on conservation efforts to preserve its pristine aquatic ecosystem.",
@@ -1029,14 +1115,14 @@ const ENGLISH_PRACTICE_QUESTIONS = [
     options: [
       { key: "A", text: "It is an industrial factory center" },
       { key: "B", text: "It serves as an essential habitat for migratory birds and supports local fisheries" },
-      { key: "C", text: "It is an airport runaway" },
+      { key: "C", text: "It is an airport runway" },
       { key: "D", text: "It is a dry desert area" }
     ],
     answer: "B",
     explanation: "The passage notes: 'It serves as an essential habitat for numerous migratory bird species and supports local freshwater fisheries.'"
   },
   {
-    id: 7,
+    id: 12,
     type: "reading",
     category: "Reading: Vocabulary in Context",
     readingPassage: "In the sentence: 'In recent years, local communities and authorities have collaborated on conservation efforts to preserve its pristine aquatic ecosystem.'",
@@ -1051,7 +1137,7 @@ const ENGLISH_PRACTICE_QUESTIONS = [
     explanation: "'Pristine' means remaining in its pure, original, and unspoiled condition."
   },
   {
-    id: 8,
+    id: 13,
     type: "reading",
     category: "Reading: Recount Text",
     readingPassage: "Last Saturday, our school organized a green tree-planting activity around the BPMP Gorontalo complex. All tenth-grade students participated enthusiastically. We successfully planted fifty mahogany trees and watered them thoroughly before noon.",
@@ -1066,7 +1152,7 @@ const ENGLISH_PRACTICE_QUESTIONS = [
     explanation: "The recount passage explicitly states: 'We successfully planted fifty mahogany trees.'"
   },
   {
-    id: 9,
+    id: 14,
     type: "reading",
     category: "Reading: Report Text",
     readingPassage: "Solar panels convert energy from sunlight into clean electricity using photovoltaic cells. Unlike fossil fuel power plants, solar energy systems produce zero carbon emissions during operation, making them a sustainable choice for school buildings.",
@@ -1079,81 +1165,6 @@ const ENGLISH_PRACTICE_QUESTIONS = [
     ],
     answer: "A",
     explanation: "The text explains: 'solar energy systems produce zero carbon emissions during operation.'"
-  },
-
-  // --- WRITING & GRAMMAR SECTION ---
-  {
-    id: 10,
-    type: "writing",
-    category: "Writing: Grammar & Tenses",
-    question: "Complete the sentence with the correct verb form: 'While Ahmad _______ the computer code, his teammate tested the hardware sensor.'",
-    options: [
-      { key: "A", text: "was writing" },
-      { key: "B", text: "writes" },
-      { key: "C", text: "is write" },
-      { key: "D", text: "will write" }
-    ],
-    answer: "A",
-    explanation: "Past continuous tense ('was writing') is used for an ongoing past action interrupted by or happening alongside another past action ('tested')."
-  },
-  {
-    id: 11,
-    type: "writing",
-    category: "Writing: Word Order / Sentence Structure",
-    question: "Rearrange these words into a grammatically correct sentence: [ posters / students / create / creative / the / must ]",
-    options: [
-      { key: "A", text: "Posters the creative must students create." },
-      { key: "B", text: "The students must create creative posters." },
-      { key: "C", text: "Must create the students creative posters." },
-      { key: "D", text: "Creative posters create must the students." }
-    ],
-    answer: "B",
-    explanation: "The correct standard English word order is: Subject (The students) + Modal Verb (must) + Main Verb (create) + Object (creative posters)."
-  },
-  {
-    id: 12,
-    type: "writing",
-    category: "Writing: Passive Voice",
-    question: "Change this active sentence into passive voice: 'The students designed an interactive poster about digital privacy.'",
-    options: [
-      { key: "A", text: "An interactive poster about digital privacy was designed by the students." },
-      { key: "B", text: "An interactive poster about digital privacy is designing by students." },
-      { key: "C", text: "The students was designed by an interactive poster." },
-      { key: "D", text: "An interactive poster designs the students." }
-    ],
-    answer: "A",
-    explanation: "Simple past passive formula: Object + was/were + Verb 3 (past participle) + by Subject -> 'An interactive poster ... was designed by the students.'"
-  },
-  {
-    id: 13,
-    type: "writing",
-    category: "Writing: Conjunctions",
-    question: "Choose the best conjunction: 'We arrived early at the computer lab _______ we could prepare our presentation slides.'",
-    options: [
-      { key: "A", text: "so that" },
-      { key: "B", text: "although" },
-      { key: "C", text: "however" },
-      { key: "D", text: "unless" }
-    ],
-    answer: "A",
-    explanation: "'So that' expresses purpose (kami datang lebih awal agar/sehingga kami bisa mempersiapkan slide presentasi)."
-  },
-  {
-    id: 14,
-    type: "listening",
-    category: "Listening: Telephone Message",
-    audioText: "Hi Rizky, this is David calling. Don't forget that our group project discussion is moved from room three to the multimedia room on the second floor.",
-    audioSpeed: 1.0,
-    maxPlays: 2,
-    question: "Where is the group project discussion moved to?",
-    options: [
-      { key: "A", text: "The canteen" },
-      { key: "B", text: "Room three" },
-      { key: "C", text: "The multimedia room on the second floor" },
-      { key: "D", text: "The library backyard" }
-    ],
-    answer: "C",
-    explanation: "David mentions: 'our group project discussion is moved ... to the multimedia room on the second floor.'"
   },
   {
     id: 15,
@@ -1169,6 +1180,223 @@ const ENGLISH_PRACTICE_QUESTIONS = [
     ],
     answer: "B",
     explanation: "The passage stresses: 'prioritizing readability allows the audience to grasp the essential message within five seconds.'"
+  },
+  {
+    id: 16,
+    type: "reading",
+    category: "Reading: Historical Narrative",
+    readingPassage: "Otanaha Fortress is an ancient stone fortress situated on a hilltop in Dembe I, Gorontalo. Built in the 16th century by King Ilato with Portuguese assistance, it was crafted from stones bonded with sand and the eggs of the Maleo bird. From the top of the fortress, visitors can enjoy a panoramic view of Lake Limboto.",
+    question: "What unique material was traditionally used to bond the stones of Otanaha Fortress?",
+    options: [
+      { key: "A", text: "Modern cement mortar" },
+      { key: "B", text: "Sand and eggs of the Maleo bird" },
+      { key: "C", text: "Liquid plastic" },
+      { key: "D", text: "Molten metal" }
+    ],
+    answer: "B",
+    explanation: "The passage records: 'it was crafted from stones bonded with sand and the eggs of the Maleo bird.'"
+  },
+  {
+    id: 17,
+    type: "reading",
+    category: "Reading: Procedure Text",
+    readingPassage: "To create an informative presentation slide: First, choose a clean and readable font such as Arial or Roboto. Second, limit each slide to a single key concept to avoid visual clutter. Third, employ high-contrast color combinations between text and background. Finally, review your draft for spelling and factual accuracy.",
+    question: "According to the passage, why should each slide be limited to a single key concept?",
+    options: [
+      { key: "A", text: "To make the presentation finish immediately" },
+      { key: "B", text: "To avoid visual clutter and maintain audience focus" },
+      { key: "C", text: "To use more slides unnecessarily" },
+      { key: "D", text: "To eliminate the need for spoken explanation" }
+    ],
+    answer: "B",
+    explanation: "The passage advises: 'limit each slide to a single key concept to avoid visual clutter.'"
+  },
+  {
+    id: 18,
+    type: "reading",
+    category: "Reading: Analytical Exposition",
+    readingPassage: "In this digital era, understanding cybersecurity is crucial for students. Phishing scams and unauthorized data tracking pose continuous threats to online personal accounts. Therefore, cultivating strong password habits and verifying unfamiliar web links are imperative digital survival skills.",
+    question: "What is the main purpose of the text?",
+    options: [
+      { key: "A", text: "To explain how to purchase a new smartphone" },
+      { key: "B", text: "To convince students of the necessity of cybersecurity awareness" },
+      { key: "C", text: "To narrate a fictional story about computer hackers" },
+      { key: "D", text: "To advertise an antivirus software product" }
+    ],
+    answer: "B",
+    explanation: "The analytical exposition argues why understanding cybersecurity and cautious online habits are vital for students."
+  },
+  {
+    id: 19,
+    type: "reading",
+    category: "Reading: Reference & Inference",
+    readingPassage: "Mangrove forests along the coastline protect inland settlements from ocean tidal surges. Furthermore, they serve as nurseries for juvenile fish and shrimp before they migrate to open coral reefs.",
+    question: "What does the word 'they' in the second sentence refer to?",
+    options: [
+      { key: "A", text: "Mangrove forests" },
+      { key: "B", text: "Inland settlements" },
+      { key: "C", text: "Tidal surges" },
+      { key: "D", text: "Open oceans" }
+    ],
+    answer: "A",
+    explanation: "The pronoun 'they' refers back to the subject of the paragraph: 'Mangrove forests'."
+  },
+  {
+    id: 20,
+    type: "reading",
+    category: "Reading: Factual Comprehension",
+    readingPassage: "Renewable energy comes from natural sources that are constantly replenished, such as solar, wind, hydro, and geothermal energy. Because these resources do not deplete over time, countries worldwide are transitioning toward green energy to combat climate change.",
+    question: "Which of the following is NOT listed as a renewable energy source in the text?",
+    options: [
+      { key: "A", text: "Solar energy" },
+      { key: "B", text: "Geothermal energy" },
+      { key: "C", text: "Coal and petroleum" },
+      { key: "D", text: "Wind power" }
+    ],
+    answer: "C",
+    explanation: "Coal and petroleum are fossil fuels that deplete, not renewable energy sources mentioned in the text."
+  },
+
+  // --- SECTION 3: WRITING & GRAMMAR STRUCTURE ---
+  {
+    id: 21,
+    type: "writing",
+    category: "Writing: Grammar & Tenses",
+    question: "Complete the sentence with the correct verb form: 'While Ahmad _______ the computer code, his teammate tested the hardware sensor.'",
+    options: [
+      { key: "A", text: "was writing" },
+      { key: "B", text: "writes" },
+      { key: "C", text: "is write" },
+      { key: "D", text: "will write" }
+    ],
+    answer: "A",
+    explanation: "Past continuous tense ('was writing') is used for an ongoing past action interrupted by or happening alongside another past action ('tested')."
+  },
+  {
+    id: 22,
+    type: "writing",
+    category: "Writing: Word Order / Sentence Structure",
+    question: "Rearrange these words into a grammatically correct sentence: [ posters / students / create / creative / the / must ]",
+    options: [
+      { key: "A", text: "Posters the creative must students create." },
+      { key: "B", text: "The students must create creative posters." },
+      { key: "C", text: "Must create the students creative posters." },
+      { key: "D", text: "Creative posters create must the students." }
+    ],
+    answer: "B",
+    explanation: "The correct standard English word order is: Subject (The students) + Modal Verb (must) + Main Verb (create) + Object (creative posters)."
+  },
+  {
+    id: 23,
+    type: "writing",
+    category: "Writing: Passive Voice",
+    question: "Change this active sentence into passive voice: 'The students designed an interactive poster about digital privacy.'",
+    options: [
+      { key: "A", text: "An interactive poster about digital privacy was designed by the students." },
+      { key: "B", text: "An interactive poster about digital privacy is designing by students." },
+      { key: "C", text: "The students was designed by an interactive poster." },
+      { key: "D", text: "An interactive poster designs the students." }
+    ],
+    answer: "A",
+    explanation: "Simple past passive formula: Object + was/were + Verb 3 (past participle) + by Subject -> 'An interactive poster ... was designed by the students.'"
+  },
+  {
+    id: 24,
+    type: "writing",
+    category: "Writing: Conjunctions",
+    question: "Choose the best conjunction: 'We arrived early at the computer lab _______ we could prepare our presentation slides.'",
+    options: [
+      { key: "A", text: "so that" },
+      { key: "B", text: "although" },
+      { key: "C", text: "however" },
+      { key: "D", text: "unless" }
+    ],
+    answer: "A",
+    explanation: "'So that' expresses purpose (kami datang lebih awal agar/sehingga kami bisa mempersiapkan slide presentasi)."
+  },
+  {
+    id: 25,
+    type: "writing",
+    category: "Writing: Subject-Verb Agreement",
+    question: "Choose the correct verb form: 'Neither the teacher nor the students _______ absent from the digital literacy workshop today.'",
+    options: [
+      { key: "A", text: "is" },
+      { key: "B", text: "are" },
+      { key: "C", text: "was" },
+      { key: "D", text: "be" }
+    ],
+    answer: "B",
+    explanation: "With 'neither... nor...', the verb agrees with the closer subject ('the students', plural) -> 'are'."
+  },
+  {
+    id: 26,
+    type: "writing",
+    category: "Writing: Conditional Sentences",
+    question: "Complete the conditional clause: 'If we _______ our coral reefs today, future generations will enjoy a vibrant marine ecosystem.'",
+    options: [
+      { key: "A", text: "protect" },
+      { key: "B", text: "protected" },
+      { key: "C", text: "had protected" },
+      { key: "D", text: "will protect" }
+    ],
+    answer: "A",
+    explanation: "First Conditional structure: If + Simple Present ('protect'), Future Real Result ('will enjoy')."
+  },
+  {
+    id: 27,
+    type: "writing",
+    category: "Writing: Relative Clauses",
+    question: "Select the appropriate relative pronoun: 'The software engineer _______ developed this 3D educational game won a national award.'",
+    options: [
+      { key: "A", text: "who" },
+      { key: "B", text: "which" },
+      { key: "C", text: "whom" },
+      { key: "D", text: "whose" }
+    ],
+    answer: "A",
+    explanation: "'Who' is the subject relative pronoun used to refer to a person ('The software engineer')."
+  },
+  {
+    id: 28,
+    type: "writing",
+    category: "Writing: Modal Auxiliaries",
+    question: "Which sentence expresses a polite formal request?",
+    options: [
+      { key: "A", text: "Could you please explain how this IoT temperature sensor works?" },
+      { key: "B", text: "Explain this sensor right now!" },
+      { key: "C", text: "You must explain the sensor to me." },
+      { key: "D", text: "Why don't you explain it?" }
+    ],
+    answer: "A",
+    explanation: "'Could you please + verb...' is the standard polite formal request in English."
+  },
+  {
+    id: 29,
+    type: "writing",
+    category: "Writing: Order of Adjectives",
+    question: "Choose the correct order of adjectives: 'Nadia wore a _______ Gorontalo Karawo dress to the cultural festival.'",
+    options: [
+      { key: "A", text: "beautiful traditional handcrafted" },
+      { key: "B", text: "handcrafted beautiful traditional" },
+      { key: "C", text: "traditional handcrafted beautiful" },
+      { key: "D", text: "beautiful handcrafted traditional" }
+    ],
+    answer: "A",
+    explanation: "Standard English Royal Order of Adjectives: Opinion (beautiful) -> Origin/Style (traditional) -> Material/Process (handcrafted)."
+  },
+  {
+    id: 30,
+    type: "writing",
+    category: "Writing: Sentence Correction & Punctuation",
+    question: "Which of the following sentences has flawless punctuation and capitalization?",
+    options: [
+      { key: "A", text: "on wednesday, Siti visited the BPMP Gorontalo office to present her project." },
+      { key: "B", text: "On Wednesday, Siti visited the BPMP Gorontalo office to present her project." },
+      { key: "C", text: "On Wednesday Siti visited the bpmp gorontalo office, to present her project" },
+      { key: "D", text: "On wednesday Siti visited the BPMP Gorontalo office to present her project?" }
+    ],
+    answer: "B",
+    explanation: "Sentence B capitalizes the first word 'On', day 'Wednesday', proper names 'Siti', acronym 'BPMP Gorontalo', and ends with a period."
   }
 ];
 

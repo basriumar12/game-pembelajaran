@@ -10,7 +10,7 @@
  */
 
 const GAS_CONFIG = {
-  DEFAULT_DEPLOYMENT_ID: "AKfycbwPiApnkPzNn280lH4AjC15flXBfm6xvLPXzS6aGlCrHHiiYMJrmfnaIOVSmY80J95prQ",
+  DEFAULT_DEPLOYMENT_ID: "AKfycbxLCx_3U0OkQa_iq92NJ22_J34qgXGx2YjfVQqTDRQjxKGn6ulugFcrt8IcHm_FDn4R",
   BASE_URL: "https://script.google.com/macros/s/",
   TIMEOUT_MS: 7000
 };
@@ -61,20 +61,36 @@ class GASService {
     return GAS_CONFIG.DEFAULT_DEPLOYMENT_ID;
   }
 
+  cleanSpreadsheetId(val) {
+    if (!val) return "";
+    let s = String(val).trim();
+    // Jika dimasukkan URL Google Sheets: docs.google.com/spreadsheets/d/<ID>/...
+    const m = s.match(/\/spreadsheets\/d\/([a-zA-Z0-9_\-]+)/);
+    if (m && m[1]) return m[1];
+    // Bersihkan karakter query string jika ada sisa
+    if (s.includes("?")) s = s.split("?")[0];
+    if (s.includes("&")) s = s.split("&")[0];
+    return s.trim();
+  }
+
   detectSpreadsheetId() {
     // 1. Cek parameter URL: ?sheet=... atau ?sheetId=... atau ?spreadsheetId=...
     try {
       const params = new URLSearchParams(window.location.search);
       const urlSheet = params.get("sheet") || params.get("sheetId") || params.get("spreadsheetId");
-      if (urlSheet && urlSheet.trim().length > 10) {
-        localStorage.setItem("gas_custom_spreadsheet_id", urlSheet.trim());
-        return urlSheet.trim();
+      if (urlSheet) {
+        const clean = this.cleanSpreadsheetId(urlSheet);
+        if (clean && clean.length > 10) {
+          localStorage.setItem("gas_custom_spreadsheet_id", clean);
+          return clean;
+        }
       }
     } catch (e) {}
 
     // 2. Cek penyimpanan lokal
     const saved = localStorage.getItem("gas_custom_spreadsheet_id");
-    return (saved && saved.trim().length > 10) ? saved.trim() : "";
+    const cleanSaved = this.cleanSpreadsheetId(saved);
+    return (cleanSaved && cleanSaved.length > 10) ? cleanSaved : "";
   }
 
   buildEndpointUrl(depId) {
@@ -92,7 +108,6 @@ class GASService {
   setCustomConfig(deploymentId, spreadsheetId) {
     if (deploymentId && deploymentId.trim()) {
       let cleanDep = deploymentId.trim();
-      // Ekstrak ID jika dimasukkan full URL
       const match = cleanDep.match(/\/s\/([a-zA-Z0-9_\-]+)\//);
       if (match && match[1]) cleanDep = match[1];
       this.deploymentId = cleanDep;
@@ -100,11 +115,7 @@ class GASService {
     }
 
     if (spreadsheetId !== undefined) {
-      let cleanSheet = (spreadsheetId || "").trim();
-      // Ekstrak Spreadsheet ID jika dimasukkan full Google Sheets URL: docs.google.com/spreadsheets/d/<ID>/edit
-      const sheetMatch = cleanSheet.match(/\/spreadsheets\/d\/([a-zA-Z0-9_\-]+)/);
-      if (sheetMatch && sheetMatch[1]) cleanSheet = sheetMatch[1];
-
+      let cleanSheet = this.cleanSpreadsheetId(spreadsheetId);
       this.spreadsheetId = cleanSheet;
       if (cleanSheet) {
         localStorage.setItem("gas_custom_spreadsheet_id", cleanSheet);
@@ -340,14 +351,175 @@ class GASService {
   }
 
   /**
-   * 4. Fetch 30 Soal
+   * Pembaca Langsung Google Sheets via GViz Query (Super Cepat, Tanpa Butuh Deploy GAS)
+   * Bekerja selama Google Sheet diatur: "Anyone with the link can view"
    */
-  async fetchQuestions() {
+  async fetchQuestionsFromGviz(sheetId) {
+    const cleanId = this.cleanSpreadsheetId(sheetId);
+    if (!cleanId) return null;
+
+    // Coba tab 'Soal' terlebih dahulu, jika gagal coba tab default tanpa parameter sheet
+    const urls = [
+      `https://docs.google.com/spreadsheets/d/${cleanId}/gviz/tq?tqx=out:json&sheet=Soal&t=${Date.now()}`,
+      `https://docs.google.com/spreadsheets/d/${cleanId}/gviz/tq?tqx=out:json&t=${Date.now()}`
+    ];
+
+    for (const url of urls) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) continue;
+        const text = await res.text();
+        const startIdx = text.indexOf("{");
+        const endIdx = text.lastIndexOf("}");
+        if (startIdx === -1 || endIdx === -1) continue;
+
+        const jsonStr = text.substring(startIdx, endIdx + 1);
+        const data = JSON.parse(jsonStr);
+
+        if (!data || !data.table || !Array.isArray(data.table.rows) || data.table.rows.length === 0) {
+          continue;
+        }
+
+        const questions = [];
+        const rows = data.table.rows;
+
+        rows.forEach((row, idx) => {
+          if (!row || !row.c) return;
+          const c = row.c;
+          const getCell = (colIdx) => {
+            if (!c[colIdx] || c[colIdx].v === null || c[colIdx].v === undefined) return "";
+            return String(c[colIdx].v).trim();
+          };
+
+          const col0 = getCell(0);
+          const col1 = getCell(1);
+          const col2 = getCell(2);
+
+          // Jika baris pertama adalah nama header kolom, lewati
+          if (idx === 0 && (col0.toLowerCase().includes("id") || col2.toLowerCase().includes("tanya") || col1.toLowerCase().includes("kategori"))) {
+            return;
+          }
+
+          // Pertanyaan harus ada teksnya
+          const questionText = col2 || col1;
+          if (!questionText) return;
+
+          const optA = getCell(3);
+          const optB = getCell(4);
+          const optC = getCell(5);
+          const optD = getCell(6);
+          const ans = (getCell(7) || "A").toUpperCase();
+          const expl = getCell(8);
+          const rawType = getCell(9).toLowerCase();
+          const audioText = getCell(10);
+          const speed = parseFloat(getCell(11)) || 1.0;
+          const maxPlays = parseInt(getCell(12), 10) || 2;
+          const readingPassage = getCell(13);
+
+          // Otomatis tentukan tipe jika kosong
+          let qType = rawType;
+          if (!qType || qType === "standard") {
+            if (audioText) qType = "listening";
+            else if (readingPassage) qType = "reading";
+            else if (col1.toLowerCase().includes("writing") || col1.toLowerCase().includes("grammar")) qType = "writing";
+            else qType = "standard";
+          }
+
+          questions.push({
+            id: questions.length + 1,
+            category: col1 || (qType === "listening" ? "Listening Comprehension" : (qType === "reading" ? "Reading Comprehension" : "Writing & Grammar")),
+            question: questionText,
+            options: [
+              { key: "A", text: optA || "Pilihan A" },
+              { key: "B", text: optB || "Pilihan B" },
+              { key: "C", text: optC || "Pilihan C" },
+              { key: "D", text: optD || "Pilihan D" }
+            ],
+            answer: ans,
+            explanation: expl,
+            type: qType,
+            audioText: audioText,
+            audioSpeed: speed,
+            maxPlays: maxPlays,
+            readingPassage: readingPassage
+          });
+        });
+
+        if (questions.length > 0) {
+          console.log(`[GAS] Sukses memuat ${questions.length} soal dari Google Sheet via GViz!`);
+          return questions;
+        }
+      } catch (e) {
+        console.warn("[GAS] Gviz query failed on URL:", url, e.message);
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * 4. Fetch Soal (Mendukung Dual-Engine: Google Sheets GViz Langsung + Google Apps Script Web App)
+   */
+  async fetchQuestions(customSheetId = null) {
+    const targetSheetId = this.cleanSpreadsheetId(customSheetId || this.spreadsheetId);
+
+    // Jalur A: Jika ada Spreadsheet ID spesifik guru
+    if (targetSheetId) {
+      // 1. Coba baca langsung dari Google Sheets via GViz (Super Cepat, Tanpa Butuh Deploy GAS oleh guru)
+      try {
+        const gvizQuestions = await this.fetchQuestionsFromGviz(targetSheetId);
+        if (gvizQuestions && gvizQuestions.length > 0) {
+          localStorage.setItem("cached_gsheet_questions", JSON.stringify(gvizQuestions));
+          localStorage.setItem("cached_gsheet_target_id", targetSheetId);
+          return gvizQuestions;
+        }
+      } catch (e) {
+        console.warn("[GAS] GViz fetch error:", e);
+      }
+
+      // 2. Coba baca via Google Apps Script Web App
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), GAS_CONFIG.TIMEOUT_MS);
+        const url = `${this.endpoint}?action=getQuestions&sheetId=${encodeURIComponent(targetSheetId)}&t=${Date.now()}`;
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            localStorage.setItem("cached_gsheet_questions", JSON.stringify(data));
+            localStorage.setItem("cached_gsheet_target_id", targetSheetId);
+            return data;
+          }
+        }
+      } catch (err) {
+        console.warn("[GAS] GAS endpoint fetch error:", err);
+      }
+
+      // 3. Fallback ke Cache Lokal jika pernah di-fetch sebelumnya untuk sheet yang sama
+      const cached = localStorage.getItem("cached_gsheet_questions");
+      const cachedId = localStorage.getItem("cached_gsheet_target_id");
+      if (cached && cachedId === targetSheetId) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            console.log("[GAS] Menggunakan cached soal dari Google Sheets.");
+            return parsed;
+          }
+        } catch (e) {}
+      }
+    }
+
+    // Jalur B: Jika tidak ada Sheet ID khusus, fetch dari endpoint default
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), GAS_CONFIG.TIMEOUT_MS);
-      const sheetParam = this.spreadsheetId ? `&sheetId=${encodeURIComponent(this.spreadsheetId)}` : "";
-      const url = `${this.endpoint}?action=getQuestions${sheetParam}&t=${Date.now()}`;
+      const url = `${this.endpoint}?action=getQuestions&t=${Date.now()}`;
       
       const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
@@ -357,32 +529,86 @@ class GASService {
         if (Array.isArray(data) && data.length > 0) return data;
       }
     } catch (err) {}
+
+    // Jalur C: Fallback Default Soal
     return window.DEFAULT_QUESTIONS || [];
   }
 
   /**
    * 5. GURU: Simpan Soal Baru ke Google Sheets
    */
-  async saveQuestions(questionList) {
+  async saveQuestions(questionList, customSheetId = null) {
+    const targetSheetId = this.cleanSpreadsheetId(customSheetId || this.spreadsheetId);
     const payload = {
       action: "saveQuestions",
       questions: questionList,
-      spreadsheetId: this.spreadsheetId || "",
+      spreadsheetId: targetSheetId || "",
       timestamp: new Date().toISOString()
     };
+
+    // Selalu simpan ke local cache untuk keandalan offline
+    try {
+      localStorage.setItem("cached_gsheet_questions", JSON.stringify(questionList));
+      if (targetSheetId) {
+        localStorage.setItem("cached_gsheet_target_id", targetSheetId);
+      }
+    } catch (e) {}
+
     try {
       this.submitViaHiddenForm(payload);
-      await fetch(this.endpoint, {
+      const res = await fetch(this.endpoint, {
         method: "POST",
         mode: "no-cors",
         headers: { "Content-Type": "text/plain" },
         body: JSON.stringify(payload)
       });
-      return { success: true };
+      return {
+        success: true,
+        count: questionList.length,
+        message: `${questionList.length} soal berhasil disimpan ke Google Sheets (Tab "Soal")!`
+      };
     } catch (e) {
       this.submitViaHiddenForm(payload);
-      return { success: true };
+      return {
+        success: true,
+        count: questionList.length,
+        message: `${questionList.length} soal berhasil dikirim ke Google Apps Script!`
+      };
     }
+  }
+
+  /**
+   * Menghasilkan teks TSV (Tab-Separated Values) yang bisa langsung dicopy-paste ke Google Sheets di sel A1
+   */
+  exportQuestionsToTSV(questionList) {
+    const header = [
+      "ID Soal", "Kategori / Topik", "Pertanyaan", "Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D",
+      "Kunci Jawaban", "Pembahasan", "Tipe", "Audio TTS", "Speed Audio", "Batas Putar", "Reading Passage"
+    ];
+    const rows = questionList.map((q, idx) => {
+      const optA = (q.options && q.options[0]) ? (q.options[0].text || q.options[0]) : "";
+      const optB = (q.options && q.options[1]) ? (q.options[1].text || q.options[1]) : "";
+      const optC = (q.options && q.options[2]) ? (q.options[2].text || q.options[2]) : "";
+      const optD = (q.options && q.options[3]) ? (q.options[3].text || q.options[3]) : "";
+      const sanitize = (str) => String(str || "").replace(/\t/g, " ").replace(/\r?\n/g, " ");
+      return [
+        q.id || (idx + 1),
+        sanitize(q.category || ""),
+        sanitize(q.question || ""),
+        sanitize(optA),
+        sanitize(optB),
+        sanitize(optC),
+        sanitize(optD),
+        (q.answer || "A").toString().toUpperCase().trim(),
+        sanitize(q.explanation || ""),
+        q.type || "standard",
+        sanitize(q.audioText || ""),
+        q.audioSpeed || 1.0,
+        q.maxPlays || 2,
+        sanitize(q.readingPassage || "")
+      ].join("\t");
+    });
+    return [header.join("\t"), ...rows].join("\n");
   }
 
   /**

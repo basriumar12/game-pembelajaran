@@ -357,14 +357,31 @@ function handleGetQuestions(data) {
   if (!ss) return jsonResponse([]);
   var sheet = ss.getSheetByName("Soal");
   if (!sheet || sheet.getLastRow() < 2) {
-    return jsonResponse([]);
+    // Fallback: jika guru belum menamai tab 'Soal', coba ambil sheet pertama
+    var allSheets = ss.getSheets();
+    if (allSheets && allSheets.length > 0 && allSheets[0].getLastRow() >= 2) {
+      sheet = allSheets[0];
+    } else {
+      return jsonResponse([]);
+    }
   }
 
   var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 14).getValues();
   var questions = rows.map(function(r, i) {
+    var rawType = String(r[9] || "").toLowerCase().trim();
+    var audio = String(r[10] || "").trim();
+    var passage = String(r[13] || "").trim();
+    var detectedType = rawType;
+    if (!detectedType || detectedType === "standard") {
+      if (audio) detectedType = "listening";
+      else if (passage) detectedType = "reading";
+      else if (String(r[1]).toLowerCase().indexOf("writing") !== -1 || String(r[1]).toLowerCase().indexOf("grammar") !== -1) detectedType = "writing";
+      else detectedType = "standard";
+    }
+
     return {
       id: r[0] || (i + 1),
-      category: r[1] || "Materi Asesmen",
+      category: r[1] || (detectedType === "listening" ? "Listening Comprehension" : (detectedType === "reading" ? "Reading Comprehension" : "Writing & Grammar")),
       question: r[2],
       options: [
         { key: "A", text: r[3] },
@@ -374,11 +391,11 @@ function handleGetQuestions(data) {
       ],
       answer: String(r[7]).toUpperCase().trim(),
       explanation: r[8] || "",
-      type: r[9] || (r[10] ? "listening" : (r[13] ? "reading" : "standard")),
-      audioText: r[10] || "",
+      type: detectedType,
+      audioText: audio,
       audioSpeed: parseFloat(r[11]) || 1.0,
       maxPlays: parseInt(r[12]) || 2,
-      readingPassage: r[13] || ""
+      readingPassage: passage
     };
   });
 

@@ -43,8 +43,25 @@ Guru/Pengawas dapat membuka halaman pemantauan khusus di layar terpisah, laptop 
 
 ## ☁️ 3. Struktur Spreadsheet Backend Google Sheets
 
-Backend Google Apps Script mengelola 2 sheet otomatis:
+Backend Google Apps Script & Integrasi Google Sheets mengelola 3 sheet otomatis:
 1. **Sheet `"Peserta"`**:
    `[Timestamp, Room ID, Player ID, Nama Lengkap, NIM / ID, Instansi, Avatar, Status, Skor, Benar, Salah, Petak, Last Ping]`
 2. **Sheet `"Scoreboard"`**:
    `[Timestamp, Room ID, Nama Lengkap, NIM / ID, Instansi, Total Poin, Benar, Salah, Durasi, Sisa Waktu]`
+3. **Sheet `"Soal"` (Bank Soal Dinamis & Bahasa Inggris)**:
+   `[ID Soal, Kategori / Topik, Pertanyaan, Pilihan A, Pilihan B, Pilihan C, Pilihan D, Kunci Jawaban, Pembahasan, Tipe, Audio TTS, Speed Audio, Batas Putar, Reading Passage]`
+
+---
+
+## 🎧 4. Integrasi Soal Google Sheets & Bahasa Inggris (Listening, Reading, Writing)
+
+Game ini mendukung **penggantian soal otomatis** secara real-time langsung dari **Google Sheets**:
+- **Guru tinggal memasukkan ID atau Link Google Sheet** di Dashboard Guru (`dashboard-guru.html`) pada tab **"Kelola Bank Soal"**.
+- Soal dapat diedit langsung di dashboard guru lalu disimpan ke Google Sheets (tombol *"Simpan ke GSheet"*), atau diedit langsung di baris-baris Google Sheet Anda!
+- **Tipe Soal yang Didukung**:
+  1. 🎧 **Listening**: Menggunakan naskah dialog/pengumuman bahasa Inggris dengan Text-to-Speech (TTS Web Speech API), kuota batas putar siswa, dan pengatur kecepatan suara.
+  2. 📖 **Reading**: Menyajikan teks bacaan/narasi panjang (*reading passage*) sebelum pertanyaan pemahaman konteks.
+  3. ✍️ **Writing**: Menguji struktur kalimat, tata bahasa (*grammar, tenses, passive voice, word order*), dan kelengkapan penulisan bahasa Inggris.
+  4. 📘 **Standard**: Soal pilihan ganda multi-jenjang (Informatika, IoT Arduino, KKA Poster Kampanye, dsb.).
+- **Tautan Siswa Otomatis**:
+  Guru cukup menyalin link game siswa melalui tombol *"🔗 Salin Link Game Siswa"*. Link akan memuat parameter `?sheet=ID_GSHEET&package=english_all` sehingga game siswa langsung otomatis membuka paket soal dari Google Sheets guru.

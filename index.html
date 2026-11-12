@@ -437,6 +437,27 @@
       const modalTitle = document.getElementById("login-modal-title");
       const modalSub = document.getElementById("login-modal-subtitle");
 
+      function syncCustomGSheetPackageOption() {
+        const customPkg = window.QUESTION_PACKAGES ? window.QUESTION_PACKAGES["custom_gsheet"] : null;
+        if (customPkg && selectPkg) {
+          let opt = selectPkg.querySelector('option[value="custom_gsheet"]');
+          if (!opt) {
+            opt = document.createElement("option");
+            opt.value = "custom_gsheet";
+            selectPkg.insertBefore(opt, selectPkg.firstChild);
+          }
+          opt.textContent = `📊 Soal Google Sheets Guru (${customPkg.questions.length} Soal)`;
+          opt.style.fontWeight = "bold";
+          opt.style.color = "#059669";
+          selectPkg.value = "custom_gsheet";
+          updatePackageUI();
+        }
+      }
+
+      window.addEventListener("questions_loaded_from_gsheet", () => {
+        syncCustomGSheetPackageOption();
+      });
+
       // Cek info target sheet
       const labelActiveSheet = document.getElementById("label-active-sheet");
       if (labelActiveSheet && window.gasService) {
@@ -456,6 +477,9 @@
           selectPkg.value = urlPkg;
         }
       } catch(e) {}
+
+      // Jalankan cek awal paket custom gsheet jika sudah tersedia
+      syncCustomGSheetPackageOption();
 
       function updatePackageUI() {
         const pkgId = selectPkg.value;

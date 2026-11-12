@@ -611,35 +611,76 @@
 
     <!-- TAB 3: KELOLA BANK SOAL (GURU) -->
     <div id="tab-questions" class="tab-content">
+      <!-- PANEL KONEKSI GOOGLE SHEETS GURU -->
+      <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9)); border: 2px solid var(--bpmp-blue); border-radius: 16px; padding: 18px 22px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 24px;">📊</span>
+            <div>
+              <h3 style="font-size: 16px; font-weight: 800; color: #fff; margin: 0;">Integrasi Otomatis Google Sheets Guru</h3>
+              <p style="font-size: 12px; color: #94a3b8; margin: 2px 0 0 0;">Cukup masukkan ID atau Link Google Sheet Anda. Soal Listening (Audio TTS), Reading (Teks Bacaan), dan Writing otomatis terhubung ke game!</p>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="gsheet-status-badge" style="background: rgba(100, 116, 139, 0.2); border: 1px solid #64748b; color: #94a3b8; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 20px;">
+              ⚪ Belum Terhubung
+            </span>
+            <a id="btn-open-active-gsheet" href="#" target="_blank" style="display: none; background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; color: #38bdf8; font-size: 11.5px; font-weight: 700; text-decoration: none; padding: 4px 10px; border-radius: 8px;">
+              ↗️ Buka Google Sheet
+            </a>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px;">
+          <div style="flex: 1; min-width: 280px; position: relative;">
+            <input type="text" id="input-teacher-gsheet-id" placeholder="Paste ID Spreadsheet atau Link Lengkap (https://docs.google.com/spreadsheets/d/...)" style="width: 100%; background: #0f172a; border: 1.5px solid var(--bpmp-blue); color: #fff; font-size: 13px; font-weight: 600; padding: 10px 14px; border-radius: 10px; outline: none; box-sizing: border-box;">
+          </div>
+          <button id="btn-connect-and-fetch-gsheet" class="header-btn" style="background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; font-weight: 800; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            🔗 Hubungkan & Tarik Soal
+          </button>
+          <button id="btn-save-questions-to-gas" class="header-btn" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 800; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            💾 Simpan ke GSheet
+          </button>
+          <button id="btn-open-sheet-guide" class="header-btn" style="background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #fbbf24; font-weight: 700; padding: 10px 14px; border-radius: 10px; cursor: pointer;">
+            📋 Panduan Kolom
+          </button>
+          <button id="btn-copy-game-share-link" class="header-btn" style="background: rgba(168, 85, 247, 0.15); border: 1px solid #a855f7; color: #c084fc; font-weight: 700; padding: 10px 14px; border-radius: 10px; cursor: pointer;">
+            🔗 Salin Link Game Siswa
+          </button>
+        </div>
+
+        <div style="font-size: 11.5px; color: #94a3b8; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+          <span>💡 <b style="color: #cbd5e1;">Tips:</b> Pastikan Google Sheet Anda diatur akses <i>"Siapa saja yang memiliki link dapat melihat (Viewer)"</i> agar siswa dapat langsung membaca soal secara real-time!</span>
+        </div>
+      </div>
+
+      <!-- KONTROL EDITOR BANK SOAL -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; background: rgba(15, 23, 42, 0.6); padding: 16px 20px; border-radius: 14px; border: 1px solid var(--card-border);">
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <h3 style="font-size: 16px; color: #fff; margin: 0;">📝 Editor Bank Soal Guru Multi-Jenjang</h3>
-            <span id="badge-question-count" style="background: rgba(2, 132, 199, 0.2); border: 1px solid #0284c7; color: #38bdf8; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 12px;">40 Soal Aktif</span>
+            <h3 style="font-size: 16px; color: #fff; margin: 0;">📝 Editor Bank Soal Guru (30 Posko Permainan)</h3>
+            <span id="badge-question-count" style="background: rgba(2, 132, 199, 0.2); border: 1px solid #0284c7; color: #38bdf8; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 12px;">30 Soal Aktif</span>
           </div>
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <label style="font-size: 12px; font-weight: 800; color: var(--bpmp-gold);">Pilih Paket / Mata Pelajaran:</label>
+            <label style="font-size: 12px; font-weight: 800; color: var(--bpmp-gold);">Template Paket / Mata Pelajaran:</label>
             <select id="select-teacher-package" style="background: #0f172a; border: 2px solid var(--bpmp-gold); color: #fff; font-weight: 800; font-size: 13px; border-radius: 8px; padding: 6px 12px; outline: none; cursor: pointer;">
-              <option value="smp_kka_7" selected>📘 SMP Kelas VII — KKA (Poster Kampanye Digital - 40 Soal)</option>
+              <option value="english_all" selected>🎧 Bahasa Inggris — Reading, Writing & Listening TTS (30 Soal)</option>
+              <option value="smp_kka_7">📘 SMP Kelas VII — KKA (Poster Kampanye Digital - 40 Soal)</option>
               <option value="sma_iot_10">💻 SMA Kelas X — Informatika & Arduino Wokwi (30 Soal)</option>
-              <option value="english_all">🎧 Bahasa Inggris — Reading, Writing & Listening TTS</option>
             </select>
           </div>
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <button id="btn-load-default-questions" class="header-btn" style="background: rgba(2, 132, 199, 0.2); border-color: #0284c7; color: #38bdf8;">
-            📥 Muat Soal Paket
+            📥 Muat Template Paket
           </button>
           <button id="btn-add-new-question" class="header-btn" style="background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #34d399;">
             ➕ Tambah Soal
           </button>
-          <button id="btn-save-questions-to-gas" class="header-btn" style="background: var(--bpmp-gold); color: #0f172a; font-weight: 800;">
-            💾 Simpan Soal ke Server
-          </button>
         </div>
       </div>
 
-      <div id="questions-save-status" style="display: none; padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 13px; font-weight: 700;"></div>
+      <div id="questions-save-status" style="display: none; padding: 12px 16px; border-radius: 10px; margin-bottom: 14px; font-size: 13px; font-weight: 700;"></div>
 
       <div id="questions-editor-list" style="display: flex; flex-direction: column; gap: 14px;">
         <!-- Card-card soal akan di-render di sini -->
@@ -855,7 +896,38 @@
     // LOGIKA EDITOR BANK SOAL GURU MULTI-JENJANG & BAHASA INGGRIS TTS
     // ========================================================================
     let teacherQuestions = [];
-    let currentTeacherPackage = "smp_kka_7";
+    let currentTeacherPackage = "english_all"; // Default ke Bahasa Inggris (Listening, Reading, Writing)
+
+    function updateGSheetStatusUI() {
+      const gsheetInput = document.getElementById("input-teacher-gsheet-id");
+      const statusBadge = document.getElementById("gsheet-status-badge");
+      const openSheetBtn = document.getElementById("btn-open-active-gsheet");
+      const curSheet = window.gasService ? window.gasService.spreadsheetId : "";
+
+      if (curSheet) {
+        if (gsheetInput && !gsheetInput.value) gsheetInput.value = curSheet;
+        if (statusBadge) {
+          statusBadge.innerHTML = `🟢 Terhubung: <code style="color:#38bdf8; font-weight:700;">${curSheet.substring(0, 8)}...</code>`;
+          statusBadge.style.background = "rgba(16, 185, 129, 0.2)";
+          statusBadge.style.borderColor = "#10b981";
+          statusBadge.style.color = "#34d399";
+        }
+        if (openSheetBtn) {
+          openSheetBtn.style.display = "inline-flex";
+          openSheetBtn.href = `https://docs.google.com/spreadsheets/d/${curSheet}/edit`;
+        }
+      } else {
+        if (statusBadge) {
+          statusBadge.innerHTML = "⚪ Template Bawaan (Belum Terhubung Sheet)";
+          statusBadge.style.background = "rgba(100, 116, 139, 0.2)";
+          statusBadge.style.borderColor = "#64748b";
+          statusBadge.style.color = "#94a3b8";
+        }
+        if (openSheetBtn) {
+          openSheetBtn.style.display = "none";
+        }
+      }
+    }
 
     function loadPackageQuestions(pkgId) {
       currentTeacherPackage = pkgId;
@@ -870,12 +942,14 @@
 
     const pkgSelectTeacher = document.getElementById("select-teacher-package");
     if (pkgSelectTeacher) {
+      pkgSelectTeacher.value = currentTeacherPackage;
       pkgSelectTeacher.addEventListener("change", (e) => {
         loadPackageQuestions(e.target.value);
       });
     }
 
     async function initQuestionsEditor() {
+      updateGSheetStatusUI();
       try {
         const data = await window.gasService.fetchQuestions();
         if (Array.isArray(data) && data.length > 0) {
@@ -1113,6 +1187,72 @@
       }
     });
 
+    // --- Tombol Hubungkan & Tarik Soal dari Google Sheets ---
+    document.getElementById("btn-connect-and-fetch-gsheet").addEventListener("click", async () => {
+      const inputEl = document.getElementById("input-teacher-gsheet-id");
+      const rawVal = inputEl ? inputEl.value.trim() : "";
+      const statusEl = document.getElementById("questions-save-status");
+
+      if (!rawVal) {
+        alert("Silakan masukkan ID Spreadsheet atau link URL Google Sheets terlebih dahulu!");
+        return;
+      }
+
+      statusEl.style.display = "block";
+      statusEl.style.background = "rgba(2, 132, 199, 0.2)";
+      statusEl.style.border = "1px solid #0284c7";
+      statusEl.style.color = "#38bdf8";
+      statusEl.innerHTML = `⏳ Sedang menghubungkan dan mengambil data soal dari Google Sheets...`;
+
+      // Simpan config spreadsheet ID
+      window.gasService.setCustomConfig(null, rawVal);
+      const cleanId = window.gasService.spreadsheetId;
+      updateGSheetStatusUI();
+
+      try {
+        const loadedQuestions = await window.gasService.fetchQuestions(cleanId);
+        if (Array.isArray(loadedQuestions) && loadedQuestions.length > 0) {
+          teacherQuestions = loadedQuestions;
+          renderQuestionsEditor();
+          statusEl.style.background = "rgba(16, 185, 129, 0.2)";
+          statusEl.style.border = "1px solid #10b981";
+          statusEl.style.color = "#34d399";
+          statusEl.innerHTML = `✅ Berhasil terhubung! Memuat <b>${loadedQuestions.length} soal</b> dari Google Sheet. Soal otomatis aktif di game siswa!`;
+        } else {
+          statusEl.style.background = "rgba(245, 158, 11, 0.2)";
+          statusEl.style.border = "1px solid #f59e0b";
+          statusEl.style.color = "#fbbf24";
+          statusEl.innerHTML = `⚠️ Sheet terhubung, namun tab "Soal" belum memiliki data baris soal. Anda dapat mengklik <b>"Simpan ke GSheet"</b> untuk mengisi Google Sheet dengan template soal Bahasa Inggris saat ini.`;
+        }
+      } catch (err) {
+        statusEl.style.background = "rgba(239, 68, 68, 0.2)";
+        statusEl.style.border = "1px solid #ef4444";
+        statusEl.style.color = "#f87171";
+        statusEl.innerHTML = `❌ Gagal mengambil soal: ${err.message}. Pastikan Google Sheet Anda diatur: "Anyone with the link can view".`;
+      }
+    });
+
+    // --- Salin Link Game Siswa Berdasarkan Sheet Terhubung ---
+    document.getElementById("btn-copy-game-share-link").addEventListener("click", () => {
+      const sheetId = window.gasService ? window.gasService.spreadsheetId : "";
+      const base = window.location.origin + window.location.pathname.replace("dashboard-guru.html", "index.html");
+      const url = new URL(base);
+      if (sheetId) url.searchParams.set("sheet", sheetId);
+      if (currentTeacherPackage) url.searchParams.set("package", currentTeacherPackage);
+
+      navigator.clipboard.writeText(url.toString()).then(() => {
+        alert(`✅ Link Game Siswa Berhasil Disalin!\n\nLink: ${url.toString()}\n\nSiswa yang membuka link ini akan otomatis bermain dengan soal dari Google Sheet guru!`);
+      }).catch(() => {
+        prompt("Salin link berikut untuk siswa:", url.toString());
+      });
+    });
+
+    // --- Tombol Panduan Kolom Sheet ---
+    const sheetGuideModal = document.getElementById("modal-sheet-guide");
+    document.getElementById("btn-open-sheet-guide").addEventListener("click", () => {
+      if (sheetGuideModal) sheetGuideModal.style.display = "flex";
+    });
+
     document.getElementById("btn-save-questions-to-gas").addEventListener("click", async () => {
       syncDOMToQuestions();
       const statusEl = document.getElementById("questions-save-status");
@@ -1120,15 +1260,14 @@
       statusEl.style.background = "rgba(2, 132, 199, 0.2)";
       statusEl.style.border = "1px solid #0284c7";
       statusEl.style.color = "#38bdf8";
-      statusEl.innerHTML = `⏳ Sedang menyimpan ${teacherQuestions.length} soal paket "${currentTeacherPackage}" ke Google Sheets...`;
+      statusEl.innerHTML = `⏳ Sedang menyimpan ${teacherQuestions.length} soal ke Google Sheets...`;
 
       try {
-        await window.gasService.saveQuestions(teacherQuestions);
+        const res = await window.gasService.saveQuestions(teacherQuestions);
         statusEl.style.background = "rgba(16, 185, 129, 0.2)";
         statusEl.style.border = "1px solid #10b981";
         statusEl.style.color = "#34d399";
-        statusEl.innerHTML = `✅ Sukses! ${teacherQuestions.length} soal berhasil disimpan ke Google Sheets (Tab "Soal"). Game siswa akan langsung menggunakan paket soal ini!`;
-        setTimeout(() => { statusEl.style.display = "none"; }, 5000);
+        statusEl.innerHTML = `✅ Sukses! ${res.message || (teacherQuestions.length + " soal berhasil disimpan ke Google Sheets (Tab 'Soal'). Game siswa akan langsung menggunakan paket soal ini!")}`;
       } catch (err) {
         statusEl.style.background = "rgba(239, 68, 68, 0.2)";
         statusEl.style.border = "1px solid #ef4444";
@@ -1157,7 +1296,7 @@
       if (m && m[1]) sheet = m[1];
 
       const url = new URL(window.location.origin + window.location.pathname.replace("dashboard-guru.html", "index.html"));
-      if (dep && dep !== "AKfycbwPiApnkPzNn280lH4AjC15flXBfm6xvLPXzS6aGlCrHHiiYMJrmfnaIOVSmY80J95prQ") {
+      if (dep && dep !== "AKfycbxLCx_3U0OkQa_iq92NJ22_J34qgXGx2YjfVQqTDRQjxKGn6ulugFcrt8IcHm_FDn4R") {
         url.searchParams.set("id", dep);
       }
       if (sheet) {
@@ -1248,7 +1387,7 @@
           <label style="display:block; font-size:12px; font-weight:700; color:#38bdf8; margin-bottom:6px;">
             2. WEB APP DEPLOYMENT ID (Opsional jika memakai backend script sendiri)
           </label>
-          <input type="text" id="cfg-deployment-id" placeholder="AKfycbwPiApnkPzNn280lH4AjC15flXBfm6xvLPXzS6aGlCrHHiiYMJrmfnaIOVSmY80J95prQ" style="width:100%; background:#0f172a; border:1px solid var(--card-border); border-radius:10px; padding:12px 14px; color:#fff; font-size:13px; outline:none; box-sizing:border-box;">
+          <input type="text" id="cfg-deployment-id" placeholder="AKfycbxLCx_3U0OkQa_iq92NJ22_J34qgXGx2YjfVQqTDRQjxKGn6ulugFcrt8IcHm_FDn4R" style="width:100%; background:#0f172a; border:1px solid var(--card-border); border-radius:10px; padding:12px 14px; color:#fff; font-size:13px; outline:none; box-sizing:border-box;">
         </div>
 
         <div style="background:rgba(15,23,42,0.8); border:1px dashed var(--bpmp-gold); border-radius:12px; padding:14px;">
@@ -1280,5 +1419,90 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal Panduan Struktur Kolom Google Sheets -->
+  <div id="modal-sheet-guide" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:16px;">
+    <div style="background:var(--card-bg); border:2px solid var(--bpmp-gold); border-radius:20px; max-width:760px; width:100%; padding:26px; box-shadow:0 20px 50px rgba(0,0,0,0.6); color:#fff; position:relative; max-height:90vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+        <h2 style="font-size:18px; font-weight:800; color:var(--bpmp-gold); margin:0; display:flex; align-items:center; gap:8px;">
+          📋 Panduan Format Kolom Google Sheets (Tab "Soal")
+        </h2>
+        <button id="btn-close-sheet-guide" style="background:none; border:none; color:#94a3b8; font-size:24px; cursor:pointer;">&times;</button>
+      </div>
+
+      <p style="font-size:13px; color:#cbd5e1; line-height:1.6; margin-bottom:14px;">
+        Guru dapat mengedit soal langsung di <b>Google Sheets</b> pada tab bernama <b><code>Soal</code></b> (atau sheet pertama). Sistem otomatis memetakan kolom A sampai N ke game:
+      </p>
+
+      <div style="overflow-x:auto; margin-bottom:18px;">
+        <table style="width:100%; font-size:12px; border-collapse:collapse; background:rgba(15,23,42,0.8); border-radius:8px; overflow:hidden;">
+          <thead>
+            <tr style="background:#1e293b; color:#38bdf8; text-align:left;">
+              <th style="padding:8px 10px; border-bottom:1px solid #334155;">Kolom</th>
+              <th style="padding:8px 10px; border-bottom:1px solid #334155;">Nama Kolom</th>
+              <th style="padding:8px 10px; border-bottom:1px solid #334155;">Fungsi & Format</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>A</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">ID Soal</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Nomor urut posko (1, 2, 3...)</td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>B</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Kategori / Topik</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Misal: <i>Listening: Daily Conversation</i>, <i>Reading: Recount</i>, <i>Writing: Grammar</i></td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>C</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Pertanyaan</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Kalimat pertanyaan asesmen yang dijawab siswa</td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>D</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Pilihan A</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Teks jawaban opsi A</td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>E</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Pilihan B</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Teks jawaban opsi B</td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>F</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Pilihan C</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Teks jawaban opsi C</td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>G</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Pilihan D</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Teks jawaban opsi D</td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>H</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Kunci Jawaban</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Huruf kunci: <code>A</code>, <code>B</code>, <code>C</code>, atau <code>D</code></td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>I</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Pembahasan</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Penjelasan yang muncul saat posko selesai dijawab</td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>J</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Tipe Soal</td><td style="padding:6px 10px; border-bottom:1px solid #334155;"><code>listening</code>, <code>reading</code>, <code>writing</code>, atau <code>standard</code></td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>K</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Audio TTS</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Teks dialog / narasi Bahasa Inggris yang akan dibacakan mesin suara di posko Listening</td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>L</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Speed Audio</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Kecepatan suara: <code>0.85</code>, <code>1.0</code>, atau <code>1.2</code></td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>M</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Batas Putar</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Kuota putar tombol audio siswa (misal: <code>2</code> atau <code>3</code> kali)</td></tr>
+            <tr><td style="padding:6px 10px;"><b>N</b></td><td style="padding:6px 10px;">Reading Passage</td><td style="padding:6px 10px;">Teks bacaan panjang / artikel yang muncul di atas soal Reading</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+        <button id="btn-copy-sheet-headers" class="btn-action" style="padding:8px 14px; font-size:12px; background:#0284c7; color:#fff; border:none;">
+          📋 Salin Baris Header (A-N)
+        </button>
+        <button id="btn-copy-all-tsv" class="btn-action btn-gold" style="padding:8px 14px; font-size:12px;">
+          📋 Salin Semua 30 Soal ke Format Sheet (Langsung Paste ke Sel A1)
+        </button>
+        <button id="btn-close-sheet-guide-bottom" class="btn-action" style="padding:8px 14px; font-size:12px; background:#334155; color:#fff; border:none;">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Handler Modal Panduan Kolom
+    const guideModalEl = document.getElementById("modal-sheet-guide");
+    const closeGuide = () => { if (guideModalEl) guideModalEl.style.display = "none"; };
+    document.getElementById("btn-close-sheet-guide").addEventListener("click", closeGuide);
+    document.getElementById("btn-close-sheet-guide-bottom").addEventListener("click", closeGuide);
+
+    document.getElementById("btn-copy-sheet-headers").addEventListener("click", () => {
+      const headers = "ID Soal\tKategori / Topik\tPertanyaan\tPilihan A\tPilihan B\tPilihan C\tPilihan D\tKunci Jawaban\tPembahasan\tTipe\tAudio TTS\tSpeed Audio\tBatas Putar\tReading Passage";
+      navigator.clipboard.writeText(headers).then(() => {
+        alert("✅ Header kolom berhasil disalin! Silakan buka Google Sheet Anda dan Paste (Ctrl+V / Cmd+V) di sel A1.");
+      }).catch(() => {
+        prompt("Salin header berikut:", headers);
+      });
+    });
+
+    document.getElementById("btn-copy-all-tsv").addEventListener("click", () => {
+      syncDOMToQuestions();
+      if (window.gasService && typeof window.gasService.exportQuestionsToTSV === "function") {
+        const tsv = window.gasService.exportQuestionsToTSV(teacherQuestions);
+        navigator.clipboard.writeText(tsv).then(() => {
+          alert(`✅ ${teacherQuestions.length} Soal berhasil disalin ke format Google Sheets!\n\nSilakan buka tab "Soal" di Google Sheet Anda, klik sel A1, lalu tekan Paste (Ctrl+V / Cmd+V).`);
+        }).catch(() => {
+          prompt("Salin data soal berikut:", tsv);
+        });
+      }
+    });
+  </script>
 </body>
 </html>

@@ -86,6 +86,30 @@ class BPMPFarmGame {
         const customQ = await window.gasService.fetchQuestions();
         if (customQ && Array.isArray(customQ) && customQ.length > 0) {
           this.questions = customQ;
+          this.customQuestions = customQ;
+
+          // Daftarkan sebagai paket Google Sheets aktif
+          if (window.QUESTION_PACKAGES) {
+            window.QUESTION_PACKAGES["custom_gsheet"] = {
+              id: "custom_gsheet",
+              title: "Soal Google Sheets Guru (Aktif)",
+              shortTitle: "Google Sheets",
+              level: "Peserta Didik",
+              description: `Memuat ${customQ.length} soal langsung dari Google Sheets Guru (Listening TTS, Reading & Writing)`,
+              icon: "📊",
+              classes: [
+                { id: "CLASS-ENG-1", name: "Kelas A / English 1" },
+                { id: "CLASS-ENG-2", name: "Kelas B / English 2" },
+                { id: "CLASS-ALL", name: "Semua Siswa" }
+              ],
+              questions: customQ
+            };
+            this.selectedPackageId = "custom_gsheet";
+          }
+          console.log(`[Game] Berhasil mengaktifkan ${customQ.length} soal dari Google Sheets!`);
+          
+          // Trigger event agar dropdown index.html otomatis terupdate
+          window.dispatchEvent(new CustomEvent("questions_loaded_from_gsheet", { detail: { count: customQ.length } }));
         }
       }
     } catch (e) {
