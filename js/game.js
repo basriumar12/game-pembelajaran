@@ -1139,6 +1139,46 @@ class BPMPFarmGame {
   }
 
   /**
+   * Menutup Modal Soal Posko & Menghentikan Total Pemutar Video YouTube / MP4 & TTS Audio
+   */
+  closePoskoQuiz() {
+    const modal = document.getElementById("posko-quiz-modal");
+    if (modal) modal.classList.remove("active");
+
+    // 1. Hentikan suara audio Text-To-Speech
+    if (window.ttsManager) window.ttsManager.stop();
+
+    // 2. Hentikan total pemutar video YouTube (iframe) atau video HTML5 agar suara mati seketika
+    const videoBox = document.getElementById("posko-video-container");
+    if (videoBox) {
+      const videoEl = videoBox.querySelector("video");
+      if (videoEl) {
+        try {
+          videoEl.pause();
+          videoEl.currentTime = 0;
+          videoEl.src = "";
+          videoEl.load();
+        } catch (e) {}
+      }
+
+      const iframeEl = videoBox.querySelector("iframe");
+      if (iframeEl) {
+        try {
+          iframeEl.src = "about:blank";
+        } catch (e) {}
+      }
+
+      videoBox.innerHTML = "";
+      videoBox.style.display = "none";
+    }
+
+    // 3. Reset flag toleransi video anti-cheat
+    if (window.setWatchingAllowedVideo) {
+      window.setWatchingAllowedVideo(false);
+    }
+  }
+
+  /**
    * Modal Interaktif Menjawab Soal di Posko yang Didekati
    * Mendukung Video Menyimak, Audio Text-to-Speech, Reading Passage, Pilihan Ganda & Soal Essay
    */
@@ -1388,9 +1428,7 @@ class BPMPFarmGame {
       nextBtn.style.display = "inline-block";
       nextBtn.textContent = "Tutup & Lanjut Jelajahi Posko Lain ➔";
       nextBtn.onclick = () => {
-        if (window.setWatchingAllowedVideo) window.setWatchingAllowedVideo(false);
-        if (window.ttsManager) window.ttsManager.stop();
-        modal.classList.remove("active");
+        this.closePoskoQuiz();
       };
 
       modal.classList.add("active");
@@ -1534,9 +1572,7 @@ class BPMPFarmGame {
     nextBtn.style.display = "inline-block";
     nextBtn.textContent = "Selesai & Lanjut Eksplorasi Peta ➔";
     nextBtn.onclick = () => {
-      if (window.setWatchingAllowedVideo) window.setWatchingAllowedVideo(false);
-      if (window.ttsManager) window.ttsManager.stop();
-      document.getElementById("posko-quiz-modal").classList.remove("active");
+      this.closePoskoQuiz();
     };
 
     this.updateHUD();
@@ -1545,7 +1581,7 @@ class BPMPFarmGame {
 
     if (this.solvedPosko.length >= this.poskoList.length) {
       setTimeout(() => {
-        document.getElementById("posko-quiz-modal").classList.remove("active");
+        this.closePoskoQuiz();
         this.triggerGameFinish(`Luar Biasa! Seluruh ${this.poskoList.length} Posko Telah Berhasil Anda Kerjakan!`);
       }, 2500);
     }
@@ -1628,8 +1664,7 @@ class BPMPFarmGame {
     nextBtn.style.display = "inline-block";
     nextBtn.textContent = "Selesai & Lanjut Eksplorasi Peta ➔";
     nextBtn.onclick = () => {
-      if (window.ttsManager) window.ttsManager.stop();
-      document.getElementById("posko-quiz-modal").classList.remove("active");
+      this.closePoskoQuiz();
     };
 
     this.updateHUD();
@@ -1638,7 +1673,7 @@ class BPMPFarmGame {
 
     if (this.solvedPosko.length >= this.poskoList.length) {
       setTimeout(() => {
-        document.getElementById("posko-quiz-modal").classList.remove("active");
+        this.closePoskoQuiz();
         this.triggerGameFinish(`Luar Biasa! Seluruh ${this.poskoList.length} Posko Telah Berhasil Anda Kerjakan!`);
       }, 2500);
     }

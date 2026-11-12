@@ -805,8 +805,33 @@
       });
 
       document.getElementById("btn-posko-close-x").addEventListener("click", () => {
-        if (window.ttsManager) window.ttsManager.stop();
-        document.getElementById("posko-quiz-modal").classList.remove("active");
+        if (game && typeof game.closePoskoQuiz === "function") {
+          game.closePoskoQuiz();
+        } else {
+          if (window.ttsManager) window.ttsManager.stop();
+          const vBox = document.getElementById("posko-video-container");
+          if (vBox) {
+            const iframe = vBox.querySelector("iframe");
+            if (iframe) iframe.src = "about:blank";
+            const vid = vBox.querySelector("video");
+            if (vid) { vid.pause(); vid.src = ""; }
+            vBox.innerHTML = "";
+            vBox.style.display = "none";
+          }
+          document.getElementById("posko-quiz-modal").classList.remove("active");
+        }
+      });
+
+      // Tombol Escape menutup modal kuis & mematikan video
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          const qModal = document.getElementById("posko-quiz-modal");
+          if (qModal && qModal.classList.contains("active")) {
+            if (game && typeof game.closePoskoQuiz === "function") {
+              game.closePoskoQuiz();
+            }
+          }
+        }
       });
 
       // Sinkronisasi Live jika Guru Mengupdate Soal dari Dashboard
