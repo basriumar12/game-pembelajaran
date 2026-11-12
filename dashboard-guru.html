@@ -635,17 +635,20 @@
           <div style="flex: 1; min-width: 280px; position: relative;">
             <input type="text" id="input-teacher-gsheet-id" placeholder="Paste ID Spreadsheet atau Link Lengkap (https://docs.google.com/spreadsheets/d/...)" style="width: 100%; background: #0f172a; border: 1.5px solid var(--bpmp-blue); color: #fff; font-size: 13px; font-weight: 600; padding: 10px 14px; border-radius: 10px; outline: none; box-sizing: border-box;">
           </div>
-          <button id="btn-connect-and-fetch-gsheet" class="header-btn" style="background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; font-weight: 800; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <button id="btn-connect-and-fetch-gsheet" class="header-btn" style="background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; font-weight: 800; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
             🔗 Hubungkan & Tarik Soal
           </button>
-          <button id="btn-save-questions-to-gas" class="header-btn" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 800; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <button id="btn-save-questions-to-gas" class="header-btn" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 800; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
             💾 Simpan ke GSheet
           </button>
-          <button id="btn-open-sheet-guide" class="header-btn" style="background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #fbbf24; font-weight: 700; padding: 10px 14px; border-radius: 10px; cursor: pointer;">
-            📋 Panduan Kolom
+          <button id="btn-quick-copy-tsv" class="header-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #0f172a; font-weight: 800; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;" title="Salin seluruh 30 soal ke clipboard, lalu paste di sel A1 Google Sheet Anda">
+            📋 Salin 30 Soal ke Sheet
           </button>
-          <button id="btn-copy-game-share-link" class="header-btn" style="background: rgba(168, 85, 247, 0.15); border: 1px solid #a855f7; color: #c084fc; font-weight: 700; padding: 10px 14px; border-radius: 10px; cursor: pointer;">
+          <button id="btn-copy-game-share-link" class="header-btn" style="background: rgba(168, 85, 247, 0.2); border: 1px solid #a855f7; color: #c084fc; font-weight: 700; padding: 10px 14px; border-radius: 10px; cursor: pointer;">
             🔗 Salin Link Game Siswa
+          </button>
+          <button id="btn-open-sheet-guide" class="header-btn" style="background: rgba(100, 116, 139, 0.2); border: 1px solid #64748b; color: #cbd5e1; font-weight: 700; padding: 10px 12px; border-radius: 10px; cursor: pointer;">
+            ℹ️ Panduan Kolom
           </button>
         </div>
 
@@ -898,6 +901,7 @@
     let teacherQuestions = [];
     let currentTeacherPackage = "english_all"; // Default ke Bahasa Inggris (Listening, Reading, Writing)
 
+    // Inisialisasi awal UI Google Sheets
     function updateGSheetStatusUI() {
       const gsheetInput = document.getElementById("input-teacher-gsheet-id");
       const statusBadge = document.getElementById("gsheet-status-badge");
@@ -927,6 +931,25 @@
           openSheetBtn.style.display = "none";
         }
       }
+    }
+
+    // Listener realtime saat input ID Google Sheet diketik atau dipaste
+    const teacherSheetInputEl = document.getElementById("input-teacher-gsheet-id");
+    if (teacherSheetInputEl) {
+      teacherSheetInputEl.addEventListener("input", (e) => {
+        const val = e.target.value.trim();
+        if (val) {
+          window.gasService.setCustomConfig(null, val);
+          updateGSheetStatusUI();
+        }
+      });
+      teacherSheetInputEl.addEventListener("change", (e) => {
+        const val = e.target.value.trim();
+        if (val) {
+          window.gasService.setCustomConfig(null, val);
+          updateGSheetStatusUI();
+        }
+      });
     }
 
     function loadPackageQuestions(pkgId) {
@@ -1194,7 +1217,8 @@
       const statusEl = document.getElementById("questions-save-status");
 
       if (!rawVal) {
-        alert("Silakan masukkan ID Spreadsheet atau link URL Google Sheets terlebih dahulu!");
+        alert("Silakan masukkan ID Spreadsheet atau link URL Google Sheets terlebih dahulu di kotak input!");
+        if (inputEl) inputEl.focus();
         return;
       }
 
@@ -1217,33 +1241,63 @@
           statusEl.style.background = "rgba(16, 185, 129, 0.2)";
           statusEl.style.border = "1px solid #10b981";
           statusEl.style.color = "#34d399";
-          statusEl.innerHTML = `✅ Berhasil terhubung! Memuat <b>${loadedQuestions.length} soal</b> dari Google Sheet. Soal otomatis aktif di game siswa!`;
+          statusEl.innerHTML = `✅ Berhasil terhubung! Memuat <b>${loadedQuestions.length} soal</b> langsung dari Google Sheet Anda. Soal otomatis aktif di game siswa!`;
         } else {
           statusEl.style.background = "rgba(245, 158, 11, 0.2)";
           statusEl.style.border = "1px solid #f59e0b";
           statusEl.style.color = "#fbbf24";
-          statusEl.innerHTML = `⚠️ Sheet terhubung, namun tab "Soal" belum memiliki data baris soal. Anda dapat mengklik <b>"Simpan ke GSheet"</b> untuk mengisi Google Sheet dengan template soal Bahasa Inggris saat ini.`;
+          statusEl.innerHTML = `⚠️ Google Sheet terhubung, namun tab <b>"Soal"</b> belum memiliki data baris soal.<br><br>💡 <b>Cara Mengisi Cepat:</b> Klik tombol kuning <b>"📋 Salin 30 Soal ke Sheet"</b> di atas, lalu buka Google Sheet Anda, klik pada sel <b>A1</b>, dan tekan <b>Paste (Ctrl+V / Cmd+V)</b>!`;
         }
       } catch (err) {
         statusEl.style.background = "rgba(239, 68, 68, 0.2)";
         statusEl.style.border = "1px solid #ef4444";
         statusEl.style.color = "#f87171";
-        statusEl.innerHTML = `❌ Gagal mengambil soal: ${err.message}. Pastikan Google Sheet Anda diatur: "Anyone with the link can view".`;
+        statusEl.innerHTML = `❌ Gagal mengambil soal: ${err.message}. Pastikan Google Sheet Anda diatur: <i>"Siapa saja yang memiliki link dapat melihat (Viewer)"</i>.`;
       }
     });
 
+    // --- Tombol Cepat: Salin Seluruh 30 Soal ke Clipboard (Langsung Paste ke Sel A1 Google Sheet) ---
+    const quickCopyBtn = document.getElementById("btn-quick-copy-tsv");
+    if (quickCopyBtn) {
+      quickCopyBtn.addEventListener("click", () => {
+        syncDOMToQuestions();
+        if (window.gasService && typeof window.gasService.exportQuestionsToTSV === "function") {
+          const tsv = window.gasService.exportQuestionsToTSV(teacherQuestions);
+          navigator.clipboard.writeText(tsv).then(() => {
+            alert(`✅ ${teacherQuestions.length} SOAL BERHASIL DISALIN KE CLIPBOARD!\n\nLangkah mengisi Google Sheet Anda:\n1. Buka Google Sheet Anda\n2. Klik pada sel A1 (paling pojok kiri atas)\n3. Tekan tombol Paste (Ctrl+V di Windows atau Cmd+V di Mac)\n\nSemua kolom A sampai N (Listening TTS, Reading & Writing) akan otomatis terisi rapi!`);
+          }).catch(() => {
+            prompt("Salin seluruh teks soal berikut, lalu paste di sel A1 Google Sheet Anda:", tsv);
+          });
+        }
+      });
+    }
+
     // --- Salin Link Game Siswa Berdasarkan Sheet Terhubung ---
     document.getElementById("btn-copy-game-share-link").addEventListener("click", () => {
-      const sheetId = window.gasService ? window.gasService.spreadsheetId : "";
-      const base = window.location.origin + window.location.pathname.replace("dashboard-guru.html", "index.html");
-      const url = new URL(base);
-      if (sheetId) url.searchParams.set("sheet", sheetId);
-      if (currentTeacherPackage) url.searchParams.set("package", currentTeacherPackage);
+      const inputEl = document.getElementById("input-teacher-gsheet-id");
+      const rawVal = inputEl ? inputEl.value.trim() : "";
+      if (rawVal) {
+        window.gasService.setCustomConfig(null, rawVal);
+        updateGSheetStatusUI();
+      }
 
-      navigator.clipboard.writeText(url.toString()).then(() => {
-        alert(`✅ Link Game Siswa Berhasil Disalin!\n\nLink: ${url.toString()}\n\nSiswa yang membuka link ini akan otomatis bermain dengan soal dari Google Sheet guru!`);
+      const sheetId = window.gasService ? window.gasService.spreadsheetId : "";
+      let shareUrl = "";
+
+      if (window.location.protocol === "file:") {
+        shareUrl = `index.html?sheet=${encodeURIComponent(sheetId || '')}&package=${encodeURIComponent(currentTeacherPackage)}`;
+      } else {
+        const base = window.location.origin + window.location.pathname.replace("dashboard-guru.html", "index.html");
+        const url = new URL(base);
+        if (sheetId) url.searchParams.set("sheet", sheetId);
+        if (currentTeacherPackage) url.searchParams.set("package", currentTeacherPackage);
+        shareUrl = url.toString();
+      }
+
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        alert(`✅ LINK GAME SISWA BERHASIL DISALIN!\n\n${shareUrl}\n\nSiswa yang membuka link ini akan langsung memainkan soal dari Google Sheet guru!`);
       }).catch(() => {
-        prompt("Salin link berikut untuk siswa:", url.toString());
+        prompt("Salin link berikut untuk siswa:", shareUrl);
       });
     });
 
@@ -1253,26 +1307,41 @@
       if (sheetGuideModal) sheetGuideModal.style.display = "flex";
     });
 
+    // --- Simpan Soal ke Google Sheets ---
     document.getElementById("btn-save-questions-to-gas").addEventListener("click", async () => {
+      const inputEl = document.getElementById("input-teacher-gsheet-id");
+      const rawVal = inputEl ? inputEl.value.trim() : "";
+      if (rawVal) {
+        window.gasService.setCustomConfig(null, rawVal);
+        updateGSheetStatusUI();
+      }
+
+      const curSheet = window.gasService ? window.gasService.spreadsheetId : "";
+      if (!curSheet) {
+        alert("Silakan masukkan ID atau link Google Sheets Anda terlebih dahulu di kotak input!");
+        if (inputEl) inputEl.focus();
+        return;
+      }
+
       syncDOMToQuestions();
       const statusEl = document.getElementById("questions-save-status");
       statusEl.style.display = "block";
       statusEl.style.background = "rgba(2, 132, 199, 0.2)";
       statusEl.style.border = "1px solid #0284c7";
       statusEl.style.color = "#38bdf8";
-      statusEl.innerHTML = `⏳ Sedang menyimpan ${teacherQuestions.length} soal ke Google Sheets...`;
+      statusEl.innerHTML = `⏳ Sedang mengirim ${teacherQuestions.length} soal ke Google Sheets...`;
 
       try {
-        const res = await window.gasService.saveQuestions(teacherQuestions);
+        const res = await window.gasService.saveQuestions(teacherQuestions, curSheet);
         statusEl.style.background = "rgba(16, 185, 129, 0.2)";
         statusEl.style.border = "1px solid #10b981";
         statusEl.style.color = "#34d399";
-        statusEl.innerHTML = `✅ Sukses! ${res.message || (teacherQuestions.length + " soal berhasil disimpan ke Google Sheets (Tab 'Soal'). Game siswa akan langsung menggunakan paket soal ini!")}`;
+        statusEl.innerHTML = `✅ ${res.message || (teacherQuestions.length + " soal berhasil diproses!")}<br><br>💡 <i>Jika Google Sheet Anda dibuat dari akun email lain, Anda juga dapat menggunakan tombol kuning <b>'📋 Salin 30 Soal ke Sheet'</b> untuk memastikan isi sheet 100% langsung terisi di sel A1 tanpa kendala izin Google!</i>`;
       } catch (err) {
-        statusEl.style.background = "rgba(239, 68, 68, 0.2)";
-        statusEl.style.border = "1px solid #ef4444";
-        statusEl.style.color = "#f87171";
-        statusEl.innerHTML = `❌ Terjadi kendala saat menyimpan: ${err.message}`;
+        statusEl.style.background = "rgba(245, 158, 11, 0.2)";
+        statusEl.style.border = "1px solid #f59e0b";
+        statusEl.style.color = "#fbbf24";
+        statusEl.innerHTML = `⚠️ Pengiriman ke script backend: ${err.message}.<br><br>💡 <b>Solusi Pasti:</b> Klik tombol kuning <b>"📋 Salin 30 Soal ke Sheet"</b> di atas, lalu Paste (Ctrl+V) langsung di sel A1 Google Sheet Anda!`;
       }
     });
 

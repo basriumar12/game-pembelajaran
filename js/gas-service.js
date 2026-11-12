@@ -391,7 +391,8 @@ class GASService {
           if (!row || !row.c) return;
           const c = row.c;
           const getCell = (colIdx) => {
-            if (!c[colIdx] || c[colIdx].v === null || c[colIdx].v === undefined) return "";
+            if (!c || !c[colIdx] || c[colIdx].v === null || c[colIdx].v === undefined) return "";
+            if (c[colIdx].f !== undefined && c[colIdx].f !== null) return String(c[colIdx].f).trim();
             return String(c[colIdx].v).trim();
           };
 
@@ -399,8 +400,15 @@ class GASService {
           const col1 = getCell(1);
           const col2 = getCell(2);
 
-          // Jika baris pertama adalah nama header kolom, lewati
-          if (idx === 0 && (col0.toLowerCase().includes("id") || col2.toLowerCase().includes("tanya") || col1.toLowerCase().includes("kategori"))) {
+          // Jika baris pertama adalah nama header kolom (Indonesia atau Inggris), lewati
+          if (idx === 0 && (
+            col0.toLowerCase().includes("id") ||
+            col2.toLowerCase().includes("tanya") ||
+            col2.toLowerCase().includes("question") ||
+            col1.toLowerCase().includes("kategori") ||
+            col1.toLowerCase().includes("category") ||
+            col1.toLowerCase().includes("topic")
+          )) {
             return;
           }
 
