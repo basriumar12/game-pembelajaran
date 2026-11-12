@@ -547,6 +547,9 @@
       <button class="tab-btn" data-tab="tab-attendance">
         📋 Daftar Siswa yang Sudah Masuk (Presensi Masuk)
       </button>
+      <button class="tab-btn" data-tab="tab-questions">
+        ✏️ Kelola Bank Soal (Edit / Ganti Soal Guru)
+      </button>
     </div>
 
     <!-- TAB 1: LIVE LEADERBOARD -->
@@ -594,9 +597,47 @@
         </tbody>
       </table>
     </div>
+
+    <!-- TAB 3: KELOLA BANK SOAL (GURU) -->
+    <div id="tab-questions" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; background: rgba(15, 23, 42, 0.6); padding: 16px 20px; border-radius: 14px; border: 1px solid var(--card-border);">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <h3 style="font-size: 16px; color: #fff; margin: 0;">📝 Editor Bank Soal Guru Multi-Jenjang</h3>
+            <span id="badge-question-count" style="background: rgba(2, 132, 199, 0.2); border: 1px solid #0284c7; color: #38bdf8; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 12px;">40 Soal Aktif</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <label style="font-size: 12px; font-weight: 800; color: var(--bpmp-gold);">Pilih Paket / Mata Pelajaran:</label>
+            <select id="select-teacher-package" style="background: #0f172a; border: 2px solid var(--bpmp-gold); color: #fff; font-weight: 800; font-size: 13px; border-radius: 8px; padding: 6px 12px; outline: none; cursor: pointer;">
+              <option value="smp_kka_7" selected>📘 SMP Kelas VII — KKA (Poster Kampanye Digital - 40 Soal)</option>
+              <option value="sma_iot_10">💻 SMA Kelas X — Informatika & Arduino Wokwi (30 Soal)</option>
+              <option value="english_all">🎧 Bahasa Inggris — Reading, Writing & Listening TTS</option>
+            </select>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button id="btn-load-default-questions" class="header-btn" style="background: rgba(2, 132, 199, 0.2); border-color: #0284c7; color: #38bdf8;">
+            📥 Muat Soal Paket
+          </button>
+          <button id="btn-add-new-question" class="header-btn" style="background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #34d399;">
+            ➕ Tambah Soal
+          </button>
+          <button id="btn-save-questions-to-gas" class="header-btn" style="background: var(--bpmp-gold); color: #0f172a; font-weight: 800;">
+            💾 Simpan Soal ke Server
+          </button>
+        </div>
+      </div>
+
+      <div id="questions-save-status" style="display: none; padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 13px; font-weight: 700;"></div>
+
+      <div id="questions-editor-list" style="display: flex; flex-direction: column; gap: 14px;">
+        <!-- Card-card soal akan di-render di sini -->
+      </div>
+    </div>
   </div>
 
   <!-- Scripts -->
+  <script src="js/questions.js"></script>
   <script src="js/gas-service.js"></script>
 
   <script>
@@ -764,6 +805,299 @@
     // Auto-refresh loop every 4 seconds
     fetchDashboardData();
     refreshTimer = setInterval(fetchDashboardData, 4000);
+
+    // ========================================================================
+    // LOGIKA EDITOR BANK SOAL GURU MULTI-JENJANG & BAHASA INGGRIS TTS
+    // ========================================================================
+    let teacherQuestions = [];
+    let currentTeacherPackage = "smp_kka_7";
+
+    function loadPackageQuestions(pkgId) {
+      currentTeacherPackage = pkgId;
+      const pkg = window.QUESTION_PACKAGES ? window.QUESTION_PACKAGES[pkgId] : null;
+      if (pkg && Array.isArray(pkg.questions) && pkg.questions.length > 0) {
+        teacherQuestions = JSON.parse(JSON.stringify(pkg.questions));
+      } else {
+        teacherQuestions = window.DEFAULT_QUESTIONS ? JSON.parse(JSON.stringify(window.DEFAULT_QUESTIONS)) : [];
+      }
+      renderQuestionsEditor();
+    }
+
+    const pkgSelectTeacher = document.getElementById("select-teacher-package");
+    if (pkgSelectTeacher) {
+      pkgSelectTeacher.addEventListener("change", (e) => {
+        loadPackageQuestions(e.target.value);
+      });
+    }
+
+    async function initQuestionsEditor() {
+      try {
+        const data = await window.gasService.fetchQuestions();
+        if (Array.isArray(data) && data.length > 0) {
+          teacherQuestions = data;
+        } else {
+          loadPackageQuestions(currentTeacherPackage);
+          return;
+        }
+      } catch (e) {
+        loadPackageQuestions(currentTeacherPackage);
+        return;
+      }
+      renderQuestionsEditor();
+    }
+
+    function renderQuestionsEditor() {
+      const container = document.getElementById("questions-editor-list");
+      const countBadge = document.getElementById("badge-question-count");
+      if (countBadge) countBadge.textContent = `${teacherQuestions.length} Soal Aktif`;
+      if (!container) return;
+      container.innerHTML = "";
+
+      const isEnglish = (currentTeacherPackage === "english_all");
+
+      teacherQuestions.forEach((q, idx) => {
+        const card = document.createElement("div");
+        card.style.cssText = "background: rgba(30, 41, 59, 0.7); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px;";
+
+        const optA = (q.options && q.options[0]) ? (q.options[0].text || q.options[0]) : "";
+        const optB = (q.options && q.options[1]) ? (q.options[1].text || q.options[1]) : "";
+        const optC = (q.options && q.options[2]) ? (q.options[2].text || q.options[2]) : "";
+        const optD = (q.options && q.options[3]) ? (q.options[3].text || q.options[3]) : "";
+        const currentAns = (q.answer || "A").toString().toUpperCase().trim();
+        const qType = q.type || (q.audioText ? "listening" : (q.readingPassage ? "reading" : "standard"));
+
+        card.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span style="background: var(--bpmp-gold); color: #0f172a; font-weight: 900; font-size: 12px; padding: 2px 8px; border-radius: 6px;">#${idx + 1}</span>
+              <input type="text" class="q-category-input" value="${q.category || 'Materi Asesmen'}" style="background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #38bdf8; font-weight: 700; border-radius: 6px; padding: 4px 8px; font-size: 12px; width: 200px;" placeholder="Kategori Topik">
+              
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <label style="font-size: 11px; color: #94a3b8;">Tipe:</label>
+                <select class="q-type-select" style="background: #0f172a; border: 1px solid var(--card-border); color: #38bdf8; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 3px 6px;">
+                  <option value="standard" ${qType === 'standard' ? 'selected' : ''}>Standard (Pilihan Ganda)</option>
+                  <option value="listening" ${qType === 'listening' ? 'selected' : ''}>🎧 Listening (TTS Audio)</option>
+                  <option value="reading" ${qType === 'reading' ? 'selected' : ''}>📖 Reading (Bacaan)</option>
+                  <option value="writing" ${qType === 'writing' ? 'selected' : ''}>✍️ Writing (Tata Bahasa)</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn-delete-q" data-idx="${idx}" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171; border-radius: 6px; padding: 3px 8px; font-size: 11px; cursor: pointer;">🗑️ Hapus</button>
+          </div>
+
+          <!-- Bagian Khusus Audio Listening TTS -->
+          <div class="q-listening-block" style="display: ${qType === 'listening' ? 'block' : 'none'}; background: rgba(14, 165, 233, 0.1); border: 1px dashed #38bdf8; border-radius: 8px; padding: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label style="font-size: 11px; font-weight: 800; color: #38bdf8;">🎙️ Teks yang Dibacakan Audio TTS (Listening Script):</label>
+              <button type="button" class="btn-preview-tts" style="background: #0284c7; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 800; cursor: pointer;">🔊 Tes Suara TTS</button>
+            </div>
+            <textarea class="q-audio-text-input" style="width: 100%; min-height: 45px; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px; font-family: inherit;" placeholder="Ketik kalimat bahasa Inggris yang akan dibacakan oleh mesin Text-to-Speech...">${q.audioText || ''}</textarea>
+            <div style="display: flex; gap: 12px; align-items: center; margin-top: 6px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <label style="font-size: 11px; color: #94a3b8;">Kecepatan Suara:</label>
+                <select class="q-audio-speed-select" style="background: #0f172a; border: 1px solid var(--card-border); color: #fff; font-size: 11px; border-radius: 6px; padding: 2px 6px;">
+                  <option value="0.75" ${q.audioSpeed == 0.75 ? 'selected' : ''}>🐢 0.75x (Lambat)</option>
+                  <option value="1.0" ${(!q.audioSpeed || q.audioSpeed == 1.0) ? 'selected' : ''}>▶️ 1.0x (Normal)</option>
+                  <option value="1.25" ${q.audioSpeed == 1.25 ? 'selected' : ''}>⚡ 1.25x (Cepat)</option>
+                </select>
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <label style="font-size: 11px; color: #94a3b8;">Batas Putar Murid:</label>
+                <input type="number" class="q-max-plays-input" value="${q.maxPlays || 2}" min="1" max="5" style="width: 55px; background: #0f172a; border: 1px solid var(--card-border); color: #fff; font-size: 11px; border-radius: 6px; padding: 2px 6px;">
+                <span style="font-size: 11px; color: #94a3b8;">Kali</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bagian Khusus Teks Bacaan (Reading Passage) -->
+          <div class="q-reading-block" style="display: ${qType === 'reading' ? 'block' : 'none'}; background: rgba(245, 158, 11, 0.1); border: 1px dashed #f59e0b; border-radius: 8px; padding: 10px;">
+            <label style="font-size: 11px; font-weight: 800; color: #fbbf24; display: block; margin-bottom: 4px;">📖 Teks Bacaan Panjang (Reading Passage):</label>
+            <textarea class="q-reading-passage-input" style="width: 100%; min-height: 50px; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px; font-family: inherit;" placeholder="Tuliskan teks narasi / artikel bacaan di sini...">${q.readingPassage || ''}</textarea>
+          </div>
+
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Teks Pertanyaan:</label>
+            <textarea class="q-text-input" style="width: 100%; min-height: 55px; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 8px; padding: 8px; font-size: 13px; font-family: inherit; resize: vertical;">${q.question || ''}</textarea>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #94a3b8;">Pilihan A:</label>
+              <input type="text" class="q-opt-a" value="${optA}" style="width: 100%; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px;">
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #94a3b8;">Pilihan B:</label>
+              <input type="text" class="q-opt-b" value="${optB}" style="width: 100%; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px;">
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #94a3b8;">Pilihan C:</label>
+              <input type="text" class="q-opt-c" value="${optC}" style="width: 100%; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px;">
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #94a3b8;">Pilihan D:</label>
+              <input type="text" class="q-opt-d" value="${optD}" style="width: 100%; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px;">
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-size: 12px; font-weight: 800; color: var(--bpmp-gold);">Kunci Jawaban:</label>
+              <select class="q-key-select" style="background: #0f172a; border: 2px solid var(--bpmp-gold); color: #fff; font-weight: 900; font-size: 13px; border-radius: 6px; padding: 4px 10px;">
+                <option value="A" ${currentAns === 'A' ? 'selected' : ''}>A</option>
+                <option value="B" ${currentAns === 'B' ? 'selected' : ''}>B</option>
+                <option value="C" ${currentAns === 'C' ? 'selected' : ''}>C</option>
+                <option value="D" ${currentAns === 'D' ? 'selected' : ''}>D</option>
+              </select>
+            </div>
+            <div style="flex: 1; min-width: 220px;">
+              <input type="text" class="q-explanation-input" value="${q.explanation || ''}" style="width: 100%; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #a7f3d0; border-radius: 6px; padding: 5px 8px; font-size: 11px;" placeholder="Pembahasan / Alasan Jawaban">
+            </div>
+          </div>
+        `;
+
+        // Switch tipe soal dinamis
+        const typeSelect = card.querySelector(".q-type-select");
+        const listeningBlock = card.querySelector(".q-listening-block");
+        const readingBlock = card.querySelector(".q-reading-block");
+        typeSelect.addEventListener("change", (e) => {
+          const val = e.target.value;
+          listeningBlock.style.display = (val === "listening") ? "block" : "none";
+          readingBlock.style.display = (val === "reading") ? "block" : "none";
+        });
+
+        // Tombol Tes Suara TTS langsung dari Dashboard
+        const previewBtn = card.querySelector(".btn-preview-tts");
+        if (previewBtn) {
+          previewBtn.addEventListener("click", () => {
+            const script = card.querySelector(".q-audio-text-input").value;
+            const speed = parseFloat(card.querySelector(".q-audio-speed-select").value) || 1.0;
+            if (!script) {
+              alert("Silakan masukkan teks audio terlebih dahulu!");
+              return;
+            }
+            if (window.speechSynthesis) {
+              window.speechSynthesis.cancel();
+              const u = new SpeechSynthesisUtterance(script);
+              u.rate = speed;
+              u.lang = "en-US";
+              window.speechSynthesis.speak(u);
+            }
+          });
+        }
+
+        card.querySelector(".btn-delete-q").addEventListener("click", () => {
+          if (confirm(`Hapus soal nomor #${idx + 1}?`)) {
+            syncDOMToQuestions();
+            teacherQuestions.splice(idx, 1);
+            renderQuestionsEditor();
+          }
+        });
+
+        container.appendChild(card);
+      });
+    }
+
+    function syncDOMToQuestions() {
+      const cards = document.querySelectorAll("#questions-editor-list > div");
+      const list = [];
+      cards.forEach((card, idx) => {
+        const cat = card.querySelector(".q-category-input").value;
+        const qType = card.querySelector(".q-type-select").value;
+        const qText = card.querySelector(".q-text-input").value;
+        const optA = card.querySelector(".q-opt-a").value;
+        const optB = card.querySelector(".q-opt-b").value;
+        const optC = card.querySelector(".q-opt-c").value;
+        const optD = card.querySelector(".q-opt-d").value;
+        const key = card.querySelector(".q-key-select").value;
+        const exp = card.querySelector(".q-explanation-input").value;
+
+        const audioText = card.querySelector(".q-audio-text-input") ? card.querySelector(".q-audio-text-input").value : "";
+        const audioSpeed = card.querySelector(".q-audio-speed-select") ? parseFloat(card.querySelector(".q-audio-speed-select").value) : 1.0;
+        const maxPlays = card.querySelector(".q-max-plays-input") ? parseInt(card.querySelector(".q-max-plays-input").value) : 2;
+        const readingPassage = card.querySelector(".q-reading-passage-input") ? card.querySelector(".q-reading-passage-input").value : "";
+
+        list.push({
+          id: idx + 1,
+          type: qType,
+          category: cat,
+          question: qText,
+          audioText: audioText,
+          audioSpeed: audioSpeed,
+          maxPlays: maxPlays,
+          readingPassage: readingPassage,
+          options: [
+            { key: "A", text: optA },
+            { key: "B", text: optB },
+            { key: "C", text: optC },
+            { key: "D", text: optD }
+          ],
+          answer: key,
+          explanation: exp
+        });
+      });
+      teacherQuestions = list;
+    }
+
+    document.getElementById("btn-add-new-question").addEventListener("click", () => {
+      syncDOMToQuestions();
+      teacherQuestions.push({
+        id: teacherQuestions.length + 1,
+        type: (currentTeacherPackage === "english_all" ? "listening" : "standard"),
+        category: (currentTeacherPackage === "english_all" ? "Listening / Reading" : "Topik Baru"),
+        question: "Tulis pertanyaan baru di sini...",
+        audioText: (currentTeacherPackage === "english_all" ? "Listen carefully to this dialogue..." : ""),
+        audioSpeed: 1.0,
+        maxPlays: 2,
+        readingPassage: "",
+        options: [
+          { key: "A", text: "Pilihan A" },
+          { key: "B", text: "Pilihan B" },
+          { key: "C", text: "Pilihan C" },
+          { key: "D", text: "Pilihan D" }
+        ],
+        answer: "A",
+        explanation: "Pembahasan untuk soal ini."
+      });
+      renderQuestionsEditor();
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    });
+
+    document.getElementById("btn-load-default-questions").addEventListener("click", () => {
+      if (confirm(`Muat ulang soal bawaan untuk paket terpilih (${currentTeacherPackage})?`)) {
+        loadPackageQuestions(currentTeacherPackage);
+      }
+    });
+
+    document.getElementById("btn-save-questions-to-gas").addEventListener("click", async () => {
+      syncDOMToQuestions();
+      const statusEl = document.getElementById("questions-save-status");
+      statusEl.style.display = "block";
+      statusEl.style.background = "rgba(2, 132, 199, 0.2)";
+      statusEl.style.border = "1px solid #0284c7";
+      statusEl.style.color = "#38bdf8";
+      statusEl.innerHTML = `⏳ Sedang menyimpan ${teacherQuestions.length} soal paket "${currentTeacherPackage}" ke Google Sheets...`;
+
+      try {
+        await window.gasService.saveQuestions(teacherQuestions);
+        statusEl.style.background = "rgba(16, 185, 129, 0.2)";
+        statusEl.style.border = "1px solid #10b981";
+        statusEl.style.color = "#34d399";
+        statusEl.innerHTML = `✅ Sukses! ${teacherQuestions.length} soal berhasil disimpan ke Google Sheets (Tab "Soal"). Game siswa akan langsung menggunakan paket soal ini!`;
+        setTimeout(() => { statusEl.style.display = "none"; }, 5000);
+      } catch (err) {
+        statusEl.style.background = "rgba(239, 68, 68, 0.2)";
+        statusEl.style.border = "1px solid #ef4444";
+        statusEl.style.color = "#f87171";
+        statusEl.innerHTML = `❌ Terjadi kendala saat menyimpan: ${err.message}`;
+      }
+    });
+
+    // Inisialisasi Bank Soal saat Tab dibuka
+    document.querySelector('[data-tab="tab-questions"]').addEventListener("click", () => {
+      if (teacherQuestions.length === 0) {
+        initQuestionsEditor();
+      }
+    });
   </script>
 </body>
 </html>

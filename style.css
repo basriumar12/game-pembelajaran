@@ -715,3 +715,285 @@ body, html {
   color: white;
   border-color: transparent;
 }
+
+/* ==========================================================================
+   CAMERA ZOOM & MOBILE TOUCH D-PAD CONTROLS
+   ========================================================================== */
+.camera-zoom-panel {
+  position: absolute;
+  right: 16px;
+  bottom: 84px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 40;
+  pointer-events: auto;
+}
+
+.btn-zoom-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(30, 41, 59, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 2px solid #f59e0b;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 0.1s, background 0.15s;
+}
+
+.btn-zoom-circle:active {
+  transform: scale(0.92);
+  background: #f59e0b;
+  color: #1e293b;
+}
+
+.dpad-zone {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  width: 140px;
+  height: 140px;
+  z-index: 40;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.dpad-btn {
+  width: 46px;
+  height: 46px;
+  background: rgba(30, 41, 59, 0.9);
+  border: 2px solid #f59e0b;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  transition: background 0.1s, transform 0.1s;
+}
+
+.dpad-btn:active, .dpad-btn.pressed {
+  background: #f59e0b;
+  color: #1e293b;
+  transform: scale(0.92);
+}
+
+.dpad-mid-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.dpad-center {
+  width: 44px;
+  height: 44px;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 8px;
+}
+
+.btn-rpg-secondary {
+  background: linear-gradient(135deg, #475569, #334155);
+  border: 2px solid #94a3b8;
+  color: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 800;
+  transition: all 0.2s;
+}
+
+.btn-rpg-secondary:hover {
+  background: #64748b;
+}
+
+.map-ctrl-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1.5px solid #f59e0b;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.map-ctrl-btn:active {
+  background: #f59e0b;
+  color: #1e293b;
+}
+
+/* ==========================================================================
+   READING & LISTENING TTS AUDIO UI
+   ========================================================================== */
+.reading-passage-box {
+  background: #fdf6e2;
+  border: 2px dashed #bcaaa4;
+  border-left: 5px solid #0284c7;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #27272a;
+  max-height: 180px;
+  overflow-y: auto;
+  text-align: left;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.listening-player-box {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border: 2px solid #38bdf8;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 14px;
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.25);
+  text-align: left;
+}
+
+.listening-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+.listening-badge {
+  background: #0284c7;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.listening-quota-tag {
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid #f59e0b;
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+
+.listening-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-tts-play {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #fff;
+  border: 2px solid #38bdf8;
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+}
+
+.btn-tts-play:hover:not(:disabled) {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.btn-tts-play:disabled {
+  background: #475569;
+  border-color: #64748b;
+  color: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.tts-speed-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 3px 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.tts-speed-btn {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tts-speed-btn.active, .tts-speed-btn:hover {
+  background: #38bdf8;
+  color: #0f172a;
+}
+
+.sound-wave-anim {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+}
+
+.sound-wave-bar {
+  width: 3px;
+  background: #38bdf8;
+  border-radius: 2px;
+  animation: soundWave 0.8s infinite ease-in-out alternate;
+}
+
+.sound-wave-bar:nth-child(1) { height: 6px; animation-delay: 0.1s; }
+.sound-wave-bar:nth-child(2) { height: 14px; animation-delay: 0.3s; }
+.sound-wave-bar:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+.sound-wave-bar:nth-child(4) { height: 16px; animation-delay: 0.4s; }
+
+@keyframes soundWave {
+  0% { transform: scaleY(0.3); }
+  100% { transform: scaleY(1.0); }
+}

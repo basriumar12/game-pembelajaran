@@ -231,6 +231,30 @@ class GASService {
     return window.DEFAULT_QUESTIONS || [];
   }
 
+  /**
+   * 5. GURU: Simpan Soal Baru ke Google Sheets
+   */
+  async saveQuestions(questionList) {
+    const payload = {
+      action: "saveQuestions",
+      questions: questionList,
+      timestamp: new Date().toISOString()
+    };
+    try {
+      this.submitViaHiddenForm(payload);
+      await fetch(this.endpoint, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(payload)
+      });
+      return { success: true };
+    } catch (e) {
+      this.submitViaHiddenForm(payload);
+      return { success: true };
+    }
+  }
+
   // --- Local Storage / Fallback Database ---
 
   saveLocalPlayer(player) {

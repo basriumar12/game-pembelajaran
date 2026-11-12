@@ -60,6 +60,8 @@ function handleIncomingData(e) {
       return handleGetLeaderboard(roomId);
     } else if (action === "getQuestions") {
       return handleGetQuestions();
+    } else if (action === "saveQuestions" || action === "updateQuestions") {
+      return handleSaveQuestions(data);
     } else if (action === "resetRoom") {
       return handleResetRoom(roomId);
     }
@@ -143,6 +145,11 @@ function handleUpdatePlayerProgress(data) {
   const playerId = data.playerId || "";
   const tabSwitches = Number(data.tabSwitchCount) || 0;
 
+  const incomingScore = Number(data.totalScore) || 0;
+  const incomingCorrect = Number(data.correctAnswers) || 0;
+  const incomingWrong = Number(data.wrongAnswers) || 0;
+  const incomingTile = Number(data.currentTile) || 0;
+
   if (sheet && sheet.getLastRow() > 1) {
     const values = sheet.getRange(2, 1, sheet.getLastRow() - 1, 14).getValues();
     for (let i = 0; i < values.length; i++) {
@@ -152,13 +159,29 @@ function handleUpdatePlayerProgress(data) {
 
       if (rowRoom === roomId && (rowId === playerId || rowName.toString().toLowerCase() === name.toLowerCase())) {
         const rowNum = i + 2;
-        sheet.getRange(rowNum, 8).setValue(data.isFinished ? "FINISHED" : "PLAYING");
-        sheet.getRange(rowNum, 9).setValue(Number(data.totalScore) || 0);
-        sheet.getRange(rowNum, 10).setValue(Number(data.correctAnswers) || 0);
-        sheet.getRange(rowNum, 11).setValue(Number(data.wrongAnswers) || 0);
-        sheet.getRange(rowNum, 12).setValue(Number(data.currentTile) || 0);
-        sheet.getRange(rowNum, 13).setValue(tabSwitches);
-        sheet.getRange(rowNum, 14).setValue(now.toLocaleTimeString("id-ID"));
+        const currentScore = Number(values[i][8]) || 0;
+        const currentCorrect = Number(values[i][9]) || 0;
+        const currentWrong = Number(values[i][10]) || 0;
+        const currentTile = Number(values[i][11]) || 0;
+
+        // Anti-Drop & Anti-Race Condition:
+        // Gunakan Math.max agar request lama yang terlambat tidak menimpa skor/jawaban benar yang lebih tinggi!
+        const finalScore = Math.max(currentScore, incomingScore);
+        const finalCorrect = Math.max(currentCorrect, incomingCorrect);
+        const finalWrong = Math.max(currentWrong, incomingWrong);
+        const finalTile = Math.max(currentTile, incomingTile);
+        const finalStatus = data.isFinished ? "FINISHED" : (values[i][7] === "FINISHED" ? "FINISHED" : "PLAYING");
+
+        // Tulis sekaligus dalam satu pemanggilan rentang (cepat dan bebas korupsi data)
+        sheet.getRange(rowNum, 8, 1, 7).setValues([[
+          finalStatus,
+          finalScore,
+          finalCorrect,
+          finalWrong,
+          finalTile,
+          tabSwitches,
+          now.toLocaleTimeString("id-ID")
+        ]]);
         break;
       }
     }
@@ -291,7 +314,7 @@ function handleGetQuestions() {
   const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 9).getValues();
   const questions = rows.map((r, i) => ({
     id: r[0] || (i + 1),
-    category: r[1] || "Arduino & Wokwi",
+    category: r[1] || "Materi Asesmen",
     question: r[2],
     options: [
       { key: "A", text: r[3] },
@@ -300,10 +323,86 @@ function handleGetQuestions() {
       { key: "D", text: r[6] }
     ],
     answer: String(r[7]).toUpperCase().trim(),
-    explanation: r[8] || ""
+    explanation: r[8] || "",
+    type: r[9] || (r[10] ? "listening" : (r[13] ? "reading" : "standard")),
+    audioText: r[10] || "",
+    audioSpeed: parseFloat(r[11]) || 1.0,
+    maxPlays: parseInt(r[12]) || 2,
+    readingPassage: r[13] || ""
   }));
   
   return jsonResponse(questions);
+}
+
+/**
+ * 4. GURU: SIMPAN / GANTI SOAL BARU KE GOOGLE SHEETS
+ * Mendukung Tipe Soal Standard, Reading Passage, dan Audio TTS Listening
+ */
+function handleSaveQuestions(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("Soal");
+  if (!sheet) {
+    sheet = ss.insertSheet("Soal");
+  } else {
+    sheet.clear();
+  }
+
+  sheet.appendRow([
+    "ID Soal", "Kategori / Topik", "Pertanyaan", "Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D", "Kunci Jawaban", "Pembahasan", "Tipe", "Audio TTS", "Speed Audio", "Batas Putar", "Reading Passage"
+  ]);
+  sheet.getRange(1, 1, 1, 14).setFontWeight("bold").setBackground("#c8e6c9");
+
+  let qList = data.questions || [];
+  if (typeof qList === "string") {
+    try { qList = JSON.parse(qList); } catch (e) {}
+  }
+
+  const rows = [];
+  qList.forEach((q, idx) => {
+    let optA = "", optB = "", optC = "", optD = "";
+    if (Array.isArray(q.options)) {
+      q.options.forEach(o => {
+        if (typeof o === "object") {
+          if (o.key === "A") optA = o.text || "";
+          else if (o.key === "B") optB = o.text || "";
+          else if (o.key === "C") optC = o.text || "";
+          else if (o.key === "D") optD = o.text || "";
+        }
+      });
+      if (!optA && q.options[0]) optA = q.options[0].text || q.options[0];
+      if (!optB && q.options[1]) optB = q.options[1].text || q.options[1];
+      if (!optC && q.options[2]) optC = q.options[2].text || q.options[2];
+      if (!optD && q.options[3]) optD = q.options[3].text || q.options[3];
+    }
+
+    rows.push([
+      q.id || (idx + 1),
+      q.category || "Materi Asesmen",
+      q.question || "",
+      optA,
+      optB,
+      optC,
+      optD,
+      (q.answer || "A").toString().toUpperCase().trim(),
+      q.explanation || "",
+      q.type || "standard",
+      q.audioText || "",
+      q.audioSpeed || 1.0,
+      q.maxPlays || 2,
+      q.readingPassage || ""
+    ]);
+  });
+
+  if (rows.length > 0) {
+    sheet.getRange(2, 1, rows.length, 14).setValues(rows);
+  }
+
+  SpreadsheetApp.flush();
+  return jsonResponse({
+    status: "success",
+    count: rows.length,
+    message: `${rows.length} soal berhasil disimpan ke Google Sheets!`
+  });
 }
 
 function handleResetRoom(roomId) {

@@ -163,3 +163,103 @@ class SoundSystem {
 }
 
 window.soundSystem = new SoundSystem();
+
+// ============================================================================
+// TEXT-TO-SPEECH (TTS) LISTENING ENGINE
+// Untuk Soal Bahasa Inggris Listening dengan Kontrol Kecepatan & Batasan Putar
+// ============================================================================
+class TTSManager {
+  constructor() {
+    this.synth = (typeof window !== "undefined" && "speechSynthesis" in window) ? window.speechSynthesis : null;
+    this.currentUtterance = null;
+    this.isPlaying = false;
+    this.playCounts = {}; // { [poskoId]: count }
+    this.currentRate = 1.0;
+    this.cachedVoices = [];
+
+    if (this.synth) {
+      if (this.synth.onvoiceschanged !== undefined) {
+        this.synth.onvoiceschanged = () => {
+          this.cachedVoices = this.synth.getVoices();
+        };
+      }
+      this.cachedVoices = this.synth.getVoices();
+    }
+  }
+
+  isSupported() {
+    return !!this.synth;
+  }
+
+  getPlaysRemaining(poskoId, maxPlays = 2) {
+    const used = this.playCounts[poskoId] || 0;
+    return Math.max(0, maxPlays - used);
+  }
+
+  setRate(rate) {
+    this.currentRate = parseFloat(rate) || 1.0;
+  }
+
+  speak(text, poskoId, options = {}) {
+    if (!this.synth) {
+      alert("Browser Anda belum mendukung fitur audio Text-to-Speech!");
+      return false;
+    }
+
+    const maxPlays = options.maxPlays || 2;
+    const remaining = this.getPlaysRemaining(poskoId, maxPlays);
+    if (remaining <= 0) {
+      alert(`Batas pemutaran audio untuk soal ini telah habis (Maksimal ${maxPlays}x).`);
+      return false;
+    }
+
+    this.stop();
+
+    // Catat pemutaran
+    this.playCounts[poskoId] = (this.playCounts[poskoId] || 0) + 1;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = options.rate || this.currentRate || 1.0;
+    utterance.pitch = options.pitch || 1.0;
+    utterance.lang = options.lang || "en-US";
+
+    // Cari voice natural jika tersedia
+    const voices = (this.cachedVoices && this.cachedVoices.length > 0) ? this.cachedVoices : this.synth.getVoices();
+    if (voices && voices.length > 0) {
+      const targetLang = utterance.lang.substring(0, 2);
+      const matched = voices.find(v => v.lang.startsWith(targetLang) && 
+        (v.name.includes("Google") || v.name.includes("Natural") || v.name.includes("Samantha") || v.name.includes("Daniel") || v.name.includes("Serena")));
+      if (matched) {
+        utterance.voice = matched;
+      }
+    }
+
+    utterance.onstart = () => {
+      this.isPlaying = true;
+      if (typeof options.onStart === "function") options.onStart();
+    };
+
+    utterance.onend = () => {
+      this.isPlaying = false;
+      if (typeof options.onEnd === "function") options.onEnd();
+    };
+
+    utterance.onerror = () => {
+      this.isPlaying = false;
+      if (typeof options.onEnd === "function") options.onEnd();
+    };
+
+    this.currentUtterance = utterance;
+    this.synth.speak(utterance);
+    return true;
+  }
+
+  stop() {
+    if (this.synth) {
+      this.synth.cancel();
+      this.isPlaying = false;
+    }
+  }
+}
+
+window.ttsManager = new TTSManager();

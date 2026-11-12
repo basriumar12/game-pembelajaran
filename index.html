@@ -129,6 +129,24 @@
       </div>
     </div>
 
+    <!-- D-PAD TOUCH CONTROLS (ALTERNATIF JOYSTICK UNTUK HP) -->
+    <div id="dpad-zone" class="dpad-zone" style="display: none;">
+      <button id="dpad-up" class="dpad-btn dpad-up">▲</button>
+      <div class="dpad-mid-row">
+        <button id="dpad-left" class="dpad-btn dpad-left">◀</button>
+        <div class="dpad-center"></div>
+        <button id="dpad-right" class="dpad-btn dpad-right">▶</button>
+      </div>
+      <button id="dpad-down" class="dpad-btn dpad-down">▼</button>
+    </div>
+
+    <!-- 3D CAMERA ZOOM CONTROLS (HP / TOUCH FRIENDLY) -->
+    <div class="camera-zoom-panel">
+      <button id="btn-zoom-in" class="btn-zoom-circle" title="Perbesar Layar (Zoom In)">🔍+</button>
+      <button id="btn-zoom-out" class="btn-zoom-circle" title="Perkecil Layar (Zoom Out)">🔍−</button>
+      <button id="btn-zoom-reset" class="btn-zoom-circle" title="Fokus Karakter">🎯</button>
+    </div>
+
     <!-- PROXIMITY ACTION: TOMBOL BUKA POSKO KETIKA MENDEKAT -->
     <div id="posko-action-container" class="posko-action-container" style="display: none;">
       <button id="btn-enter-posko" class="btn-enter-posko">
@@ -141,6 +159,7 @@
 
     <!-- Quick Control Buttons (Bawah Kanan) -->
     <div style="position: absolute; bottom: 12px; right: 12px; display: flex; gap: 6px; pointer-events: auto;">
+      <button id="btn-toggle-ctrl" class="btn-action" style="padding: 6px 10px; font-size: 11px;">🕹️ D-Pad</button>
       <button id="btn-open-map" class="btn-action" style="padding: 6px 12px; font-size: 11px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-weight: 800; border-color: #b45309;">🗺️ Peta Posko</button>
       <button id="btn-cam-follow" class="btn-action" style="padding: 6px 10px; font-size: 11px;">🚶 Kamera</button>
       <button id="btn-cam-iso" class="btn-action" style="padding: 6px 10px; font-size: 11px;">📐 Iso</button>
@@ -154,25 +173,37 @@
        MODAL LOGIN: KHUSUS KELAS X-A & KELAS X-B (SMA SNT)
        ======================================================================== -->
   <div id="login-modal" class="modal-backdrop active">
-    <div class="rpg-dialog-frame" style="max-width: 440px;">
+    <div class="rpg-dialog-frame" style="max-width: 460px;">
       <div class="rpg-dialog-parchment">
         <div class="dialog-header">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="font-size: 32px;">👨‍💻</div>
+            <div id="login-modal-icon" style="font-size: 32px;">📘</div>
             <div>
-              <div class="dialog-title">Asesmen Arduino & Wokwi 3D</div>
-              <div class="dialog-meta">SMA SNT · Petualangan Berburu 30 Posko (60 Menit)</div>
+              <div id="login-modal-title" class="dialog-title">Asesmen Edukasi 3D</div>
+              <div id="login-modal-subtitle" class="dialog-meta">SMP & SMA · Petualangan Berburu Posko (60 Menit)</div>
             </div>
           </div>
         </div>
 
         <form id="login-form">
-          <!-- Pilihan Kelas: Hanya X-A dan X-B -->
+          <!-- Pilihan Mata Pelajaran & Jenjang -->
           <div class="form-group">
-            <label class="form-label">Pilih Kelas X (SMA SNT) *</label>
-            <select id="select-kelas-x" class="form-input" style="font-weight: 800; color: #1976d2; font-size: 15px;" required>
-              <option value="SMA-SNT-XA" selected>Kelas X-A</option>
-              <option value="SMA-SNT-XB">Kelas X-B</option>
+            <label class="form-label">Pilih Mata Pelajaran & Jenjang *</label>
+            <select id="select-package" class="form-input" style="font-weight: 800; color: #1976d2; font-size: 13.5px;" required>
+              <option value="smp_kka_7" selected>📘 SMP Kelas VII — KKA (Poster Kampanye Digital - 40 Soal)</option>
+              <option value="sma_iot_10">💻 SMA Kelas X — Informatika & Arduino Wokwi (30 Soal)</option>
+              <option value="english_all">🎧 Bahasa Inggris — Reading, Writing & Listening TTS</option>
+            </select>
+          </div>
+
+          <!-- Pilihan Kelas / Rombel (Dinamis Menyesuaikan Paket) -->
+          <div class="form-group">
+            <label class="form-label">Pilih Kelas / Rombel *</label>
+            <select id="select-kelas-x" class="form-input" style="font-weight: 800; color: #0284c7; font-size: 14px;" required>
+              <option value="SMP-VII-A" selected>Kelas VII-A</option>
+              <option value="SMP-VII-B">Kelas VII-B</option>
+              <option value="SMP-VII-C">Kelas VII-C</option>
+              <option value="SMP-VII-D">Kelas VII-D</option>
             </select>
           </div>
 
@@ -195,8 +226,8 @@
           </div>
 
           <div class="dialog-footer" style="margin-top: 16px;">
-            <button type="submit" class="btn-rpg-primary" style="width: 100%; font-size: 15px; padding: 12px;">
-              🚀 MULAI BERMAIN & JELAJAHI 30 POSKO
+            <button type="submit" id="btn-login-submit" class="btn-rpg-primary" style="width: 100%; font-size: 15px; padding: 12px;">
+              🚀 MULAI BERMAIN & JELAJAHI POSKO
             </button>
           </div>
         </form>
@@ -205,18 +236,24 @@
   </div>
 
   <!-- ========================================================================
-       MODAL SOAL POSKO (SAAT MENDEKATI POSKO #1 s/d #30)
+       MODAL SOAL POSKO (SAAT MENDEKATI POSKO #1 s/d #40)
        ======================================================================== -->
   <div id="posko-quiz-modal" class="modal-backdrop">
-    <div class="rpg-dialog-frame">
+    <div class="rpg-dialog-frame" style="max-width: 580px;">
       <div class="rpg-dialog-parchment">
         <div class="dialog-header">
           <div>
-            <div id="modal-posko-badge" class="dialog-title" style="color: #f59e0b;">Posko #1 dari 30</div>
-            <div id="modal-posko-topic" class="dialog-meta">Topik: Konsep Variabel & Memori</div>
+            <div id="modal-posko-badge" class="dialog-title" style="color: #f59e0b;">Posko #1</div>
+            <div id="modal-posko-topic" class="dialog-meta">Topik Soal</div>
           </div>
           <button id="btn-posko-close-x" class="btn-action" style="padding: 4px 8px; font-size: 11px;">✖ Keluar</button>
         </div>
+
+        <!-- Audio Listening TTS Player (Khusus Soal Listening) -->
+        <div id="posko-listening-container" style="display: none;"></div>
+
+        <!-- Reading Passage (Khusus Soal Reading) -->
+        <div id="posko-reading-container" style="display: none;"></div>
 
         <!-- Pertanyaan -->
         <div id="modal-posko-question" class="dialog-question">
@@ -276,13 +313,16 @@
           </div>
         </div>
 
-        <div style="background: #e8f5e9; border: 2px solid #81c784; border-radius: 10px; padding: 10px; margin-bottom: 12px; text-align: center; font-size: 12px; color: #1b5e20;">
-          ✅ Data nilai Anda telah otomatis masuk ke Google Sheets Guru SMA SNT!
+        <div id="finish-sync-status" style="background: #e8f5e9; border: 2px solid #81c784; border-radius: 10px; padding: 12px; margin-bottom: 12px; text-align: center; font-size: 13px; color: #1b5e20; font-weight: 800;">
+          ✅ Data nilai Anda telah otomatis tersimpan ke Google Sheets Guru SMA SNT!
         </div>
 
-        <div class="dialog-footer">
-          <button onclick="location.reload()" class="btn-rpg-primary" style="width: 100%;">
-            🔄 Mainkan Sesi Baru
+        <div class="dialog-footer" style="display: flex; gap: 8px;">
+          <button id="btn-resync-final" class="btn-rpg-secondary" style="flex: 1; font-size: 13px; padding: 10px;">
+            🔄 Kirim Ulang ke Guru
+          </button>
+          <button id="btn-exit-game" class="btn-rpg-primary" style="flex: 1; font-size: 13px; padding: 10px; background: #dc2626;">
+            🚪 Selesai & Tutup Game
           </button>
         </div>
       </div>
@@ -325,6 +365,11 @@
             DENAH KAWASAN BPMP GORONTALO (Ketuk nomor posko untuk panduan arah):
           </div>
           <div style="position: relative; display: inline-block; border: 3px solid #8d6e63; border-radius: 14px; overflow: hidden; background: #e8f5e9; box-shadow: inset 0 2px 8px rgba(0,0,0,0.15);">
+            <div style="position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; z-index: 10;">
+              <button id="btn-map-zoom-in" class="map-ctrl-btn" title="Zoom In Peta">🔍+</button>
+              <button id="btn-map-zoom-out" class="map-ctrl-btn" title="Zoom Out Peta">🔍−</button>
+              <button id="btn-map-reset" class="map-ctrl-btn" title="Fokus Posisi Siswa">🎯</button>
+            </div>
             <canvas id="large-map-canvas" width="560" height="380" style="max-width: 100%; height: auto; display: block;"></canvas>
           </div>
         </div>
@@ -385,23 +430,68 @@
         });
       });
 
-      // Form Submit: Kelas X-A atau X-B
+      // Dinamisasi Pilihan Paket Soal & Jenjang
+      const selectPkg = document.getElementById("select-package");
+      const selectKelas = document.getElementById("select-kelas-x");
+      const modalIcon = document.getElementById("login-modal-icon");
+      const modalTitle = document.getElementById("login-modal-title");
+      const modalSub = document.getElementById("login-modal-subtitle");
+
+      function updatePackageUI() {
+        const pkgId = selectPkg.value;
+        const pkg = window.QUESTION_PACKAGES ? window.QUESTION_PACKAGES[pkgId] : null;
+        if (!pkg) return;
+
+        modalIcon.textContent = pkg.icon || "📘";
+        modalTitle.textContent = pkg.title;
+        modalSub.textContent = pkg.description;
+
+        // Render Opsi Kelas Sesuai Paket
+        selectKelas.innerHTML = "";
+        pkg.classes.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c.id;
+          opt.textContent = c.name;
+          selectKelas.appendChild(opt);
+        });
+
+        if (window.gameInstance) {
+          window.gameInstance.switchPackage(pkgId);
+        }
+      }
+
+      if (selectPkg) {
+        selectPkg.addEventListener("change", updatePackageUI);
+      }
+
+      // Form Submit: Masuk Game dengan Paket Pilihan
       const loginForm = document.getElementById("login-form");
       loginForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        const kelasSelect = document.getElementById("select-kelas-x").value;
+        const pkgId = selectPkg.value;
+        const pkg = window.QUESTION_PACKAGES ? window.QUESTION_PACKAGES[pkgId] : null;
+        const kelasSelect = selectKelas.value;
+        const selectedKelasOpt = selectKelas.options[selectKelas.selectedIndex];
+        const kelasNama = selectedKelasOpt ? selectedKelasOpt.textContent : kelasSelect;
         const name = document.getElementById("input-player-name").value.trim();
         const nim = document.getElementById("input-player-nim").value.trim();
 
         if (!name || !nim) return;
 
-        const kelasNama = (kelasSelect === "SMA-SNT-XA") ? "Kelas X-A" : "Kelas X-B";
+        // Terapkan paket soal ke game
+        if (game.switchPackage) {
+          game.switchPackage(pkgId);
+        }
+
+        const schoolLevel = pkg ? pkg.level : "SMA SNT";
 
         game.playerData = {
+          packageId: pkgId,
+          packageTitle: pkg ? pkg.shortTitle : "Asesmen",
           roomId: kelasSelect,
           name: name,
           nim: nim,
-          institution: `SMA SNT (${kelasNama})`,
+          institution: `${schoolLevel} (${kelasNama})`,
           avatar: selectedAvatar
         };
 
@@ -413,7 +503,7 @@
 
         // Update HUD
         document.getElementById("hud-player-title").textContent = name;
-        document.getElementById("hud-player-sub").textContent = `SMA SNT · ${kelasNama}`;
+        document.getElementById("hud-player-sub").textContent = `${pkg ? pkg.shortTitle : schoolLevel} · ${kelasNama}`;
 
         // Tutup Modal Login
         document.getElementById("login-modal").classList.remove("active");
@@ -422,7 +512,7 @@
         // Mulai audio & timer 60 menit
         window.soundSystem.startMusic();
         game.startTimer();
-        game.showToast(`Selamat datang ${name}! Silakan jalan mencari Posko 1 s/d 30! 🏃`);
+        game.showToast(`Selamat datang ${name}! Silakan jelajahi ${game.poskoList.length} Posko Soal! 🏃`);
       });
 
       // Deteksi Pindah Tab (Anti-Curang)
@@ -454,6 +544,7 @@
       });
 
       document.getElementById("btn-posko-close-x").addEventListener("click", () => {
+        if (window.ttsManager) window.ttsManager.stop();
         document.getElementById("posko-quiz-modal").classList.remove("active");
       });
 
