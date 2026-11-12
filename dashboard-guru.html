@@ -464,7 +464,7 @@
         📥 Ekspor Nilai (CSV)
       </button>
 
-      <a href="index.html" target="_blank" class="btn-action btn-gold" style="text-decoration: none;">
+      <a id="nav-btn-game-siswa" href="./" target="_blank" class="btn-action btn-gold" style="text-decoration: none;">
         🎮 Tampilan Game Siswa ➔
       </a>
     </div>
@@ -1777,6 +1777,35 @@
       });
     }
 
+    // --- Helper Universal Pembuat URL Game Siswa (Bebas Masalah Routing Cloudflare Pages) ---
+    function getStudentGameUrl(params = {}) {
+      if (window.location.protocol === "file:") {
+        const usp = new URLSearchParams(params);
+        const q = usp.toString();
+        return "index.html" + (q ? "?" + q : "");
+      }
+      let path = window.location.pathname;
+      // Hapus /dashboard-guru atau /dashboard-guru.html di akhir URL
+      path = path.replace(/\/dashboard-guru(\.html)?\/?$/i, "/");
+      if (!path.endsWith("/")) {
+        path = path.substring(0, path.lastIndexOf("/") + 1);
+      }
+      const base = window.location.origin + path;
+      const url = new URL(base);
+      for (const [k, v] of Object.entries(params)) {
+        if (v !== undefined && v !== null && v !== "") {
+          url.searchParams.set(k, v);
+        }
+      }
+      return url.toString();
+    }
+
+    // Pastikan tombol nav atas mengarah ke URL root game siswa yang valid
+    const navGameBtn = document.getElementById("nav-btn-game-siswa");
+    if (navGameBtn) {
+      navGameBtn.href = getStudentGameUrl();
+    }
+
     // --- Salin Link Room Siswa (Siswa Cukup Masuk Menggunakan Kode Room) ---
     document.getElementById("btn-copy-game-share-link").addEventListener("click", () => {
       saveTeacherQuestionsLocally();
@@ -1798,22 +1827,16 @@
       // Simpan konfigurasi room ke server dan local
       window.gasService.saveRoomConfig(roomId, sheetId, mapelVal, currentTeacherPackage, levelVal);
 
-      let shareUrl = "";
-      if (window.location.protocol === "file:") {
-        shareUrl = `index.html?room=${encodeURIComponent(roomId)}${sheetId ? `&sheet=${encodeURIComponent(sheetId)}` : ""}&mapel=${encodeURIComponent(mapelVal)}`;
-      } else {
-        const base = window.location.origin + window.location.pathname.replace("dashboard-guru.html", "index.html");
-        const url = new URL(base);
-        url.searchParams.set("room", roomId);
-        if (sheetId) url.searchParams.set("sheet", sheetId);
-        if (mapelVal) url.searchParams.set("mapel", mapelVal);
-        shareUrl = url.toString();
-      }
+      const shareUrl = getStudentGameUrl({
+        room: roomId,
+        sheet: sheetId,
+        mapel: mapelVal
+      });
 
       navigator.clipboard.writeText(shareUrl).then(() => {
-        alert(`✅ LINK ROOM SISWA BERHASIL DISALIN!\n\n${shareUrl}\n\n🔑 Kode Room: ${roomId}\n🏷️ Mapel: ${mapelVal}\n🏫 Jenjang: ${levelText}\n\nSiswa yang membuka link ini akan otomatis masuk ke Room "${roomId}" tanpa perlu mengisi ID Google Sheet!`);
+        alert(`✅ LINK GAME SISWA BERHASIL DISALIN!\n\n${shareUrl}\n\n🔑 Kode Room: ${roomId}\n🏷️ Mapel: ${mapelVal}\n🏫 Jenjang: ${levelText}\n\nSiswa yang membuka link ini akan langsung masuk ke Game Pembelajaran (bukan dashboard guru)!`);
       }).catch(() => {
-        prompt("Salin link room berikut untuk siswa:", shareUrl);
+        prompt("Salin link game berikut untuk siswa:", shareUrl);
       });
     });
 
@@ -1883,17 +1906,22 @@
       const m = sheet.match(/\/spreadsheets\/d\/([a-zA-Z0-9_\-]+)/);
       if (m && m[1]) sheet = m[1];
 
-      const url = new URL(window.location.origin + window.location.pathname.replace("dashboard-guru.html", "index.html"));
+      const params = {};
       if (dep && dep !== "AKfycbxLCx_3U0OkQa_iq92NJ22_J34qgXGx2YjfVQqTDRQjxKGn6ulugFcrt8IcHm_FDn4R") {
-        url.searchParams.set("id", dep);
+        params.id = dep;
       }
       if (sheet) {
-        url.searchParams.set("sheet", sheet);
+        params.sheet = sheet;
       }
       if (currentTeacherPackage) {
-        url.searchParams.set("package", currentTeacherPackage);
+        params.package = currentTeacherPackage;
       }
-      cfgShareLink.value = url.toString();
+      const roomId = teacherRoomInputEl ? (teacherRoomInputEl.value.trim().toUpperCase() || "ROOM-01") : "ROOM-01";
+      if (roomId) {
+        params.room = roomId;
+      }
+
+      cfgShareLink.value = getStudentGameUrl(params);
     }
 
     const openCfgModal = () => {
