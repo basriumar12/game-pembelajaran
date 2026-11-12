@@ -1391,11 +1391,13 @@
 
       let shareUrl = "";
       if (window.location.protocol === "file:") {
-        shareUrl = `index.html?room=${encodeURIComponent(roomId)}`;
+        shareUrl = `index.html?room=${encodeURIComponent(roomId)}${sheetId ? `&sheet=${encodeURIComponent(sheetId)}` : ""}&mapel=${encodeURIComponent(mapelVal)}`;
       } else {
         const base = window.location.origin + window.location.pathname.replace("dashboard-guru.html", "index.html");
         const url = new URL(base);
         url.searchParams.set("room", roomId);
+        if (sheetId) url.searchParams.set("sheet", sheetId);
+        if (mapelVal) url.searchParams.set("mapel", mapelVal);
         shareUrl = url.toString();
       }
 
