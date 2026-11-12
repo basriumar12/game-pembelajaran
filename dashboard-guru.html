@@ -445,6 +445,10 @@
         <option value="ALL">Semua Kelas X (ALL)</option>
       </select>
 
+      <button id="btn-open-config-modal" class="btn-action" style="border: 1px solid var(--bpmp-blue); color: #38bdf8;">
+        ⚙️ Server & ID Sheets
+      </button>
+
       <button id="btn-manual-refresh" class="btn-action">
         🔄 Refresh
       </button>
@@ -1098,6 +1102,138 @@
         initQuestionsEditor();
       }
     });
+
+    // --- Modal Konfigurasi Server & Sheets Guru ---
+    const configModal = document.getElementById("modal-server-config");
+    const cfgSheetInput = document.getElementById("cfg-sheet-id");
+    const cfgDepInput = document.getElementById("cfg-deployment-id");
+    const cfgShareLink = document.getElementById("cfg-share-link");
+
+    function updateShareLinkPreview() {
+      const dep = cfgDepInput.value.trim();
+      let sheet = cfgSheetInput.value.trim();
+      const m = sheet.match(/\/spreadsheets\/d\/([a-zA-Z0-9_\-]+)/);
+      if (m && m[1]) sheet = m[1];
+
+      const url = new URL(window.location.origin + window.location.pathname.replace("dashboard-guru.html", "index.html"));
+      if (dep && dep !== "AKfycbwPiApnkPzNn280lH4AjC15flXBfm6xvLPXzS6aGlCrHHiiYMJrmfnaIOVSmY80J95prQ") {
+        url.searchParams.set("id", dep);
+      }
+      if (sheet) {
+        url.searchParams.set("sheet", sheet);
+      }
+      if (currentTeacherPackage) {
+        url.searchParams.set("package", currentTeacherPackage);
+      }
+      cfgShareLink.value = url.toString();
+    }
+
+    document.getElementById("btn-open-config-modal").addEventListener("click", () => {
+      cfgSheetInput.value = window.gasService.spreadsheetId || "";
+      cfgDepInput.value = window.gasService.deploymentId || "";
+      updateShareLinkPreview();
+      configModal.style.display = "flex";
+    });
+
+    const closeCfg = () => { configModal.style.display = "none"; };
+    document.getElementById("btn-close-config-modal").addEventListener("click", closeCfg);
+    document.getElementById("btn-close-config-modal-bottom").addEventListener("click", closeCfg);
+
+    cfgSheetInput.addEventListener("input", updateShareLinkPreview);
+    cfgDepInput.addEventListener("input", updateShareLinkPreview);
+
+    document.getElementById("btn-copy-share-link").addEventListener("click", () => {
+      cfgShareLink.select();
+      navigator.clipboard.writeText(cfgShareLink.value).then(() => {
+        alert("✅ Link berhasil disalin! Silakan bagikan link ini kepada siswa.");
+      }).catch(() => {
+        document.execCommand("copy");
+        alert("✅ Link disalin!");
+      });
+    });
+
+    document.getElementById("btn-save-config").addEventListener("click", () => {
+      const dep = cfgDepInput.value.trim();
+      const sheet = cfgSheetInput.value.trim();
+      window.gasService.setCustomConfig(dep, sheet);
+      alert("✅ Konfigurasi Server & Sheets berhasil disimpan! Dashboard akan memuat data sesuai ID Sheets ini.");
+      closeCfg();
+      loadDashboardData();
+    });
+
+    document.getElementById("btn-reset-config").addEventListener("click", () => {
+      if (confirm("Reset konfigurasi kembali ke Server & Sheet Bawaan BPMP?")) {
+        window.gasService.resetToDefaultConfig();
+        cfgSheetInput.value = "";
+        cfgDepInput.value = window.gasService.deploymentId;
+        updateShareLinkPreview();
+        alert("✅ Konfigurasi direset ke bawaan.");
+        closeCfg();
+        loadDashboardData();
+      }
+    });
   </script>
+
+  <!-- Modal Konfigurasi Server / Sheets Guru -->
+  <div id="modal-server-config" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:16px;">
+    <div style="background:var(--card-bg); border:2px solid var(--bpmp-blue); border-radius:20px; max-width:620px; width:100%; padding:28px; box-shadow:0 20px 50px rgba(0,0,0,0.6); color:#fff; position:relative; max-height:90vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <h2 style="font-size:18px; font-weight:800; color:var(--bpmp-gold); display:flex; align-items:center; gap:8px;">
+          ⚙️ Konfigurasi Server & Google Sheets Guru
+        </h2>
+        <button id="btn-close-config-modal" style="background:none; border:none; color:#94a3b8; font-size:24px; cursor:pointer;">&times;</button>
+      </div>
+
+      <p style="font-size:13px; color:var(--text-muted); line-height:1.5; margin-bottom:20px;">
+        Game ini dapat digunakan secara <b>universal / general</b> untuk berbagai mapel (SMP, SMA, Bahasa Inggris, dll). Guru cukup mengganti <b>Spreadsheet ID</b> untuk mengarahkan nilai dan soal ke Google Sheet masing-masing!
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:24px;">
+        <div>
+          <label style="display:block; font-size:12px; font-weight:700; color:#38bdf8; margin-bottom:6px;">
+            1. GOOGLE SPREADSHEET ID (Atau Full URL Google Sheet)
+          </label>
+          <input type="text" id="cfg-sheet-id" placeholder="Contoh: 1jixYqA... atau paste link https://docs.google.com/spreadsheets/d/..." style="width:100%; background:#0f172a; border:1px solid var(--card-border); border-radius:10px; padding:12px 14px; color:#fff; font-size:13px; outline:none; box-sizing:border-box;">
+          <small style="display:block; color:#94a3b8; font-size:11px; margin-top:4px;">
+            💡 <i>Kosongkan jika ingin memakai Sheet Bawaan Default. Pastikan Google Sheet ini sudah diberi izin akses (Share > Anyone with link can edit/viewer).</i>
+          </small>
+        </div>
+
+        <div>
+          <label style="display:block; font-size:12px; font-weight:700; color:#38bdf8; margin-bottom:6px;">
+            2. WEB APP DEPLOYMENT ID (Opsional jika memakai backend script sendiri)
+          </label>
+          <input type="text" id="cfg-deployment-id" placeholder="AKfycbwPiApnkPzNn280lH4AjC15flXBfm6xvLPXzS6aGlCrHHiiYMJrmfnaIOVSmY80J95prQ" style="width:100%; background:#0f172a; border:1px solid var(--card-border); border-radius:10px; padding:12px 14px; color:#fff; font-size:13px; outline:none; box-sizing:border-box;">
+        </div>
+
+        <div style="background:rgba(15,23,42,0.8); border:1px dashed var(--bpmp-gold); border-radius:12px; padding:14px;">
+          <label style="display:block; font-size:12px; font-weight:800; color:var(--bpmp-gold); margin-bottom:6px;">
+            🔗 LINK KHUSUS UNTUK DIBAGIKAN KE SISWA:
+          </label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="cfg-share-link" readonly style="flex:1; background:#020617; border:1px solid #334155; border-radius:8px; padding:8px 12px; color:#34d399; font-size:12px; outline:none;" value="">
+            <button id="btn-copy-share-link" class="btn-action btn-gold" style="padding:8px 14px; font-size:12px; white-space:nowrap;">📋 Salin Link</button>
+          </div>
+          <small style="display:block; color:#94a3b8; font-size:11px; margin-top:6px;">
+            Siswa yang membuka link ini akan otomatis terhubung ke Sheet & paket soal guru tanpa perlu atur ID secara manual!
+          </small>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; border-top:1px solid var(--card-border); padding-top:16px;">
+        <button id="btn-reset-config" style="background:transparent; border:1px solid #ef4444; color:#ef4444; border-radius:10px; padding:10px 16px; font-size:13px; font-weight:700; cursor:pointer;">
+          🔄 Reset Default
+        </button>
+        <div style="display:flex; gap:10px;">
+          <button id="btn-close-config-modal-bottom" style="background:#334155; border:none; color:#fff; border-radius:10px; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer;">
+            Batal
+          </button>
+          <button id="btn-save-config" class="btn-action btn-gold" style="padding:10px 20px; font-size:13px;">
+            💾 Simpan Konfigurasi
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

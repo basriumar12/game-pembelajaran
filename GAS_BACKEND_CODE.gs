@@ -55,15 +55,15 @@ function handleIncomingData(e) {
     } else if (action === "updateProgress" || action === "submitScore") {
       return handleUpdatePlayerProgress(data);
     } else if (action === "getTeacherDashboard" || action === "getRoomPlayers") {
-      return handleGetTeacherDashboard(roomId);
+      return handleGetTeacherDashboard(roomId, data);
     } else if (action === "getLeaderboard") {
-      return handleGetLeaderboard(roomId);
+      return handleGetLeaderboard(roomId, data);
     } else if (action === "getQuestions") {
-      return handleGetQuestions();
+      return handleGetQuestions(data);
     } else if (action === "saveQuestions" || action === "updateQuestions") {
       return handleSaveQuestions(data);
     } else if (action === "resetRoom") {
-      return handleResetRoom(roomId);
+      return handleResetRoom(roomId, data);
     }
 
     return jsonResponse({ status: "success", message: "API Active", received: data });
@@ -73,10 +73,32 @@ function handleIncomingData(e) {
 }
 
 /**
+ * MENDAPATKAN SPREADSHEET TARGET SECARA DINAMIS
+ * Guru/Admin dapat mengganti Google Sheets kapan saja hanya dengan menyertakan spreadsheetId.
+ * Jika tidak disertakan, backend otomatis menggunakan Active Spreadsheet tempat script dipasang.
+ */
+function getTargetSpreadsheet(data) {
+  var targetId = data && (data.spreadsheetId || data.sheetId);
+  if (targetId && String(targetId).trim() !== "") {
+    try {
+      return SpreadsheetApp.openById(String(targetId).trim());
+    } catch (err) {
+      console.warn("Gagal membuka sheet by ID (" + targetId + "), fallback ke Active Spreadsheet:", err);
+    }
+  }
+  try {
+    return SpreadsheetApp.getActiveSpreadsheet();
+  } catch (err) {
+    console.error("Gagal getActiveSpreadsheet:", err);
+    throw new Error("Spreadsheet tidak ditemukan. Pastikan Spreadsheet ID valid dan email pembuat Web App memiliki akses View/Edit ke Spreadsheet tersebut!");
+  }
+}
+
+/**
  * 1. SIMPAN PESERTA BARU KE SHEET "Peserta"
  */
 function handleRegisterPlayer(data) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getTargetSpreadsheet(data);
   let sheet = ss.getSheetByName("Peserta");
   
   if (!sheet) {
@@ -137,7 +159,7 @@ function handleRegisterPlayer(data) {
  * 2. UPDATE PROGRESS & CATAT DI SHEET "Scoreboard"
  */
 function handleUpdatePlayerProgress(data) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getTargetSpreadsheet(data);
   let sheet = ss.getSheetByName("Peserta");
   const now = new Date();
   const roomId = data.roomId || "SMA-SNT-XA";
@@ -244,8 +266,8 @@ function handleUpdatePlayerProgress(data) {
 /**
  * 3. DASHBOARD GURU
  */
-function handleGetTeacherDashboard(roomId) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+function handleGetTeacherDashboard(roomId, data) {
+  const ss = getTargetSpreadsheet(data);
   const sheet = ss.getSheetByName("Peserta");
   
   if (!sheet || sheet.getLastRow() < 2) {
@@ -300,12 +322,12 @@ function handleGetTeacherDashboard(roomId) {
   });
 }
 
-function handleGetLeaderboard(roomId) {
-  return handleGetTeacherDashboard(roomId);
+function handleGetLeaderboard(roomId, data) {
+  return handleGetTeacherDashboard(roomId, data);
 }
 
-function handleGetQuestions() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+function handleGetQuestions(data) {
+  const ss = getTargetSpreadsheet(data);
   const sheet = ss.getSheetByName("Soal");
   if (!sheet || sheet.getLastRow() < 2) {
     return jsonResponse([]);
@@ -339,7 +361,7 @@ function handleGetQuestions() {
  * Mendukung Tipe Soal Standard, Reading Passage, dan Audio TTS Listening
  */
 function handleSaveQuestions(data) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getTargetSpreadsheet(data);
   let sheet = ss.getSheetByName("Soal");
   if (!sheet) {
     sheet = ss.insertSheet("Soal");
@@ -405,8 +427,8 @@ function handleSaveQuestions(data) {
   });
 }
 
-function handleResetRoom(roomId) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+function handleResetRoom(roomId, data) {
+  const ss = getTargetSpreadsheet(data);
   const sheet = ss.getSheetByName("Peserta");
   if (sheet && sheet.getLastRow() > 1) {
     const values = sheet.getRange(2, 2, sheet.getLastRow() - 1, 1).getValues();

@@ -3,14 +3,24 @@
  * Multi-Player Room Sync, Anti-Cheat & 100% Guaranteed Data Recording
  */
 
+/**
+ * Google Apps Script (GAS) & Google Sheets Integration Service
+ * Multi-Player Room Sync, Anti-Cheat & 100% Guaranteed Data Recording
+ * Mendukung Konfigurasi Dinamis (Ganti Deployment ID & Spreadsheet ID per Mapel/Guru)
+ */
+
 const GAS_CONFIG = {
-  ENDPOINT_URL: "https://script.google.com/macros/s/AKfycbwPiApnkPzNn280lH4AjC15flXBfm6xvLPXzS6aGlCrHHiiYMJrmfnaIOVSmY80J95prQ/exec",
+  DEFAULT_DEPLOYMENT_ID: "AKfycbwPiApnkPzNn280lH4AjC15flXBfm6xvLPXzS6aGlCrHHiiYMJrmfnaIOVSmY80J95prQ",
+  BASE_URL: "https://script.google.com/macros/s/",
   TIMEOUT_MS: 7000
 };
 
 class GASService {
   constructor() {
-    this.endpoint = GAS_CONFIG.ENDPOINT_URL;
+    this.deploymentId = this.detectDeploymentId();
+    this.spreadsheetId = this.detectSpreadsheetId();
+    this.endpoint = this.buildEndpointUrl(this.deploymentId);
+
     this.isOnline = navigator.onLine;
     this.roomId = "SMA-SNT-XA";
     this.playerId = this.getOrCreatePlayerId();
@@ -28,6 +38,115 @@ class GASService {
 
     window.addEventListener("online", () => { this.isOnline = true; });
     window.addEventListener("offline", () => { this.isOnline = false; });
+  }
+
+  detectDeploymentId() {
+    // 1. Cek parameter URL: ?id=... atau ?deploymentId=...
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlId = params.get("id") || params.get("deploymentId");
+      if (urlId && urlId.trim().length > 15) {
+        localStorage.setItem("gas_custom_deployment_id", urlId.trim());
+        return urlId.trim();
+      }
+    } catch (e) {}
+
+    // 2. Cek penyimpanan lokal
+    const saved = localStorage.getItem("gas_custom_deployment_id");
+    if (saved && saved.trim().length > 15) {
+      return saved.trim();
+    }
+
+    // 3. Gunakan Default
+    return GAS_CONFIG.DEFAULT_DEPLOYMENT_ID;
+  }
+
+  detectSpreadsheetId() {
+    // 1. Cek parameter URL: ?sheet=... atau ?sheetId=... atau ?spreadsheetId=...
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlSheet = params.get("sheet") || params.get("sheetId") || params.get("spreadsheetId");
+      if (urlSheet && urlSheet.trim().length > 10) {
+        localStorage.setItem("gas_custom_spreadsheet_id", urlSheet.trim());
+        return urlSheet.trim();
+      }
+    } catch (e) {}
+
+    // 2. Cek penyimpanan lokal
+    const saved = localStorage.getItem("gas_custom_spreadsheet_id");
+    return (saved && saved.trim().length > 10) ? saved.trim() : "";
+  }
+
+  buildEndpointUrl(depId) {
+    let cleanId = depId ? depId.trim() : GAS_CONFIG.DEFAULT_DEPLOYMENT_ID;
+    // Jika user menginputkan full URL, ambil ID-nya saja atau gunakan langsung
+    if (cleanId.startsWith("http")) {
+      return cleanId.endsWith("/exec") ? cleanId : (cleanId + "/exec");
+    }
+    return `${GAS_CONFIG.BASE_URL}${cleanId}/exec`;
+  }
+
+  /**
+   * Mengubah Konfigurasi Server / Sheets Guru Secara Dinamis
+   */
+  setCustomConfig(deploymentId, spreadsheetId) {
+    if (deploymentId && deploymentId.trim()) {
+      let cleanDep = deploymentId.trim();
+      // Ekstrak ID jika dimasukkan full URL
+      const match = cleanDep.match(/\/s\/([a-zA-Z0-9_\-]+)\//);
+      if (match && match[1]) cleanDep = match[1];
+      this.deploymentId = cleanDep;
+      localStorage.setItem("gas_custom_deployment_id", cleanDep);
+    }
+
+    if (spreadsheetId !== undefined) {
+      let cleanSheet = (spreadsheetId || "").trim();
+      // Ekstrak Spreadsheet ID jika dimasukkan full Google Sheets URL: docs.google.com/spreadsheets/d/<ID>/edit
+      const sheetMatch = cleanSheet.match(/\/spreadsheets\/d\/([a-zA-Z0-9_\-]+)/);
+      if (sheetMatch && sheetMatch[1]) cleanSheet = sheetMatch[1];
+
+      this.spreadsheetId = cleanSheet;
+      if (cleanSheet) {
+        localStorage.setItem("gas_custom_spreadsheet_id", cleanSheet);
+      } else {
+        localStorage.removeItem("gas_custom_spreadsheet_id");
+      }
+    }
+
+    this.endpoint = this.buildEndpointUrl(this.deploymentId);
+    console.log("[GAS] Server & Sheets Berhasil Diperbarui:", {
+      endpoint: this.endpoint,
+      deploymentId: this.deploymentId,
+      spreadsheetId: this.spreadsheetId || "(Active Sheet Bawaan)"
+    });
+  }
+
+  resetToDefaultConfig() {
+    localStorage.removeItem("gas_custom_deployment_id");
+    localStorage.removeItem("gas_custom_spreadsheet_id");
+    this.deploymentId = GAS_CONFIG.DEFAULT_DEPLOYMENT_ID;
+    this.spreadsheetId = "";
+    this.endpoint = this.buildEndpointUrl(this.deploymentId);
+  }
+
+  getShareableLink(extraParams = {}) {
+    const url = new URL(window.location.href);
+    if (this.deploymentId && this.deploymentId !== GAS_CONFIG.DEFAULT_DEPLOYMENT_ID) {
+      url.searchParams.set("id", this.deploymentId);
+    } else {
+      url.searchParams.delete("id");
+      url.searchParams.delete("deploymentId");
+    }
+    if (this.spreadsheetId) {
+      url.searchParams.set("sheet", this.spreadsheetId);
+    } else {
+      url.searchParams.delete("sheet");
+      url.searchParams.delete("sheetId");
+    }
+    for (const k in extraParams) {
+      if (extraParams[k]) url.searchParams.set(k, extraParams[k]);
+    }
+    return url.toString();
   }
 
   getOrCreatePlayerId() {
@@ -62,7 +181,8 @@ class GASService {
       nim: playerData.nim,
       institution: playerData.institution || "SMA SNT (Kelas X)",
       avatar: playerData.avatar || "student_boy",
-      tabSwitchCount: this.tabSwitchCount
+      tabSwitchCount: this.tabSwitchCount,
+      spreadsheetId: this.spreadsheetId || ""
     };
 
     console.log("[GAS] Mengirim Registrasi Siswa ke Google Sheets:", payload);
@@ -100,6 +220,7 @@ class GASService {
       timeRemaining: progressData.timeRemaining || "00:00:00",
       isFinished: progressData.isFinished || false,
       lastAnswer: progressData.lastAnswer || null,
+      spreadsheetId: this.spreadsheetId || "",
       timestamp: new Date().toLocaleTimeString("id-ID")
     };
 
@@ -170,8 +291,9 @@ class GASService {
   sendFallbackQuery(payload) {
     try {
       const jsonStr = JSON.stringify(payload);
+      const sheetParam = this.spreadsheetId ? `&sheetId=${encodeURIComponent(this.spreadsheetId)}` : "";
       // Kirim via GET Image Beacon
-      const q = `${this.endpoint}?action=${payload.action}&roomId=${encodeURIComponent(payload.roomId || '')}&name=${encodeURIComponent(payload.name || '')}&nim=${encodeURIComponent(payload.nim || '')}&inst=${encodeURIComponent(payload.institution || '')}&score=${payload.totalScore || 0}&correct=${payload.correctAnswers || 0}&wrong=${payload.wrongAnswers || 0}&tile=${payload.currentTile || 0}&tab=${payload.tabSwitchCount || 0}&data=${encodeURIComponent(jsonStr)}&_r=${Math.random()}`;
+      const q = `${this.endpoint}?action=${payload.action}&roomId=${encodeURIComponent(payload.roomId || '')}&name=${encodeURIComponent(payload.name || '')}&nim=${encodeURIComponent(payload.nim || '')}&inst=${encodeURIComponent(payload.institution || '')}&score=${payload.totalScore || 0}&correct=${payload.correctAnswers || 0}&wrong=${payload.wrongAnswers || 0}&tile=${payload.currentTile || 0}&tab=${payload.tabSwitchCount || 0}${sheetParam}&data=${encodeURIComponent(jsonStr)}&_r=${Math.random()}`;
       
       const img = new Image();
       img.src = q;
@@ -193,7 +315,8 @@ class GASService {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), GAS_CONFIG.TIMEOUT_MS);
-      const url = `${this.endpoint}?action=getTeacherDashboard&roomId=${encodeURIComponent(roomId)}&t=${Date.now()}`;
+      const sheetParam = this.spreadsheetId ? `&sheetId=${encodeURIComponent(this.spreadsheetId)}` : "";
+      const url = `${this.endpoint}?action=getTeacherDashboard&roomId=${encodeURIComponent(roomId)}${sheetParam}&t=${Date.now()}`;
       
       const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
@@ -218,7 +341,8 @@ class GASService {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), GAS_CONFIG.TIMEOUT_MS);
-      const url = `${this.endpoint}?action=getQuestions&t=${Date.now()}`;
+      const sheetParam = this.spreadsheetId ? `&sheetId=${encodeURIComponent(this.spreadsheetId)}` : "";
+      const url = `${this.endpoint}?action=getQuestions${sheetParam}&t=${Date.now()}`;
       
       const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
@@ -238,6 +362,7 @@ class GASService {
     const payload = {
       action: "saveQuestions",
       questions: questionList,
+      spreadsheetId: this.spreadsheetId || "",
       timestamp: new Date().toISOString()
     };
     try {

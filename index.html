@@ -229,6 +229,12 @@
             <button type="submit" id="btn-login-submit" class="btn-rpg-primary" style="width: 100%; font-size: 15px; padding: 12px;">
               🚀 MULAI BERMAIN & JELAJAHI POSKO
             </button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.2); font-size: 11px;">
+              <span id="label-active-sheet" style="color: #cbd5e1; font-size: 10px;">📊 Target Sheets: Bawaan</span>
+              <a href="dashboard-guru.html" target="_blank" style="color: #ffd54f; text-decoration: underline; font-weight: 700;">
+                👨‍🏫 Menu Guru / Ganti Sheets ➔
+              </a>
+            </div>
           </div>
         </form>
       </div>
@@ -436,6 +442,26 @@
       const modalIcon = document.getElementById("login-modal-icon");
       const modalTitle = document.getElementById("login-modal-title");
       const modalSub = document.getElementById("login-modal-subtitle");
+
+      // Cek info target sheet
+      const labelActiveSheet = document.getElementById("label-active-sheet");
+      if (labelActiveSheet && window.gasService) {
+        if (window.gasService.spreadsheetId) {
+          const shortId = window.gasService.spreadsheetId.substring(0, 8) + "...";
+          labelActiveSheet.innerHTML = `📊 Sheet: <span style="color:#38bdf8; font-weight:700;">${shortId}</span>`;
+        } else {
+          labelActiveSheet.innerHTML = `📊 Sheet: <span style="color:#34d399; font-weight:700;">Bawaan BPMP</span>`;
+        }
+      }
+
+      // Cek parameter ?package= di URL
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlPkg = urlParams.get("package") || urlParams.get("pkg");
+        if (urlPkg && selectPkg && selectPkg.querySelector(`option[value="${urlPkg}"]`)) {
+          selectPkg.value = urlPkg;
+        }
+      } catch(e) {}
 
       function updatePackageUI() {
         const pkgId = selectPkg.value;
