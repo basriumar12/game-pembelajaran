@@ -1401,9 +1401,50 @@ const ENGLISH_PRACTICE_QUESTIONS = [
 ];
 
 // ============================================================================
-// REGISTRY PAKET BANK SOAL
+// DAFTAR RESMI MATA PELAJARAN (MAPEL) & JENJANG KELAS (SMP VII-IX & SMA X-XII)
+// ============================================================================
+const SUBJECT_LIST = [
+  { id: "english_all", name: "🎧 Bahasa Inggris (Listening TTS, Reading, Writing)", short: "Bahasa Inggris", icon: "🎧" },
+  { id: "sma_iot_10", name: "💻 Informatika & IoT (Arduino Wokwi)", short: "Informatika & IoT", icon: "💻" },
+  { id: "smp_kka_7", name: "📘 KKA (Poster Kampanye Digital)", short: "KKA Digital", icon: "📘" },
+  { id: "ipa", name: "🔬 Ilmu Pengetahuan Alam (IPA)", short: "IPA", icon: "🔬" },
+  { id: "matematika", name: "📐 Matematika", short: "Matematika", icon: "📐" },
+  { id: "custom_gsheet", name: "📊 Soal Khusus Google Sheet Guru", short: "Google Sheet", icon: "📊" }
+];
+window.SUBJECT_LIST = SUBJECT_LIST;
+
+const GRADE_LEVELS = [
+  { id: "smp_7", name: "Kelas VII SMP", group: "SMP", defaultRoom: "SMP-7A", classes: ["Kelas VII-A", "Kelas VII-B", "Kelas VII-C", "Kelas VII-D"] },
+  { id: "smp_8", name: "Kelas VIII SMP", group: "SMP", defaultRoom: "SMP-8A", classes: ["Kelas VIII-A", "Kelas VIII-B", "Kelas VIII-C", "Kelas VIII-D"] },
+  { id: "smp_9", name: "Kelas IX SMP", group: "SMP", defaultRoom: "SMP-9A", classes: ["Kelas IX-A", "Kelas IX-B", "Kelas IX-C", "Kelas IX-D"] },
+  { id: "sma_10", name: "Kelas X SMA", group: "SMA", defaultRoom: "SMA-10A", classes: ["Kelas X-A", "Kelas X-B", "Kelas X-MIPA", "Kelas X-IPS"] },
+  { id: "sma_11", name: "Kelas XI SMA", group: "SMA", defaultRoom: "SMA-11A", classes: ["Kelas XI-MIPA-1", "Kelas XI-MIPA-2", "Kelas XI-IPS", "Kelas XI-A"] },
+  { id: "sma_12", name: "Kelas XII SMA", group: "SMA", defaultRoom: "SMA-12A", classes: ["Kelas XII-MIPA-1", "Kelas XII-MIPA-2", "Kelas XII-IPS", "Kelas XII-A"] }
+];
+window.GRADE_LEVELS = GRADE_LEVELS;
+window.SCHOOL_LEVELS = GRADE_LEVELS; // Kompatibilitas alias
+
+// ============================================================================
+// REGISTRY PAKET BANK SOAL MULTI-JENJANG & MULTI-MAPEL
 // ============================================================================
 const QUESTION_PACKAGES = {
+  "english_all": {
+    id: "english_all",
+    title: "Bahasa Inggris · Reading, Writing & Listening (TTS Audio)",
+    shortTitle: "Bahasa Inggris · TTS",
+    level: "SMP & SMA (Kelas VII - XII)",
+    description: "30 Soal Interaktif: Reading Comprehension, Sentence Building/Writing, dan Audio Listening TTS",
+    icon: "🎧",
+    classes: [
+      { id: "SMP-VII", name: "Kelas VII SMP" },
+      { id: "SMP-VIII", name: "Kelas VIII SMP" },
+      { id: "SMP-IX", name: "Kelas IX SMP" },
+      { id: "SMA-X", name: "Kelas X SMA" },
+      { id: "SMA-XI", name: "Kelas XI SMA" },
+      { id: "SMA-XII", name: "Kelas XII SMA" }
+    ],
+    questions: ENGLISH_PRACTICE_QUESTIONS
+  },
   "smp_kka_7": {
     id: "smp_kka_7",
     title: "SMP Kelas VII · KKA (Poster Kampanye Digital)",
@@ -1419,6 +1460,34 @@ const QUESTION_PACKAGES = {
     ],
     questions: SMP_KKA_QUESTIONS
   },
+  "smp_8_general": {
+    id: "smp_8_general",
+    title: "SMP Kelas VIII · Asesmen Literasi & Bahasa",
+    shortTitle: "SMP Kelas VIII",
+    level: "SMP Kelas VIII",
+    description: "Asesmen Membaca Kritis, Tata Bahasa, dan Pemahaman Dialog Audio",
+    icon: "📗",
+    classes: [
+      { id: "SMP-VIII-A", name: "Kelas VIII-A" },
+      { id: "SMP-VIII-B", name: "Kelas VIII-B" },
+      { id: "SMP-VIII-C", name: "Kelas VIII-C" }
+    ],
+    questions: ENGLISH_PRACTICE_QUESTIONS
+  },
+  "smp_9_general": {
+    id: "smp_9_general",
+    title: "SMP Kelas IX · Asesmen Persiapan Ujian & Literasi",
+    shortTitle: "SMP Kelas IX",
+    level: "SMP Kelas IX",
+    description: "Reading Comprehension, Dialogues, dan Struktur Kebahasaan Kompleks",
+    icon: "📙",
+    classes: [
+      { id: "SMP-IX-A", name: "Kelas IX-A" },
+      { id: "SMP-IX-B", name: "Kelas IX-B" },
+      { id: "SMP-IX-C", name: "Kelas IX-C" }
+    ],
+    questions: ENGLISH_PRACTICE_QUESTIONS
+  },
   "sma_iot_10": {
     id: "sma_iot_10",
     title: "SMA Kelas X · Informatika & Arduino Wokwi",
@@ -1427,23 +1496,37 @@ const QUESTION_PACKAGES = {
     description: "30 Soal Pilihan Ganda: Variabel, Pin I/O, Sensor HC-SR04, Percabangan Logika, dan Debugging",
     icon: "💻",
     classes: [
-      { id: "SMA-SNT-XA", name: "Kelas X-A" },
-      { id: "SMA-SNT-XB", name: "Kelas X-B" }
+      { id: "SMA-X-A", name: "Kelas X-A" },
+      { id: "SMA-X-B", name: "Kelas X-B" },
+      { id: "SMA-SNT-XA", name: "Kelas X-SNT" }
     ],
     questions: SMA_IOT_QUESTIONS
   },
-  "english_all": {
-    id: "english_all",
-    title: "Bahasa Inggris · Reading, Writing & Listening (TTS Audio)",
-    shortTitle: "Bahasa Inggris · TTS",
-    level: "SMP & SMA",
-    description: "Reading Comprehension, Sentence Building/Writing, dan Audio Listening Interaktif dengan Text-to-Speech",
-    icon: "🎧",
+  "sma_11_general": {
+    id: "sma_11_general",
+    title: "SMA Kelas XI · Literasi Sains & Bahasa Lanjutan",
+    shortTitle: "SMA Kelas XI",
+    level: "SMA Kelas XI",
+    description: "Analytical Reading, Listening Comprehension, dan Writing Structure",
+    icon: "🔬",
     classes: [
-      { id: "ENG-CLASS-7", name: "Kelas 7 English" },
-      { id: "ENG-CLASS-8", name: "Kelas 8 English" },
-      { id: "ENG-CLASS-9", name: "Kelas 9 English" },
-      { id: "ENG-CLASS-10", name: "Kelas X English" }
+      { id: "SMA-XI-MIPA", name: "Kelas XI MIPA" },
+      { id: "SMA-XI-IPS", name: "Kelas XI IPS" },
+      { id: "SMA-XI-A", name: "Kelas XI-A" }
+    ],
+    questions: ENGLISH_PRACTICE_QUESTIONS
+  },
+  "sma_12_general": {
+    id: "sma_12_general",
+    title: "SMA Kelas XII · Pemantapan Asesmen Tingkat Akhir",
+    shortTitle: "SMA Kelas XII",
+    level: "SMA Kelas XII",
+    description: "Persiapan Ujian Akhir, Academic Reading, Listening Monologues, dan Complex Grammar",
+    icon: "🎓",
+    classes: [
+      { id: "SMA-XII-MIPA", name: "Kelas XII MIPA" },
+      { id: "SMA-XII-IPS", name: "Kelas XII IPS" },
+      { id: "SMA-XII-A", name: "Kelas XII-A" }
     ],
     questions: ENGLISH_PRACTICE_QUESTIONS
   }

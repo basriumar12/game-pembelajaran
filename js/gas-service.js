@@ -663,6 +663,92 @@ class GASService {
     return { success: true };
   }
 
+  /**
+   * 8. GURU: SIMPAN KONFIGURASI ROOM (ROOM ID -> GSHEET ID, MAPEL, PAKET, JENJANG KELAS)
+   */
+  async saveRoomConfig(roomId, sheetId, mapel = "Asesmen Pembelajaran", packageId = "english_all", gradeLevel = "smp_7") {
+    const cleanRoom = String(roomId || "").trim().toUpperCase();
+    const cleanSheet = this.cleanSpreadsheetId(sheetId);
+    if (!cleanRoom) return { success: false, message: "Room ID kosong" };
+
+    const config = {
+      roomId: cleanRoom,
+      sheetId: cleanSheet,
+      mapel: mapel,
+      packageId: packageId,
+      gradeLevel: gradeLevel,
+      updatedAt: new Date().toISOString()
+    };
+
+    // Simpan ke local cache browser
+    try {
+      localStorage.setItem("room_cfg_" + cleanRoom, JSON.stringify(config));
+      localStorage.setItem("last_teacher_room_id", cleanRoom);
+      if (this.channel) {
+        this.channel.postMessage({ type: "room_config_updated", config: config });
+      }
+    } catch(e) {}
+
+    // Simpan ke Google Apps Script backend
+    const payload = {
+      action: "saveRoomConfig",
+      roomId: cleanRoom,
+      sheetId: cleanSheet,
+      mapel: mapel,
+      packageId: packageId,
+      gradeLevel: gradeLevel
+    };
+
+    this.submitViaHiddenForm(payload);
+    try {
+      await fetch(this.endpoint, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(payload)
+      });
+    } catch(e) {}
+
+    return { success: true, roomConfig: config };
+  }
+
+  /**
+   * 9. SISWA / GAME: AMBIL KONFIGURASI ROOM DARI KODE ROOM
+   */
+  async getRoomConfig(roomId) {
+    const cleanRoom = String(roomId || "").trim().toUpperCase();
+    if (!cleanRoom) return null;
+
+    // 1. Coba ambil dari local storage
+    try {
+      const saved = localStorage.getItem("room_cfg_" + cleanRoom);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.sheetId) return parsed;
+      }
+    } catch(e) {}
+
+    // 2. Coba fetch dari backend server Google Apps Script
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const url = `${this.endpoint}?action=getRoomConfig&roomId=${encodeURIComponent(cleanRoom)}&t=${Date.now()}`;
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.roomConfig) {
+          localStorage.setItem("room_cfg_" + cleanRoom, JSON.stringify(data.roomConfig));
+          return data.roomConfig;
+        }
+      }
+    } catch(e) {
+      console.warn("[GAS] Gagal getRoomConfig dari server:", e);
+    }
+
+    return null;
+  }
+
   // --- Local Storage / Fallback Database ---
 
   saveLocalPlayer(player) {

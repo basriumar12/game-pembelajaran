@@ -632,13 +632,46 @@
         </div>
 
         <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px;">
-          <div style="flex: 1; min-width: 240px;">
-            <label style="display: block; font-size: 11.5px; font-weight: 800; color: var(--bpmp-gold); margin-bottom: 5px;">
-              🏷️ Soal Mapel Apa? (Mata Pelajaran / Topik):
+          <div style="flex: 1; min-width: 170px;">
+            <label style="display: block; font-size: 11.5px; font-weight: 800; color: #a855f7; margin-bottom: 5px;">
+              🏫 Jenjang Kelas:
             </label>
-            <input type="text" id="input-teacher-mapel-name" value="Bahasa Inggris — Reading, Writing & Listening" placeholder="Contoh: Bahasa Inggris Kelas 8, Informatika, dll." style="width: 100%; background: #0f172a; border: 1.5px solid var(--bpmp-gold); color: #fff; font-size: 13px; font-weight: 700; padding: 10px 12px; border-radius: 8px; outline: none; box-sizing: border-box;">
+            <select id="select-teacher-school-level" style="width: 100%; background: #0f172a; border: 1.5px solid #a855f7; color: #c084fc; font-size: 13px; font-weight: 800; padding: 10px 10px; border-radius: 8px; outline: none; cursor: pointer;">
+              <optgroup label="Sekolah Menengah Pertama (SMP)">
+                <option value="smp_7" selected>📘 Kelas VII SMP</option>
+                <option value="smp_8">📗 Kelas VIII SMP</option>
+                <option value="smp_9">📙 Kelas IX SMP</option>
+              </optgroup>
+              <optgroup label="Sekolah Menengah Atas (SMA)">
+                <option value="sma_10">💻 Kelas X SMA</option>
+                <option value="sma_11">🔬 Kelas XI SMA</option>
+                <option value="sma_12">🎓 Kelas XII SMA</option>
+              </optgroup>
+            </select>
           </div>
-          <div style="flex: 1.5; min-width: 280px;">
+          <div style="flex: 1; min-width: 170px;">
+            <label style="display: block; font-size: 11.5px; font-weight: 800; color: #34d399; margin-bottom: 5px;">
+              🔑 Kode Room Kelas (Untuk Siswa):
+            </label>
+            <input type="text" id="input-teacher-room-id" value="SMP-7A" placeholder="Contoh: SMP-7A, SMA-10A" style="width: 100%; background: #0f172a; border: 1.5px solid #10b981; color: #34d399; font-size: 13px; font-weight: 800; padding: 10px 12px; border-radius: 8px; outline: none; box-sizing: border-box; text-transform: uppercase;">
+          </div>
+          <div style="flex: 1.4; min-width: 240px;">
+            <label style="display: block; font-size: 11.5px; font-weight: 800; color: var(--bpmp-gold); margin-bottom: 5px;">
+              🏷️ Soal Mapel Apa? (Pilih / Tulis Mata Pelajaran):
+            </label>
+            <div style="display: flex; gap: 6px;">
+              <select id="select-teacher-mapel-preset" style="background: #0f172a; border: 1.5px solid var(--bpmp-gold); color: #fbbf24; font-size: 12.5px; font-weight: 800; padding: 10px 8px; border-radius: 8px; outline: none; cursor: pointer; max-width: 150px;">
+                <option value="Bahasa Inggris — Reading, Writing & Listening" selected>🎧 B. Inggris</option>
+                <option value="Informatika & IoT (Arduino Wokwi)">💻 Informatika</option>
+                <option value="KKA (Poster Kampanye Digital)">📘 KKA</option>
+                <option value="Ilmu Pengetahuan Alam (IPA)">🔬 IPA</option>
+                <option value="Matematika">📐 Matematika</option>
+                <option value="custom">✍️ Tulis Sendiri...</option>
+              </select>
+              <input type="text" id="input-teacher-mapel-name" value="Bahasa Inggris — Reading, Writing & Listening" placeholder="Nama Mapel" style="flex: 1; background: #0f172a; border: 1.5px solid var(--bpmp-gold); color: #fff; font-size: 13px; font-weight: 700; padding: 10px 12px; border-radius: 8px; outline: none; box-sizing: border-box;">
+            </div>
+          </div>
+          <div style="flex: 1.7; min-width: 260px;">
             <label style="display: block; font-size: 11.5px; font-weight: 800; color: #38bdf8; margin-bottom: 5px;">
               📊 ID atau Link Google Sheet Guru:
             </label>
@@ -1222,11 +1255,63 @@
       }
     });
 
+    // Listener perubahan Jenjang Kelas Guru
+    const schoolLevelSelectEl = document.getElementById("select-teacher-school-level");
+    const teacherRoomInputEl = document.getElementById("input-teacher-room-id");
+    if (schoolLevelSelectEl && teacherRoomInputEl) {
+      schoolLevelSelectEl.addEventListener("change", (e) => {
+        const val = e.target.value;
+        const defaults = {
+          "smp_7": "SMP-7A",
+          "smp_8": "SMP-8A",
+          "smp_9": "SMP-9A",
+          "sma_10": "SMA-10A",
+          "sma_11": "SMA-11A",
+          "sma_12": "SMA-12A"
+        };
+        if (defaults[val] && (!teacherRoomInputEl.value || teacherRoomInputEl.value.startsWith("SMP-") || teacherRoomInputEl.value.startsWith("SMA-") || teacherRoomInputEl.value.startsWith("INGGRIS-"))) {
+          teacherRoomInputEl.value = defaults[val];
+        }
+      });
+    }
+
+    // Listener Preset Pilihan Mata Pelajaran Guru
+    const mapelPresetSelectEl = document.getElementById("select-teacher-mapel-preset");
+    const mapelNameInputEl = document.getElementById("input-teacher-mapel-name");
+    const teacherPackageSelectEl = document.getElementById("select-teacher-package");
+    if (mapelPresetSelectEl && mapelNameInputEl) {
+      mapelPresetSelectEl.addEventListener("change", (e) => {
+        const val = e.target.value;
+        if (val === "custom") {
+          mapelNameInputEl.value = "";
+          mapelNameInputEl.focus();
+        } else {
+          mapelNameInputEl.value = val;
+          // Sinkronkan ke paket editor soal jika sesuai
+          if (teacherPackageSelectEl) {
+            if (val.includes("Bahasa Inggris")) {
+              teacherPackageSelectEl.value = "english_all";
+              loadPackageQuestions("english_all");
+            } else if (val.includes("Informatika")) {
+              teacherPackageSelectEl.value = "sma_iot_10";
+              loadPackageQuestions("sma_iot_10");
+            } else if (val.includes("KKA")) {
+              teacherPackageSelectEl.value = "smp_kka_7";
+              loadPackageQuestions("smp_kka_7");
+            }
+          }
+        }
+      });
+    }
+
     // --- Tombol Hubungkan & Tarik Soal dari Google Sheets ---
     document.getElementById("btn-connect-and-fetch-gsheet").addEventListener("click", async () => {
       const inputEl = document.getElementById("input-teacher-gsheet-id");
       const rawVal = inputEl ? inputEl.value.trim() : "";
       const statusEl = document.getElementById("questions-save-status");
+      const roomId = teacherRoomInputEl ? (teacherRoomInputEl.value.trim().toUpperCase() || "ROOM-01") : "ROOM-01";
+      const mapelVal = document.getElementById("input-teacher-mapel-name") ? document.getElementById("input-teacher-mapel-name").value.trim() : "Bahasa Inggris";
+      const levelVal = schoolLevelSelectEl ? schoolLevelSelectEl.value : "smp_7";
 
       if (!rawVal) {
         alert("Silakan masukkan ID Spreadsheet atau link URL Google Sheets terlebih dahulu di kotak input!");
@@ -1238,11 +1323,12 @@
       statusEl.style.background = "rgba(2, 132, 199, 0.2)";
       statusEl.style.border = "1px solid #0284c7";
       statusEl.style.color = "#38bdf8";
-      statusEl.innerHTML = `⏳ Sedang menghubungkan dan mengambil data soal dari Google Sheets...`;
+      statusEl.innerHTML = `⏳ Sedang menghubungkan Room <b>${roomId}</b> ke Google Sheets...`;
 
-      // Simpan config spreadsheet ID
+      // Simpan config spreadsheet ID & tautkan ke Room ID
       window.gasService.setCustomConfig(null, rawVal);
       const cleanId = window.gasService.spreadsheetId;
+      window.gasService.saveRoomConfig(roomId, cleanId, mapelVal, currentTeacherPackage, levelVal);
       updateGSheetStatusUI();
 
       try {
@@ -1253,12 +1339,12 @@
           statusEl.style.background = "rgba(16, 185, 129, 0.2)";
           statusEl.style.border = "1px solid #10b981";
           statusEl.style.color = "#34d399";
-          statusEl.innerHTML = `✅ Berhasil terhubung! Memuat <b>${loadedQuestions.length} soal</b> langsung dari Google Sheet Anda. Soal otomatis aktif di game siswa!`;
+          statusEl.innerHTML = `✅ Berhasil! Room <b>${roomId}</b> (${mapelVal}) terhubung dengan <b>${loadedQuestions.length} soal</b> dari Google Sheet Anda! Siswa cukup memasukkan kode room <b>${roomId}</b>.`;
         } else {
           statusEl.style.background = "rgba(245, 158, 11, 0.2)";
           statusEl.style.border = "1px solid #f59e0b";
           statusEl.style.color = "#fbbf24";
-          statusEl.innerHTML = `⚠️ Google Sheet terhubung, namun tab <b>"Soal"</b> belum memiliki data baris soal.<br><br>💡 <b>Cara Mengisi Cepat:</b> Klik tombol kuning <b>"📋 Salin 30 Soal ke Sheet"</b> di atas, lalu buka Google Sheet Anda, klik pada sel <b>A1</b>, dan tekan <b>Paste (Ctrl+V / Cmd+V)</b>!`;
+          statusEl.innerHTML = `⚠️ Google Sheet terhubung ke Room <b>${roomId}</b>, namun tab <b>"Soal"</b> belum memiliki data baris soal.<br><br>💡 <b>Cara Mengisi Cepat:</b> Klik tombol kuning <b>"📋 Salin 30 Soal ke Sheet"</b> di atas, lalu buka Google Sheet Anda, klik pada sel <b>A1</b>, dan tekan <b>Paste (Ctrl+V / Cmd+V)</b>!`;
         }
       } catch (err) {
         statusEl.style.background = "rgba(239, 68, 68, 0.2)";
@@ -1284,7 +1370,7 @@
       });
     }
 
-    // --- Salin Link Game Siswa Berdasarkan Sheet Terhubung & Mapel ---
+    // --- Salin Link Room Siswa (Siswa Cukup Masuk Menggunakan Kode Room) ---
     document.getElementById("btn-copy-game-share-link").addEventListener("click", () => {
       const inputEl = document.getElementById("input-teacher-gsheet-id");
       const rawVal = inputEl ? inputEl.value.trim() : "";
@@ -1294,29 +1380,29 @@
       }
 
       const mapelInputEl = document.getElementById("input-teacher-mapel-name");
-      const mapelVal = mapelInputEl ? mapelInputEl.value.trim() : "";
-      if (mapelVal) {
-        localStorage.setItem("gas_custom_mapel_name", mapelVal);
-      }
-
+      const mapelVal = mapelInputEl ? mapelInputEl.value.trim() : "Bahasa Inggris";
+      const roomId = teacherRoomInputEl ? (teacherRoomInputEl.value.trim().toUpperCase() || "ROOM-01") : "ROOM-01";
+      const levelVal = schoolLevelSelectEl ? schoolLevelSelectEl.value : "smp_7";
+      const levelText = schoolLevelSelectEl ? schoolLevelSelectEl.options[schoolLevelSelectEl.selectedIndex].text : "SMP / SMA";
       const sheetId = window.gasService ? window.gasService.spreadsheetId : "";
-      let shareUrl = "";
 
+      // Simpan konfigurasi room ke server dan local
+      window.gasService.saveRoomConfig(roomId, sheetId, mapelVal, currentTeacherPackage, levelVal);
+
+      let shareUrl = "";
       if (window.location.protocol === "file:") {
-        shareUrl = `index.html?sheet=${encodeURIComponent(sheetId || '')}&package=${encodeURIComponent(currentTeacherPackage)}${mapelVal ? '&mapel=' + encodeURIComponent(mapelVal) : ''}`;
+        shareUrl = `index.html?room=${encodeURIComponent(roomId)}`;
       } else {
         const base = window.location.origin + window.location.pathname.replace("dashboard-guru.html", "index.html");
         const url = new URL(base);
-        if (sheetId) url.searchParams.set("sheet", sheetId);
-        if (currentTeacherPackage) url.searchParams.set("package", currentTeacherPackage);
-        if (mapelVal) url.searchParams.set("mapel", mapelVal);
+        url.searchParams.set("room", roomId);
         shareUrl = url.toString();
       }
 
       navigator.clipboard.writeText(shareUrl).then(() => {
-        alert(`✅ LINK GAME SISWA BERHASIL DISALIN!\n\n${shareUrl}\n\nMapel: ${mapelVal || 'Asesmen'}\nSiswa yang membuka link ini akan otomatis bermain dengan soal Google Sheet guru!`);
+        alert(`✅ LINK ROOM SISWA BERHASIL DISALIN!\n\n${shareUrl}\n\n🔑 Kode Room: ${roomId}\n🏷️ Mapel: ${mapelVal}\n🏫 Jenjang: ${levelText}\n\nSiswa yang membuka link ini akan otomatis masuk ke Room "${roomId}" tanpa perlu mengisi ID Google Sheet!`);
       }).catch(() => {
-        prompt("Salin link berikut untuk siswa:", shareUrl);
+        prompt("Salin link room berikut untuk siswa:", shareUrl);
       });
     });
 

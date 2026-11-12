@@ -73,6 +73,10 @@ function handleIncomingData(e) {
       return handleResetRoom(roomId, data);
     } else if (action === "clearOfflinePlayers") {
       return handleClearOfflinePlayers(roomId, data);
+    } else if (action === "saveRoomConfig") {
+      return handleSaveRoomConfig(data);
+    } else if (action === "getRoomConfig") {
+      return handleGetRoomConfig(roomId, data);
     }
 
     return jsonResponse({ status: "success", message: "API Active", received: data });
@@ -513,4 +517,115 @@ function handleClearOfflinePlayers(roomId, data) {
   }
   SpreadsheetApp.flush();
   return jsonResponse({ status: "success", deletedCount: deletedCount });
+}
+
+/**
+ * 8. GURU: SIMPAN KONFIGURASI ROOM (ROOM ID -> GSHEET ID, MAPEL, PAKET)
+ * Disimpan secara terpusat di PropertiesService & Sheet RoomConfig
+ */
+function handleSaveRoomConfig(data) {
+  var roomId = String(data.roomId || "").trim().toUpperCase();
+  if (!roomId) {
+    return jsonResponse({ status: "error", message: "Room ID wajib diisi." });
+  }
+
+  var roomConfig = {
+    roomId: roomId,
+    sheetId: String(data.sheetId || data.spreadsheetId || "").trim(),
+    mapel: data.mapel || "Asesmen Pembelajaran",
+    packageId: data.packageId || "english_all",
+    gradeLevel: data.gradeLevel || data.schoolLevel || "smp_7",
+    updatedAt: new Date().toISOString()
+  };
+
+  try {
+    var props = PropertiesService.getScriptProperties();
+    props.setProperty("ROOM_" + roomId, JSON.stringify(roomConfig));
+  } catch (err) {
+    console.warn("Gagal simpan ke ScriptProperties:", err);
+  }
+
+  // Backup ke spreadsheet induk jika ada
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (ss) {
+      var sheet = ss.getSheetByName("RoomConfig");
+      if (!sheet) {
+        sheet = ss.insertSheet("RoomConfig");
+        sheet.appendRow(["Room ID", "Spreadsheet ID", "Mata Pelajaran", "Paket", "Jenjang Kelas", "Terakhir Diupdate"]);
+        sheet.getRange(1, 1, 1, 6).setFontWeight("bold");
+      }
+      var rows = sheet.getDataRange().getValues();
+      var foundRow = -1;
+      for (var i = 1; i < rows.length; i++) {
+        if (String(rows[i][0]).toUpperCase() === roomId) {
+          foundRow = i + 1;
+          break;
+        }
+      }
+      var newRow = [roomId, roomConfig.sheetId, roomConfig.mapel, roomConfig.packageId, roomConfig.gradeLevel, roomConfig.updatedAt];
+      if (foundRow > 0) {
+        sheet.getRange(foundRow, 1, 1, 6).setValues([newRow]);
+      } else {
+        sheet.appendRow(newRow);
+      }
+    }
+  } catch (e) {}
+
+  return jsonResponse({
+    status: "success",
+    message: "Konfigurasi Room " + roomId + " berhasil disimpan!",
+    roomConfig: roomConfig
+  });
+}
+
+/**
+ * 9. SISWA / GAME: AMBIL KONFIGURASI ROOM DARI KODE ROOM
+ */
+function handleGetRoomConfig(roomId, data) {
+  var cleanRoomId = String(roomId || (data && data.roomId) || "").trim().toUpperCase();
+  if (!cleanRoomId) {
+    return jsonResponse({ status: "error", message: "Room ID tidak valid." });
+  }
+
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var saved = props.getProperty("ROOM_" + cleanRoomId);
+    if (saved) {
+      var parsed = JSON.parse(saved);
+      return jsonResponse({ status: "success", roomConfig: parsed });
+    }
+  } catch (err) {}
+
+  // Fallback dari Sheet "RoomConfig"
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (ss) {
+      var sheet = ss.getSheetByName("RoomConfig");
+      if (sheet && sheet.getLastRow() > 1) {
+        var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 6).getValues();
+        for (var i = 0; i < rows.length; i++) {
+          if (String(rows[i][0]).toUpperCase() === cleanRoomId) {
+            return jsonResponse({
+              status: "success",
+              roomConfig: {
+                roomId: cleanRoomId,
+                sheetId: String(rows[i][1]).trim(),
+                mapel: rows[i][2] || "Asesmen Pembelajaran",
+                packageId: rows[i][3] || "english_all",
+                gradeLevel: rows[i][4] || "smp_7",
+                updatedAt: rows[i][5]
+              }
+            });
+          }
+        }
+      }
+    }
+  } catch (e) {}
+
+  return jsonResponse({
+    status: "not_found",
+    message: "Room ID " + cleanRoomId + " belum terdaftar di sistem.",
+    roomConfig: null
+  });
 }
