@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>BPMP Farm Quest: Open-World 3D · SMA SNT Kelas X (Roblox & Harvest Moon Style)</title>
+  <title>BPMP Farm Quest: Game Pembelajaran 3D & Asesmen Interaktif Multi-Mapel</title>
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -53,7 +53,7 @@
   <div id="canvas-container"></div>
 
   <!-- Retro Toast Notification -->
-  <div id="retro-toast" class="retro-toast">Selamat Datang di Asesmen SMA SNT!</div>
+  <div id="retro-toast" class="retro-toast">Selamat Datang di Asesmen Interaktif BPMP!</div>
 
   <!-- UI Overlay -->
   <div id="ui-overlay">
@@ -64,8 +64,8 @@
       <div style="display: flex; flex-direction: column; gap: 6px;">
         <div class="brand-badge wood-panel">
           <div>
-            <div id="hud-player-title" class="brand-title">👨‍💻 SMA SNT KELAS X</div>
-            <div id="hud-player-sub" class="brand-sub">Petualangan 30 Posko Arduino & Wokwi</div>
+            <div id="hud-player-title" class="brand-title">👨‍💻 Menunggu Login Siswa...</div>
+            <div id="hud-player-sub" class="brand-sub">Petualangan Asesmen Interaktif 3D</div>
           </div>
         </div>
 
@@ -320,7 +320,7 @@
         </div>
 
         <div id="finish-sync-status" style="background: #e8f5e9; border: 2px solid #81c784; border-radius: 10px; padding: 12px; margin-bottom: 12px; text-align: center; font-size: 13px; color: #1b5e20; font-weight: 800;">
-          ✅ Data nilai Anda telah otomatis tersimpan ke Google Sheets Guru SMA SNT!
+          ✅ Data nilai Anda telah otomatis tersimpan ke Google Sheets Guru!
         </div>
 
         <div class="dialog-footer" style="display: flex; gap: 8px;">
@@ -509,7 +509,7 @@
           game.switchPackage(pkgId);
         }
 
-        const schoolLevel = pkg ? pkg.level : "SMA SNT";
+        const schoolLevel = pkg ? pkg.level : "Peserta Didik";
 
         game.playerData = {
           packageId: pkgId,
@@ -520,6 +520,11 @@
           institution: `${schoolLevel} (${kelasNama})`,
           avatar: selectedAvatar
         };
+
+        // Update Karakter 3D & Nama di Atas Kepala Sesuai Input Siswa
+        if (game.setPlayerProfile) {
+          game.setPlayerProfile(name, selectedAvatar);
+        }
 
         // Kunci Landscape saat masuk di HP
         lockScreenLandscape();

@@ -117,7 +117,7 @@ function handleRegisterPlayer(data) {
   const playerId = data.playerId || ("PL_" + Utilities.getUuid().slice(0, 8));
   const name = data.name || "Siswa Baru";
   const nim = data.nim || "-";
-  const inst = data.institution || "SMA SNT (Kelas X)";
+  const inst = data.institution || "Peserta Didik";
   const avatar = data.avatar || "student_boy";
   const tabSwitches = Number(data.tabSwitchCount) || 0;
 
@@ -223,7 +223,7 @@ function handleUpdatePlayerProgress(data) {
   }
 
   scoreSheet.appendRow([
-    now, roomId, data.name || "Anonim", data.nim || "-", data.institution || "SMA SNT",
+    now, roomId, data.name || "Anonim", data.nim || "-", data.institution || "Peserta Didik",
     Number(data.totalScore) || 0, Number(data.correctAnswers) || 0, Number(data.wrongAnswers) || 0,
     tabSwitches, data.timeElapsed || "00:00:00", data.timeRemaining || "00:00:00"
   ]);

@@ -440,9 +440,12 @@
       </div>
 
       <select id="select-room-id" class="room-selector">
-        <option value="SMA-SNT-XA" selected>Kelas X-A (SMA SNT)</option>
-        <option value="SMA-SNT-XB">Kelas X-B (SMA SNT)</option>
-        <option value="ALL">Semua Kelas X (ALL)</option>
+        <option value="ALL" selected>Semua Kelas / Ruang (ALL)</option>
+        <option value="SMP-VII-A">Kelas VII-A (SMP)</option>
+        <option value="SMP-VII-B">Kelas VII-B (SMP)</option>
+        <option value="SMA-SNT-XA">Kelas X-A (SMA)</option>
+        <option value="SMA-SNT-XB">Kelas X-B (SMA)</option>
+        <option value="ENG-CLASS-A">Kelas Bahasa Inggris</option>
       </select>
 
       <button id="btn-open-config-modal" class="btn-action" style="border: 1px solid var(--bpmp-blue); color: #38bdf8;">
@@ -649,7 +652,7 @@
   <script src="js/gas-service.js"></script>
 
   <script>
-    let currentRoom = "SMA-SNT-XA";
+    let currentRoom = "ALL";
     let refreshTimer = null;
     let latestData = null;
 

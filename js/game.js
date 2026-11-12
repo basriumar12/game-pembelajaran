@@ -13,11 +13,11 @@ class BPMPFarmGame {
 
     // Player State
     this.playerData = {
-      name: "Siswa SMA SNT",
-      nim: "001",
-      institution: "SMA SNT (Kelas X-A)",
+      name: "Siswa",
+      nim: "-",
+      institution: "Asesmen Interaktif",
       avatar: "student_boy",
-      roomId: "SMA-SNT-XA"
+      roomId: "ROOM-01"
     };
 
     // Movement & Controls
@@ -441,6 +441,28 @@ class BPMPFarmGame {
     this.playerMesh = this.createChibiAvatar(0x1976d2, this.playerData.avatar || "student_boy", true, this.playerData.name, this.score);
     this.playerMesh.position.copy(this.playerPos);
     this.scene.add(this.playerMesh);
+  }
+
+  setPlayerProfile(name, avatarType = "student_boy") {
+    this.playerData.name = name;
+    this.playerData.avatar = avatarType;
+
+    // Respawn avatar sesuai avatar pilihan (siswa atau siswi) dengan nama asli di atas kepala
+    if (this.playerMesh && this.scene) {
+      const currentPos = this.playerMesh.position.clone();
+      const currentRot = this.playerMesh.rotation.y;
+      this.scene.remove(this.playerMesh);
+      const color = (avatarType === "student_girl") ? 0xe91e63 : 0x1976d2;
+      this.playerMesh = this.createChibiAvatar(color, avatarType, true, name, this.score);
+      this.playerMesh.position.copy(currentPos);
+      this.playerMesh.rotation.y = currentRot;
+      this.scene.add(this.playerMesh);
+    } else {
+      this.spawnMyPlayer();
+    }
+
+    this.updateAvatarTag(this.playerMesh, name, this.score, true);
+    this.broadcastMyPosition();
   }
 
   /**
