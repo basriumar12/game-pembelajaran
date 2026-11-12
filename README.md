@@ -56,12 +56,13 @@ Backend Google Apps Script & Integrasi Google Sheets mengelola 3 sheet otomatis:
 ## 🎧 4. Integrasi Soal Google Sheets & Bahasa Inggris (Listening, Reading, Writing)
 
 Game ini mendukung **penggantian soal otomatis** secara real-time langsung dari **Google Sheets**:
-- **Guru tinggal memasukkan ID atau Link Google Sheet** di Dashboard Guru (`dashboard-guru.html`) pada tab **"Kelola Bank Soal"**.
-- Soal dapat diedit langsung di dashboard guru lalu disimpan ke Google Sheets (tombol *"Simpan ke GSheet"*), atau diedit langsung di baris-baris Google Sheet Anda!
-- **Tipe Soal yang Didukung**:
-  1. 🎧 **Listening**: Menggunakan naskah dialog/pengumuman bahasa Inggris dengan Text-to-Speech (TTS Web Speech API), kuota batas putar siswa, dan pengatur kecepatan suara.
-  2. 📖 **Reading**: Menyajikan teks bacaan/narasi panjang (*reading passage*) sebelum pertanyaan pemahaman konteks.
-  3. ✍️ **Writing**: Menguji struktur kalimat, tata bahasa (*grammar, tenses, passive voice, word order*), dan kelengkapan penulisan bahasa Inggris.
-  4. 📘 **Standard**: Soal pilihan ganda multi-jenjang (Informatika, IoT Arduino, KKA Poster Kampanye, dsb.).
-- **Tautan Siswa Otomatis**:
-  Guru cukup menyalin link game siswa melalui tombol *"🔗 Salin Link Game Siswa"*. Link akan memuat parameter `?sheet=ID_GSHEET&package=english_all` sehingga game siswa langsung otomatis membuka paket soal dari Google Sheets guru.
+- **Sisi Guru (`dashboard-guru.html`)**:
+  - Input **"🏷️ Soal Mapel Apa?"**: Guru dapat menentukan nama mata pelajaran atau judul asesmen (misal: *Bahasa Inggris Kelas 8*, *Informatika*, dll.).
+  - Input **"📊 ID atau Link Google Sheet Guru"**: Guru menempelkan ID Google Sheet miliknya.
+  - Tombol **"📋 Salin 30 Soal ke Sheet"**: Satu-klik untuk menyalin seluruh 30 soal ke clipboard, lalu paste di sel A1 Google Sheet guru.
+  - Tombol **"🔗 Salin Link Game Siswa"**: Menyalin link permainan lengkap dengan parameter `?sheet=...&mapel=...`.
+
+- **Sisi Siswa (`index.html`)**:
+  - Siswa yang membuka game dapat **mengisi ID Google Sheet guru** di form pendaftaran/login (atau otomatis terisi jika membuka tautan dari guru).
+  - Setiap siswa yang mengisi ID Sheet yang sama akan **otomatis mendapatkan dan mengerjakan 30 soal posko yang sama persis** dari Google Sheet guru tersebut!
+  - Jawaban, skor, dan waktu pengerjaan siswa tercatat langsung ke Google Sheet masing-masing guru.

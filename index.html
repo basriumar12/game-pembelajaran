@@ -186,13 +186,25 @@
         </div>
 
         <form id="login-form">
+          <!-- Input ID Google Sheet Guru (Agar semua siswa otomatis mengerjakan soal yang sama dari Sheet yang sama) -->
+          <div class="form-group" style="background: rgba(14, 165, 233, 0.08); border: 1.5px dashed #0284c7; border-radius: 10px; padding: 10px 12px; margin-bottom: 14px;">
+            <label class="form-label" style="color: #0284c7; font-weight: 800; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span>📊 ID / Link Google Sheet Guru</span>
+              <span id="badge-sheet-detect" style="font-size: 10.5px; background: #10b981; color: white; padding: 2px 8px; border-radius: 10px; display: none; font-weight: 700;">Terhubung dari Guru ✅</span>
+            </label>
+            <input type="text" id="input-student-gsheet-id" class="form-input" placeholder="Paste ID Spreadsheet atau Link Sheet Guru di sini" style="font-size: 12.5px; border-color: #0284c7;">
+            <div style="font-size: 10.5px; color: #64748b; margin-top: 5px; line-height: 1.4;">
+              💡 <i>Masukkan ID Sheet agar Anda otomatis mengerjakan soal yang sama persis dengan teman sekelas dari Google Sheet guru.</i>
+            </div>
+          </div>
+
           <!-- Pilihan Mata Pelajaran & Jenjang -->
           <div class="form-group">
             <label class="form-label">Pilih Mata Pelajaran & Jenjang *</label>
             <select id="select-package" class="form-input" style="font-weight: 800; color: #1976d2; font-size: 13.5px;" required>
-              <option value="smp_kka_7" selected>📘 SMP Kelas VII — KKA (Poster Kampanye Digital - 40 Soal)</option>
+              <option value="english_all" selected>🎧 Bahasa Inggris — Reading, Writing & Listening TTS</option>
+              <option value="smp_kka_7">📘 SMP Kelas VII — KKA (Poster Kampanye Digital - 40 Soal)</option>
               <option value="sma_iot_10">💻 SMA Kelas X — Informatika & Arduino Wokwi (30 Soal)</option>
-              <option value="english_all">🎧 Bahasa Inggris — Reading, Writing & Listening TTS</option>
             </select>
           </div>
 
@@ -436,6 +448,34 @@
       const modalIcon = document.getElementById("login-modal-icon");
       const modalTitle = document.getElementById("login-modal-title");
       const modalSub = document.getElementById("login-modal-subtitle");
+      const studentSheetInput = document.getElementById("input-student-gsheet-id");
+      const badgeSheetDetect = document.getElementById("badge-sheet-detect");
+
+      // Cek parameter ?sheet= dan ?mapel= dari URL
+      let urlSheetId = "";
+      let urlMapel = "";
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlSheetId = urlParams.get("sheet") || urlParams.get("sheetId") || urlParams.get("spreadsheetId") || "";
+        urlMapel = urlParams.get("mapel") || "";
+        const urlPkg = urlParams.get("package") || urlParams.get("pkg");
+
+        if (urlSheetId && studentSheetInput) {
+          studentSheetInput.value = urlSheetId;
+          if (badgeSheetDetect) badgeSheetDetect.style.display = "inline-block";
+        } else if (window.gasService && window.gasService.spreadsheetId && studentSheetInput) {
+          studentSheetInput.value = window.gasService.spreadsheetId;
+        }
+
+        if (urlMapel) {
+          modalTitle.textContent = "Asesmen: " + urlMapel;
+          modalSub.textContent = "Mengerjakan Soal Asesmen dari Guru (" + urlMapel + ")";
+        }
+
+        if (urlPkg && selectPkg && selectPkg.querySelector(`option[value="${urlPkg}"]`)) {
+          selectPkg.value = urlPkg;
+        }
+      } catch(e) {}
 
       function syncCustomGSheetPackageOption() {
         const customPkg = window.QUESTION_PACKAGES ? window.QUESTION_PACKAGES["custom_gsheet"] : null;
@@ -458,7 +498,7 @@
         syncCustomGSheetPackageOption();
       });
 
-      // Cek info target sheet
+      // Cek info target sheet di HUD
       const labelActiveSheet = document.getElementById("label-active-sheet");
       if (labelActiveSheet && window.gasService) {
         if (window.gasService.spreadsheetId) {
@@ -469,15 +509,6 @@
         }
       }
 
-      // Cek parameter ?package= di URL
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlPkg = urlParams.get("package") || urlParams.get("pkg");
-        if (urlPkg && selectPkg && selectPkg.querySelector(`option[value="${urlPkg}"]`)) {
-          selectPkg.value = urlPkg;
-        }
-      } catch(e) {}
-
       // Jalankan cek awal paket custom gsheet jika sudah tersedia
       syncCustomGSheetPackageOption();
 
@@ -487,8 +518,8 @@
         if (!pkg) return;
 
         modalIcon.textContent = pkg.icon || "📘";
-        modalTitle.textContent = pkg.title;
-        modalSub.textContent = pkg.description;
+        modalTitle.textContent = urlMapel ? ("Asesmen: " + urlMapel) : pkg.title;
+        modalSub.textContent = urlMapel ? ("Mengerjakan Soal dari Guru · " + urlMapel) : pkg.description;
 
         // Render Opsi Kelas Sesuai Paket
         selectKelas.innerHTML = "";
@@ -508,10 +539,13 @@
         selectPkg.addEventListener("change", updatePackageUI);
       }
 
-      // Form Submit: Masuk Game dengan Paket Pilihan
+      // Form Submit: Masuk Game dengan Paket Pilihan / Google Sheet Guru
       const loginForm = document.getElementById("login-form");
       loginForm.addEventListener("submit", async (e) => {
         e.preventDefault();
+        const submitBtn = document.getElementById("btn-login-submit");
+        const originalBtnHtml = submitBtn.innerHTML;
+
         const pkgId = selectPkg.value;
         const pkg = window.QUESTION_PACKAGES ? window.QUESTION_PACKAGES[pkgId] : null;
         const kelasSelect = selectKelas.value;
@@ -519,19 +553,47 @@
         const kelasNama = selectedKelasOpt ? selectedKelasOpt.textContent : kelasSelect;
         const name = document.getElementById("input-player-name").value.trim();
         const nim = document.getElementById("input-player-nim").value.trim();
+        const studentSheetVal = studentSheetInput ? studentSheetInput.value.trim() : "";
 
         if (!name || !nim) return;
 
-        // Terapkan paket soal ke game
-        if (game.switchPackage) {
-          game.switchPackage(pkgId);
+        // 1. Jika Siswa Memasukkan ID Google Sheet Guru (Semua Siswa Mendapatkan Soal yang Sama Persis)
+        let activeTitle = pkg ? pkg.shortTitle : "Asesmen";
+        if (studentSheetVal) {
+          submitBtn.innerHTML = "⏳ Memuat Soal dari Google Sheet Guru...";
+          submitBtn.disabled = true;
+
+          window.gasService.setCustomConfig(null, studentSheetVal);
+          const cleanSheetId = window.gasService.spreadsheetId;
+
+          try {
+            const sheetQuestions = await window.gasService.fetchQuestions(cleanSheetId);
+            if (Array.isArray(sheetQuestions) && sheetQuestions.length > 0) {
+              game.questions = sheetQuestions;
+              if (game.rebuildPoskos) {
+                game.rebuildPoskos();
+              }
+              activeTitle = urlMapel || "Soal Google Sheet Guru";
+              console.log(`[Game Siswa] Berhasil memuat ${sheetQuestions.length} soal dari Google Sheet guru!`);
+            }
+          } catch (err) {
+            console.warn("[Game Siswa] Gagal memuat sheet dari guru, gunakan paket terpilih:", err);
+            if (game.switchPackage) {
+              game.switchPackage(pkgId);
+            }
+          }
+        } else {
+          // Jika tidak ada ID Sheet khusus, gunakan paket terpilih
+          if (game.switchPackage) {
+            game.switchPackage(pkgId);
+          }
         }
 
         const schoolLevel = pkg ? pkg.level : "Peserta Didik";
 
         game.playerData = {
-          packageId: pkgId,
-          packageTitle: pkg ? pkg.shortTitle : "Asesmen",
+          packageId: studentSheetVal ? "custom_gsheet" : pkgId,
+          packageTitle: urlMapel || activeTitle,
           roomId: kelasSelect,
           name: name,
           nim: nim,
@@ -552,7 +614,7 @@
 
         // Update HUD
         document.getElementById("hud-player-title").textContent = name;
-        document.getElementById("hud-player-sub").textContent = `${pkg ? pkg.shortTitle : schoolLevel} · ${kelasNama}`;
+        document.getElementById("hud-player-sub").textContent = `${urlMapel || activeTitle} · ${kelasNama}`;
 
         // Tutup Modal Login
         document.getElementById("login-modal").classList.remove("active");

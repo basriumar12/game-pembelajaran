@@ -631,10 +631,22 @@
           </div>
         </div>
 
-        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px;">
-          <div style="flex: 1; min-width: 280px; position: relative;">
-            <input type="text" id="input-teacher-gsheet-id" placeholder="Paste ID Spreadsheet atau Link Lengkap (https://docs.google.com/spreadsheets/d/...)" style="width: 100%; background: #0f172a; border: 1.5px solid var(--bpmp-blue); color: #fff; font-size: 13px; font-weight: 600; padding: 10px 14px; border-radius: 10px; outline: none; box-sizing: border-box;">
+        <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px;">
+          <div style="flex: 1; min-width: 240px;">
+            <label style="display: block; font-size: 11.5px; font-weight: 800; color: var(--bpmp-gold); margin-bottom: 5px;">
+              🏷️ Soal Mapel Apa? (Mata Pelajaran / Topik):
+            </label>
+            <input type="text" id="input-teacher-mapel-name" value="Bahasa Inggris — Reading, Writing & Listening" placeholder="Contoh: Bahasa Inggris Kelas 8, Informatika, dll." style="width: 100%; background: #0f172a; border: 1.5px solid var(--bpmp-gold); color: #fff; font-size: 13px; font-weight: 700; padding: 10px 12px; border-radius: 8px; outline: none; box-sizing: border-box;">
           </div>
+          <div style="flex: 1.5; min-width: 280px;">
+            <label style="display: block; font-size: 11.5px; font-weight: 800; color: #38bdf8; margin-bottom: 5px;">
+              📊 ID atau Link Google Sheet Guru:
+            </label>
+            <input type="text" id="input-teacher-gsheet-id" placeholder="Paste ID Spreadsheet atau Link Lengkap (https://docs.google.com/spreadsheets/d/...)" style="width: 100%; background: #0f172a; border: 1.5px solid var(--bpmp-blue); color: #fff; font-size: 13px; font-weight: 600; padding: 10px 12px; border-radius: 8px; outline: none; box-sizing: border-box;">
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px;">
           <button id="btn-connect-and-fetch-gsheet" class="header-btn" style="background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; font-weight: 800; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
             🔗 Hubungkan & Tarik Soal
           </button>
@@ -1272,7 +1284,7 @@
       });
     }
 
-    // --- Salin Link Game Siswa Berdasarkan Sheet Terhubung ---
+    // --- Salin Link Game Siswa Berdasarkan Sheet Terhubung & Mapel ---
     document.getElementById("btn-copy-game-share-link").addEventListener("click", () => {
       const inputEl = document.getElementById("input-teacher-gsheet-id");
       const rawVal = inputEl ? inputEl.value.trim() : "";
@@ -1281,21 +1293,28 @@
         updateGSheetStatusUI();
       }
 
+      const mapelInputEl = document.getElementById("input-teacher-mapel-name");
+      const mapelVal = mapelInputEl ? mapelInputEl.value.trim() : "";
+      if (mapelVal) {
+        localStorage.setItem("gas_custom_mapel_name", mapelVal);
+      }
+
       const sheetId = window.gasService ? window.gasService.spreadsheetId : "";
       let shareUrl = "";
 
       if (window.location.protocol === "file:") {
-        shareUrl = `index.html?sheet=${encodeURIComponent(sheetId || '')}&package=${encodeURIComponent(currentTeacherPackage)}`;
+        shareUrl = `index.html?sheet=${encodeURIComponent(sheetId || '')}&package=${encodeURIComponent(currentTeacherPackage)}${mapelVal ? '&mapel=' + encodeURIComponent(mapelVal) : ''}`;
       } else {
         const base = window.location.origin + window.location.pathname.replace("dashboard-guru.html", "index.html");
         const url = new URL(base);
         if (sheetId) url.searchParams.set("sheet", sheetId);
         if (currentTeacherPackage) url.searchParams.set("package", currentTeacherPackage);
+        if (mapelVal) url.searchParams.set("mapel", mapelVal);
         shareUrl = url.toString();
       }
 
       navigator.clipboard.writeText(shareUrl).then(() => {
-        alert(`✅ LINK GAME SISWA BERHASIL DISALIN!\n\n${shareUrl}\n\nSiswa yang membuka link ini akan langsung memainkan soal dari Google Sheet guru!`);
+        alert(`✅ LINK GAME SISWA BERHASIL DISALIN!\n\n${shareUrl}\n\nMapel: ${mapelVal || 'Asesmen'}\nSiswa yang membuka link ini akan otomatis bermain dengan soal Google Sheet guru!`);
       }).catch(() => {
         prompt("Salin link berikut untuk siswa:", shareUrl);
       });
