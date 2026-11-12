@@ -420,40 +420,51 @@ class GASService {
           const optB = getCell(4);
           const optC = getCell(5);
           const optD = getCell(6);
-          const ans = (getCell(7) || "A").toUpperCase();
+          const ans = (getCell(7) || "A").trim();
           const expl = getCell(8);
           const rawType = getCell(9).toLowerCase();
           const audioText = getCell(10);
           const speed = parseFloat(getCell(11)) || 1.0;
           const maxPlays = parseInt(getCell(12), 10) || 2;
           const readingPassage = getCell(13);
+          const videoUrl = getCell(14);
 
-          // Otomatis tentukan tipe jika kosong
+          // Otomatis tentukan tipe jika kosong atau fleksibel
           let qType = rawType;
-          if (!qType || qType === "standard") {
+          if (rawType.includes("video") || videoUrl) {
+            qType = "video_listening";
+          } else if (rawType.includes("essay") || rawType.includes("uraian")) {
+            qType = "essay";
+          } else if (!qType || qType === "standard") {
             if (audioText) qType = "listening";
             else if (readingPassage) qType = "reading";
             else if (col1.toLowerCase().includes("writing") || col1.toLowerCase().includes("grammar")) qType = "writing";
             else qType = "standard";
           }
 
-          questions.push({
-            id: questions.length + 1,
-            category: col1 || (qType === "listening" ? "Listening Comprehension" : (qType === "reading" ? "Reading Comprehension" : "Writing & Grammar")),
-            question: questionText,
-            options: [
+          const optionsList = [];
+          if (qType !== "essay") {
+            optionsList.push(
               { key: "A", text: optA || "Pilihan A" },
               { key: "B", text: optB || "Pilihan B" },
               { key: "C", text: optC || "Pilihan C" },
               { key: "D", text: optD || "Pilihan D" }
-            ],
+            );
+          }
+
+          questions.push({
+            id: questions.length + 1,
+            category: col1 || (qType === "video_listening" ? "Video Comprehension" : (qType === "essay" ? "Soal Essay / Uraian" : (qType === "listening" ? "Listening Comprehension" : (qType === "reading" ? "Reading Comprehension" : "Writing & Grammar")))),
+            question: questionText,
+            options: optionsList,
             answer: ans,
             explanation: expl,
             type: qType,
             audioText: audioText,
             audioSpeed: speed,
             maxPlays: maxPlays,
-            readingPassage: readingPassage
+            readingPassage: readingPassage,
+            videoUrl: videoUrl
           });
         });
 
@@ -591,7 +602,7 @@ class GASService {
   exportQuestionsToTSV(questionList) {
     const header = [
       "ID Soal", "Kategori / Topik", "Pertanyaan", "Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D",
-      "Kunci Jawaban", "Pembahasan", "Tipe", "Audio TTS", "Speed Audio", "Batas Putar", "Reading Passage"
+      "Kunci Jawaban", "Pembahasan", "Tipe", "Audio TTS", "Speed Audio", "Batas Putar", "Reading Passage", "Link Video URL"
     ];
     const rows = questionList.map((q, idx) => {
       const optA = (q.options && q.options[0]) ? (q.options[0].text || q.options[0]) : "";
@@ -607,13 +618,14 @@ class GASService {
         sanitize(optB),
         sanitize(optC),
         sanitize(optD),
-        (q.answer || "A").toString().toUpperCase().trim(),
+        sanitize(q.answer || "A").trim(),
         sanitize(q.explanation || ""),
         q.type || "standard",
         sanitize(q.audioText || ""),
         q.audioSpeed || 1.0,
         q.maxPlays || 2,
-        sanitize(q.readingPassage || "")
+        sanitize(q.readingPassage || ""),
+        sanitize(q.videoUrl || "")
       ].join("\t");
     });
     return [header.join("\t"), ...rows].join("\n");

@@ -393,13 +393,14 @@ function handleGetQuestions(data) {
         { key: "C", text: r[5] },
         { key: "D", text: r[6] }
       ],
-      answer: String(r[7]).toUpperCase().trim(),
+      answer: String(r[7]).trim(),
       explanation: r[8] || "",
       type: detectedType,
       audioText: audio,
       audioSpeed: parseFloat(r[11]) || 1.0,
       maxPlays: parseInt(r[12]) || 2,
-      readingPassage: passage
+      readingPassage: passage,
+      videoUrl: r[14] || ""
     };
   });
 
@@ -424,9 +425,9 @@ function handleSaveQuestions(data) {
 
   sheet.appendRow([
     "ID Soal", "Kategori / Topik", "Pertanyaan", "Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D",
-    "Kunci Jawaban", "Pembahasan", "Tipe", "Audio TTS", "Speed Audio", "Batas Putar", "Reading Passage"
+    "Kunci Jawaban", "Pembahasan", "Tipe", "Audio TTS", "Speed Audio", "Batas Putar", "Reading Passage", "Link Video URL"
   ]);
-  sheet.getRange(1, 1, 1, 14).setFontWeight("bold").setBackground("#c8e6c9");
+  sheet.getRange(1, 1, 1, 15).setFontWeight("bold").setBackground("#c8e6c9");
 
   var qList = data.questions || [];
   if (typeof qList === "string") {
@@ -459,18 +460,19 @@ function handleSaveQuestions(data) {
       optB,
       optC,
       optD,
-      (q.answer || "A").toString().toUpperCase().trim(),
+      String(q.answer || "A").trim(),
       q.explanation || "",
       q.type || "standard",
       q.audioText || "",
       q.audioSpeed || 1.0,
       q.maxPlays || 2,
-      q.readingPassage || ""
+      q.readingPassage || "",
+      q.videoUrl || ""
     ]);
   });
 
   if (rows.length > 0) {
-    sheet.getRange(2, 1, rows.length, 14).setValues(rows);
+    sheet.getRange(2, 1, rows.length, 15).setValues(rows);
   }
 
   SpreadsheetApp.flush();

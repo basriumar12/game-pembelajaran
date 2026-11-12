@@ -933,9 +933,24 @@ const SMA_IOT_QUESTIONS = [
 // 30 SOAL LENGKAP: 10 LISTENING (TTS AUDIO), 10 READING, 10 WRITING/GRAMMAR
 // ============================================================================
 const ENGLISH_PRACTICE_QUESTIONS = [
-  // --- SECTION 1: LISTENING COMPREHENSION (AUDIO TTS INTERAKTIF) ---
+  // --- SECTION 1: LISTENING & VIDEO COMPREHENSION ---
   {
     id: 1,
+    type: "video_listening",
+    category: "Video Comprehension: Introducing Yourself",
+    videoUrl: "https://www.youtube.com/watch?v=d_kS_jXWvDk",
+    question: "Watch the introductory English dialogue video above. Why is body language and clear pronunciation important during an introduction?",
+    options: [
+      { key: "A", text: "To make the conversation longer and more difficult" },
+      { key: "B", text: "To convey confidence, friendliness, and ensure clear mutual understanding" },
+      { key: "C", text: "To avoid talking to the other person" },
+      { key: "D", text: "To speak faster than normal native speakers" }
+    ],
+    answer: "B",
+    explanation: "Effective communication involves both clear vocal pronunciation and positive body language to build trust and mutual understanding."
+  },
+  {
+    id: 2,
     type: "listening",
     category: "Listening: Daily Conversation",
     audioText: "Hello, Sarah! Are you coming to the science exhibition at school this afternoon? The bus will leave at one thirty sharp.",
@@ -948,6 +963,9 @@ const ENGLISH_PRACTICE_QUESTIONS = [
       { key: "C", text: "At 2:00" },
       { key: "D", text: "At 3:15" }
     ],
+    answer: "B",
+    explanation: "The speaker explicitly stated: 'The bus will leave at one thirty sharp.'"
+  },
     answer: "B",
     explanation: "The speaker explicitly stated: 'The bus will leave at one thirty sharp (1:30).'"
   },
@@ -1386,17 +1404,12 @@ const ENGLISH_PRACTICE_QUESTIONS = [
   },
   {
     id: 30,
-    type: "writing",
-    category: "Writing: Sentence Correction & Punctuation",
-    question: "Which of the following sentences has flawless punctuation and capitalization?",
-    options: [
-      { key: "A", text: "on wednesday, Siti visited the BPMP Gorontalo office to present her project." },
-      { key: "B", text: "On Wednesday, Siti visited the BPMP Gorontalo office to present her project." },
-      { key: "C", text: "On Wednesday Siti visited the bpmp gorontalo office, to present her project" },
-      { key: "D", text: "On wednesday Siti visited the BPMP Gorontalo office to present her project?" }
-    ],
-    answer: "B",
-    explanation: "Sentence B capitalizes the first word 'On', day 'Wednesday', proper names 'Siti', acronym 'BPMP Gorontalo', and ends with a period."
+    type: "essay",
+    category: "Writing Essay: Self Expression & Reflection",
+    question: "Write a short paragraph (3 to 5 sentences) describing your dream career or future ambition in English. Explain why you chose it and what steps you will take to achieve your goal.",
+    options: [],
+    answer: "Pedoman Penilaian: 1. Kesesuaian topik (5 poin), 2. Struktur kalimat & Grammar (5 poin), 3. Keragaman Vocabulary (5 poin), 4. Koherensi paragraf (5 poin).",
+    explanation: "Rubrik Penskoran: Paragraf memuat cita-cita masa depan, alasan pemilihan yang logis, serta langkah nyata yang akan ditempuh dengan tata bahasa Simple Future (will / going to) atau Present Tense yang tepat."
   }
 ];
 

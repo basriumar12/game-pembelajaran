@@ -1110,8 +1110,24 @@ class BPMPFarmGame {
   }
 
   /**
+   * Helper Pengubah URL Video Menjadi Embed Aman (YouTube / Google Drive / Direct Video)
+   */
+  formatVideoEmbedUrl(rawUrl) {
+    if (!rawUrl) return "";
+    const str = String(rawUrl).trim();
+    const ytMatch = str.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/|watch\?.+&v=))([\w-]{11})/i);
+    if (ytMatch && ytMatch[1]) {
+      return `https://www.youtube.com/embed/${ytMatch[1]}`;
+    }
+    if (str.includes("drive.google.com/file/d/")) {
+      return str.replace(/\/view(\?.*)?$/, "/preview");
+    }
+    return str;
+  }
+
+  /**
    * Modal Interaktif Menjawab Soal di Posko yang Didekati
-   * Mendukung Teks Bacaan (Reading Passage) & Audio Text-to-Speech (Listening Comprehension)
+   * Mendukung Video Menyimak, Audio Text-to-Speech, Reading Passage, Pilihan Ganda & Soal Essay
    */
   openPoskoQuiz(posko) {
     const q = posko.question;
@@ -1124,8 +1140,48 @@ class BPMPFarmGame {
     const optContainer = document.getElementById("modal-posko-options");
     const feedbackBox = document.getElementById("modal-posko-feedback");
     const nextBtn = document.getElementById("btn-modal-close");
+    const essayContainer = document.getElementById("posko-essay-container");
 
-    // Wadah Reading & Listening
+    // 1. Wadah Video Player (Khusus Menyimak Video / Video Comprehension)
+    const videoBox = document.getElementById("posko-video-container");
+    if (videoBox) {
+      const vidUrl = q.videoUrl;
+      if (vidUrl || q.type === "video_listening") {
+        videoBox.style.display = "block";
+        const embedUrl = this.formatVideoEmbedUrl(vidUrl);
+        const isDirectVideo = vidUrl && vidUrl.match(/\.(mp4|webm|ogg)(\?.*)?$/i);
+
+        if (isDirectVideo) {
+          videoBox.innerHTML = `
+            <div style="background: rgba(15, 23, 42, 0.95); border: 2px solid #38bdf8; border-radius: 12px; padding: 10px; margin-bottom: 6px;">
+              <div style="font-size: 11.5px; font-weight: 800; color: #38bdf8; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                🎥 MENYIMAK VIDEO PEMBELAJARAN
+              </div>
+              <video src="${vidUrl}" controls playsinline style="width: 100%; max-height: 240px; border-radius: 8px; background: #000;"></video>
+            </div>
+          `;
+        } else if (embedUrl) {
+          videoBox.innerHTML = `
+            <div style="background: rgba(15, 23, 42, 0.95); border: 2px solid #38bdf8; border-radius: 12px; padding: 10px; margin-bottom: 6px;">
+              <div style="font-size: 11.5px; font-weight: 800; color: #38bdf8; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                🎥 MENYIMAK VIDEO PEMBELAJARAN (SIMAK DENGAN SEKSAMA)
+              </div>
+              <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background: #000;">
+                <iframe src="${embedUrl}" style="position: absolute; top:0; left:0; width: 100%; height: 100%; border: 0;" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+              </div>
+            </div>
+          `;
+        } else {
+          videoBox.style.display = "none";
+          videoBox.innerHTML = "";
+        }
+      } else {
+        videoBox.style.display = "none";
+        videoBox.innerHTML = "";
+      }
+    }
+
+    // 2. Wadah Reading & Listening
     const readingBox = document.getElementById("posko-reading-container");
     if (readingBox) {
       if (q.readingPassage || q.type === "reading") {
@@ -1245,37 +1301,56 @@ class BPMPFarmGame {
     }
 
     const totalInList = this.poskoList.length || 30;
+    const isEssay = (q.type === "essay");
 
     // 🔒 JIKA SOAL INI SUDAH DIJAWAB: KUNCI TOTAL! HANYA BISA LIHAT PEMBAHASAN
     if (posko.isAnswered) {
-      const statusTitle = posko.isCorrect ? "✅ TERJAWAB BENAR" : "❌ TERJAWAB SALAH";
+      const statusTitle = isEssay ? "✅ ESSAY SELESAI" : (posko.isCorrect ? "✅ TERJAWAB BENAR" : "❌ TERJAWAB SALAH");
       document.getElementById("modal-posko-badge").textContent = `Posko #${posko.id} dari ${totalInList} (🔒 SUDAH SELESAI)`;
       document.getElementById("modal-posko-topic").textContent = `${q.category || "Materi Asesmen"} — ${statusTitle}`;
       document.getElementById("modal-posko-question").textContent = q.question;
 
-      optContainer.innerHTML = "";
-      q.options.forEach(opt => {
-        const btn = document.createElement("button");
-        btn.className = "retro-option-btn";
-        btn.disabled = true; // Dinonaktifkan mutlak
-        btn.style.cursor = "not-allowed";
-        btn.style.opacity = "0.85";
-
-        if (opt.key === posko.userAnswer) {
-          btn.classList.add(posko.isCorrect ? "correct" : "wrong");
-          btn.innerHTML = `<span class="option-key">${opt.key}</span> <span>${opt.text} <b style="margin-left: 8px;">(Jawaban Anda)</b></span>`;
-        } else if (opt.key === q.answer && !posko.isCorrect) {
-          btn.classList.add("correct");
-          btn.innerHTML = `<span class="option-key">${opt.key}</span> <span>${opt.text} <b style="margin-left: 8px;">(Kunci yang Benar)</b></span>`;
-        } else {
-          btn.innerHTML = `<span class="option-key">${opt.key}</span> <span>${opt.text}</span>`;
+      if (isEssay) {
+        if (optContainer) optContainer.style.display = "none";
+        if (essayContainer) {
+          essayContainer.style.display = "block";
+          essayContainer.innerHTML = `
+            <div style="background: rgba(15, 23, 42, 0.85); border: 1.5px solid #10b981; border-radius: 10px; padding: 12px;">
+              <div style="font-size: 11.5px; font-weight: 800; color: #34d399; margin-bottom: 6px;">📝 JAWABAN ESSAY ANDA (TERSIMPAN):</div>
+              <div style="font-size: 13px; color: #fff; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; white-space: pre-wrap; font-style: italic;">"${posko.userEssayAnswer || posko.userAnswer || '-'}"</div>
+            </div>
+          `;
         }
-        optContainer.appendChild(btn);
-      });
+        feedbackBox.className = "quiz-explanation correct";
+        feedbackBox.innerHTML = `<strong>🔒 SOAL ESSAY TELAH DIKERJAKAN (+20 Poin):</strong><br>Jawaban Anda telah dicatat ke rekapitulasi penilaian guru.<br><br><strong>Pedoman / Kunci Acuan:</strong> ${q.answer || 'Tercatat'}<br><em>Pembahasan / Rubrik:</em> ${q.explanation || '-'}`;
+        feedbackBox.style.display = "block";
+      } else {
+        if (essayContainer) essayContainer.style.display = "none";
+        if (optContainer) optContainer.style.display = "flex";
+        optContainer.innerHTML = "";
+        (q.options || []).forEach(opt => {
+          const btn = document.createElement("button");
+          btn.className = "retro-option-btn";
+          btn.disabled = true; // Dinonaktifkan mutlak
+          btn.style.cursor = "not-allowed";
+          btn.style.opacity = "0.85";
 
-      feedbackBox.className = posko.isCorrect ? "quiz-explanation correct" : "quiz-explanation wrong";
-      feedbackBox.innerHTML = `<strong>🔒 SOAL INI TELAH DIJAWAB (${posko.isCorrect ? 'BENAR +20 Poin' : 'SALAH 0 Poin'}):</strong><br>Soal yang sudah dikerjakan tidak dapat diubah atau dijawab ulang.<br><br><strong>Kunci Jawaban: ${q.answer}</strong><br><em>Pembahasan:</em> ${q.explanation}`;
-      feedbackBox.style.display = "block";
+          if (opt.key === posko.userAnswer) {
+            btn.classList.add(posko.isCorrect ? "correct" : "wrong");
+            btn.innerHTML = `<span class="option-key">${opt.key}</span> <span>${opt.text} <b style="margin-left: 8px;">(Jawaban Anda)</b></span>`;
+          } else if (opt.key === q.answer && !posko.isCorrect) {
+            btn.classList.add("correct");
+            btn.innerHTML = `<span class="option-key">${opt.key}</span> <span>${opt.text} <b style="margin-left: 8px;">(Kunci yang Benar)</b></span>`;
+          } else {
+            btn.innerHTML = `<span class="option-key">${opt.key}</span> <span>${opt.text}</span>`;
+          }
+          optContainer.appendChild(btn);
+        });
+
+        feedbackBox.className = posko.isCorrect ? "quiz-explanation correct" : "quiz-explanation wrong";
+        feedbackBox.innerHTML = `<strong>🔒 SOAL INI TELAH DIJAWAB (${posko.isCorrect ? 'BENAR +20 Poin' : 'SALAH 0 Poin'}):</strong><br>Soal yang sudah dikerjakan tidak dapat diubah atau dijawab ulang.<br><br><strong>Kunci Jawaban: ${q.answer}</strong><br><em>Pembahasan:</em> ${q.explanation}`;
+        feedbackBox.style.display = "block";
+      }
 
       nextBtn.style.display = "inline-block";
       nextBtn.textContent = "Tutup & Lanjut Jelajahi Posko Lain ➔";
@@ -1295,17 +1370,125 @@ class BPMPFarmGame {
 
     feedbackBox.style.display = "none";
     nextBtn.style.display = "none";
-    optContainer.innerHTML = "";
 
-    q.options.forEach(opt => {
-      const btn = document.createElement("button");
-      btn.className = "retro-option-btn";
-      btn.innerHTML = `<span class="option-key">${opt.key}</span> <span>${opt.text}</span>`;
-      btn.onclick = () => this.handlePoskoAnswer(posko, opt.key, btn);
-      optContainer.appendChild(btn);
-    });
+    if (isEssay) {
+      if (optContainer) optContainer.style.display = "none";
+      if (essayContainer) {
+        essayContainer.style.display = "block";
+        essayContainer.innerHTML = `
+          <div style="background: rgba(15, 23, 42, 0.85); border: 1.5px solid #a855f7; border-radius: 10px; padding: 12px;">
+            <label style="display: block; font-size: 12px; font-weight: 800; color: #c084fc; margin-bottom: 6px;">
+              ✍️ Tuliskan Jawaban / Uraian Essay Anda:
+            </label>
+            <textarea id="input-essay-${posko.id}" style="width: 100%; min-height: 90px; background: #0f172a; border: 1.5px solid #a855f7; color: #fff; border-radius: 8px; padding: 10px; font-size: 13px; font-family: inherit; resize: vertical; box-sizing: border-box;" placeholder="Ketik uraian jawaban Anda secara jelas dan lengkap di sini..."></textarea>
+            <button id="btn-submit-essay-${posko.id}" class="btn-rpg-primary" style="margin-top: 10px; width: 100%; font-size: 13.5px; padding: 10px; background: linear-gradient(135deg, #a855f7, #7e22ce); border-color: #c084fc;">
+              📤 Kirim & Simpan Jawaban Essay
+            </button>
+          </div>
+        `;
+
+        const submitBtn = document.getElementById(`btn-submit-essay-${posko.id}`);
+        if (submitBtn) {
+          submitBtn.onclick = () => {
+            const txtInput = document.getElementById(`input-essay-${posko.id}`);
+            const val = txtInput ? txtInput.value.trim() : "";
+            if (!val) {
+              alert("Silakan ketik jawaban uraian Anda terlebih dahulu sebelum mengirim!");
+              if (txtInput) txtInput.focus();
+              return;
+            }
+            this.handlePoskoEssayAnswer(posko, val);
+          };
+        }
+      }
+    } else {
+      if (essayContainer) essayContainer.style.display = "none";
+      if (optContainer) {
+        optContainer.style.display = "flex";
+        optContainer.innerHTML = "";
+        (q.options || []).forEach(opt => {
+          const btn = document.createElement("button");
+          btn.className = "retro-option-btn";
+          btn.innerHTML = `<span class="option-key">${opt.key}</span> <span>${opt.text}</span>`;
+          btn.onclick = () => this.handlePoskoAnswer(posko, opt.key, btn);
+          optContainer.appendChild(btn);
+        });
+      }
+    }
 
     modal.classList.add("active");
+  }
+
+  handlePoskoEssayAnswer(posko, essayText) {
+    if (posko.isAnswered) return;
+    if (window.ttsManager) window.ttsManager.stop();
+
+    const q = posko.question;
+    posko.isAnswered = true;
+    posko.userAnswer = essayText;
+    posko.userEssayAnswer = essayText;
+    posko.isCorrect = true;
+    posko.isSolved = true;
+    this.score += 20;
+    this.correctCount++;
+    this.answeredMap[posko.id] = { selectedKey: "ESSAY", isCorrect: true, essayAnswer: essayText };
+
+    if (!this.solvedPosko.includes(posko.id)) {
+      this.solvedPosko.push(posko.id);
+    }
+
+    posko.roof.material.color.setHex(0x10b981);
+    posko.ring.material.color.setHex(0x10b981);
+
+    window.soundSystem.playCorrect();
+
+    const feedbackBox = document.getElementById("modal-posko-feedback");
+    const nextBtn = document.getElementById("btn-modal-close");
+    const essayContainer = document.getElementById("posko-essay-container");
+
+    if (essayContainer) {
+      essayContainer.innerHTML = `
+        <div style="background: rgba(15, 23, 42, 0.85); border: 1.5px solid #10b981; border-radius: 10px; padding: 12px;">
+          <div style="font-size: 11.5px; font-weight: 800; color: #34d399; margin-bottom: 6px;">✅ JAWABAN ESSAY BERHASIL DISIMPAN:</div>
+          <div style="font-size: 13px; color: #fff; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; white-space: pre-wrap; font-style: italic;">"${essayText}"</div>
+        </div>
+      `;
+    }
+
+    feedbackBox.className = "quiz-explanation correct";
+    feedbackBox.innerHTML = `<strong>📝 JAWABAN ESSAY TERSIMPAN (+20 Poin):</strong><br>Jawaban Anda telah dicatat ke rekapitulasi penilaian guru.<br><br><strong>Pedoman / Kunci Acuan:</strong> ${q.answer || 'Tercatat'}<br><em>Pembahasan / Rubrik:</em> ${q.explanation || '-'}`;
+    feedbackBox.style.display = "block";
+
+    this.updatePosko3DBadge(posko);
+    this.updateAvatarTag(this.playerMesh, this.playerData.name, this.score, true);
+
+    const lastAnswer = {
+      poskoId: posko.id,
+      category: q.category || "Soal Essay",
+      userAnswer: essayText,
+      correctAnswer: q.answer || "Pedoman Essay",
+      isCorrect: true,
+      scoreGained: 20,
+      isEssay: true
+    };
+
+    nextBtn.style.display = "inline-block";
+    nextBtn.textContent = "Selesai & Lanjut Eksplorasi Peta ➔";
+    nextBtn.onclick = () => {
+      if (window.ttsManager) window.ttsManager.stop();
+      document.getElementById("posko-quiz-modal").classList.remove("active");
+    };
+
+    this.updateHUD();
+    this.syncScoreToGAS(lastAnswer);
+    this.broadcastMyPosition();
+
+    if (this.solvedPosko.length >= this.poskoList.length) {
+      setTimeout(() => {
+        document.getElementById("posko-quiz-modal").classList.remove("active");
+        this.triggerGameFinish(`Luar Biasa! Seluruh ${this.poskoList.length} Posko Telah Berhasil Anda Kerjakan!`);
+      }, 2500);
+    }
   }
 
   handlePoskoAnswer(posko, selectedKey, clickedBtn) {

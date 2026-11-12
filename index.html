@@ -285,6 +285,9 @@
           <button id="btn-posko-close-x" class="btn-action" style="padding: 4px 8px; font-size: 11px;">✖ Keluar</button>
         </div>
 
+        <!-- Video Player (Khusus Soal Menyimak Video / Video Comprehension) -->
+        <div id="posko-video-container" style="display: none; margin-bottom: 12px;"></div>
+
         <!-- Audio Listening TTS Player (Khusus Soal Listening) -->
         <div id="posko-listening-container" style="display: none;"></div>
 
@@ -296,8 +299,11 @@
           Memuat pertanyaan...
         </div>
 
-        <!-- 4 Opsi Jawaban A, B, C, D -->
+        <!-- 4 Opsi Jawaban A, B, C, D (Khusus Pilihan Ganda) -->
         <div id="modal-posko-options" class="dialog-options"></div>
+
+        <!-- Input Jawaban Essay / Uraian (Khusus Soal Essay) -->
+        <div id="posko-essay-container" style="display: none; margin-top: 10px;"></div>
 
         <!-- Feedback Pembahasan -->
         <div id="modal-posko-feedback" class="quiz-explanation" style="display: none;"></div>

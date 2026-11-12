@@ -1065,8 +1065,9 @@
         const optB = (q.options && q.options[1]) ? (q.options[1].text || q.options[1]) : "";
         const optC = (q.options && q.options[2]) ? (q.options[2].text || q.options[2]) : "";
         const optD = (q.options && q.options[3]) ? (q.options[3].text || q.options[3]) : "";
-        const currentAns = (q.answer || "A").toString().toUpperCase().trim();
-        const qType = q.type || (q.audioText ? "listening" : (q.readingPassage ? "reading" : "standard"));
+        const currentAns = (q.answer || "A").toString().trim();
+        const qType = q.type || (q.videoUrl ? "video_listening" : (q.audioText ? "listening" : (q.readingPassage ? "reading" : "standard")));
+        const isEssay = (qType === "essay");
 
         card.innerHTML = `
           <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; flex-wrap: wrap; gap: 8px;">
@@ -1075,16 +1076,28 @@
               <input type="text" class="q-category-input" value="${q.category || 'Materi Asesmen'}" style="background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #38bdf8; font-weight: 700; border-radius: 6px; padding: 4px 8px; font-size: 12px; width: 200px;" placeholder="Kategori Topik">
               
               <div style="display: flex; align-items: center; gap: 4px;">
-                <label style="font-size: 11px; color: #94a3b8;">Tipe:</label>
-                <select class="q-type-select" style="background: #0f172a; border: 1px solid var(--card-border); color: #38bdf8; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 3px 6px;">
-                  <option value="standard" ${qType === 'standard' ? 'selected' : ''}>Standard (Pilihan Ganda)</option>
-                  <option value="listening" ${qType === 'listening' ? 'selected' : ''}>🎧 Listening (TTS Audio)</option>
+                <label style="font-size: 11px; color: #94a3b8;">Tipe Soal:</label>
+                <select class="q-type-select" style="background: #0f172a; border: 1.5px solid #0284c7; color: #38bdf8; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 3px 6px;">
+                  <option value="standard" ${qType === 'standard' ? 'selected' : ''}>🔘 Standard (Pilihan Ganda)</option>
+                  <option value="listening" ${qType === 'listening' ? 'selected' : ''}>🎧 Menyimak Suara (Audio TTS)</option>
+                  <option value="video_listening" ${qType === 'video_listening' ? 'selected' : ''}>🎥 Menyimak Video (YouTube / MP4)</option>
                   <option value="reading" ${qType === 'reading' ? 'selected' : ''}>📖 Reading (Bacaan)</option>
                   <option value="writing" ${qType === 'writing' ? 'selected' : ''}>✍️ Writing (Tata Bahasa)</option>
+                  <option value="essay" ${qType === 'essay' ? 'selected' : ''}>📝 Soal Essay / Uraian Bebas</option>
                 </select>
               </div>
             </div>
             <button class="btn-delete-q" data-idx="${idx}" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171; border-radius: 6px; padding: 3px 8px; font-size: 11px; cursor: pointer;">🗑️ Hapus</button>
+          </div>
+
+          <!-- Bagian Khusus Menyimak Video (YouTube / Link Video) -->
+          <div class="q-video-block" style="display: ${qType === 'video_listening' ? 'block' : 'none'}; background: rgba(56, 189, 248, 0.08); border: 1.5px dashed #38bdf8; border-radius: 8px; padding: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+              <label style="font-size: 11px; font-weight: 800; color: #38bdf8;">🎥 Link Video Pembelajaran (YouTube / Direct MP4 / Google Drive):</label>
+              <button type="button" class="btn-preview-video" style="background: #0284c7; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 800; cursor: pointer;">▶️ Uji Video</button>
+            </div>
+            <input type="text" class="q-video-url-input" value="${q.videoUrl || ''}" placeholder="Paste URL Video (contoh: https://www.youtube.com/watch?v=... atau https://youtu.be/...)" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 7px 10px; font-size: 12px; font-family: inherit; box-sizing: border-box;">
+            <div style="font-size: 10.5px; color: #94a3b8; margin-top: 4px;">💡 <i>Siswa akan menyimak video ini langsung di dalam posko game sebelum menjawab pertanyaan.</i></div>
           </div>
 
           <!-- Bagian Khusus Audio Listening TTS -->
@@ -1093,7 +1106,7 @@
               <label style="font-size: 11px; font-weight: 800; color: #38bdf8;">🎙️ Teks yang Dibacakan Audio TTS (Listening Script):</label>
               <button type="button" class="btn-preview-tts" style="background: #0284c7; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 800; cursor: pointer;">🔊 Tes Suara TTS</button>
             </div>
-            <textarea class="q-audio-text-input" style="width: 100%; min-height: 45px; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px; font-family: inherit;" placeholder="Ketik kalimat bahasa Inggris yang akan dibacakan oleh mesin Text-to-Speech...">${q.audioText || ''}</textarea>
+            <textarea class="q-audio-text-input" style="width: 100%; min-height: 45px; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px; font-family: inherit; box-sizing: border-box;" placeholder="Ketik kalimat bahasa Inggris yang akan dibacakan oleh mesin Text-to-Speech...">${q.audioText || ''}</textarea>
             <div style="display: flex; gap: 12px; align-items: center; margin-top: 6px; flex-wrap: wrap;">
               <div style="display: flex; align-items: center; gap: 4px;">
                 <label style="font-size: 11px; color: #94a3b8;">Kecepatan Suara:</label>
@@ -1114,35 +1127,44 @@
           <!-- Bagian Khusus Teks Bacaan (Reading Passage) -->
           <div class="q-reading-block" style="display: ${qType === 'reading' ? 'block' : 'none'}; background: rgba(245, 158, 11, 0.1); border: 1px dashed #f59e0b; border-radius: 8px; padding: 10px;">
             <label style="font-size: 11px; font-weight: 800; color: #fbbf24; display: block; margin-bottom: 4px;">📖 Teks Bacaan Panjang (Reading Passage):</label>
-            <textarea class="q-reading-passage-input" style="width: 100%; min-height: 50px; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px; font-family: inherit;" placeholder="Tuliskan teks narasi / artikel bacaan di sini...">${q.readingPassage || ''}</textarea>
+            <textarea class="q-reading-passage-input" style="width: 100%; min-height: 50px; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px; font-family: inherit; box-sizing: border-box;" placeholder="Tuliskan teks narasi / artikel bacaan di sini...">${q.readingPassage || ''}</textarea>
           </div>
 
           <div>
-            <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Teks Pertanyaan:</label>
-            <textarea class="q-text-input" style="width: 100%; min-height: 55px; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 8px; padding: 8px; font-size: 13px; font-family: inherit; resize: vertical;">${q.question || ''}</textarea>
+            <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Teks Pertanyaan / Instruksi Soal:</label>
+            <textarea class="q-text-input" style="width: 100%; min-height: 55px; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 8px; padding: 8px; font-size: 13px; font-family: inherit; resize: vertical; box-sizing: border-box;">${q.question || ''}</textarea>
           </div>
 
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
+          <!-- 4 Opsi Jawaban (Khusus Pilihan Ganda) -->
+          <div class="q-options-grid" style="display: ${isEssay ? 'none' : 'grid'}; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
             <div>
               <label style="font-size: 11px; font-weight: 700; color: #94a3b8;">Pilihan A:</label>
-              <input type="text" class="q-opt-a" value="${optA}" style="width: 100%; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px;">
+              <input type="text" class="q-opt-a" value="${optA}" style="width: 100%; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px; box-sizing: border-box;">
             </div>
             <div>
               <label style="font-size: 11px; font-weight: 700; color: #94a3b8;">Pilihan B:</label>
-              <input type="text" class="q-opt-b" value="${optB}" style="width: 100%; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px;">
+              <input type="text" class="q-opt-b" value="${optB}" style="width: 100%; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px; box-sizing: border-box;">
             </div>
             <div>
               <label style="font-size: 11px; font-weight: 700; color: #94a3b8;">Pilihan C:</label>
-              <input type="text" class="q-opt-c" value="${optC}" style="width: 100%; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px;">
+              <input type="text" class="q-opt-c" value="${optC}" style="width: 100%; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px; box-sizing: border-box;">
             </div>
             <div>
               <label style="font-size: 11px; font-weight: 700; color: #94a3b8;">Pilihan D:</label>
-              <input type="text" class="q-opt-d" value="${optD}" style="width: 100%; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px;">
+              <input type="text" class="q-opt-d" value="${optD}" style="width: 100%; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #fff; border-radius: 6px; padding: 6px 8px; font-size: 12px; box-sizing: border-box;">
             </div>
           </div>
 
+          <!-- Petunjuk Khusus Soal Essay -->
+          <div class="q-essay-info-block" style="display: ${isEssay ? 'block' : 'none'}; background: rgba(168, 85, 247, 0.1); border: 1px solid #a855f7; border-radius: 8px; padding: 10px;">
+            <div style="font-size: 11.5px; color: #c084fc; font-weight: 700;">
+              📝 <b>Mode Soal Essay / Uraian Bebas:</b> Siswa akan mengetik langsung jawaban/uraian di dalam kotak teks game. Jawaban lengkap siswa otomatis tersimpan di sheet <b>"Jawaban_Siswa"</b> Google Sheet Anda.
+            </div>
+          </div>
+
+          <!-- Baris Kunci Jawaban & Pembahasan -->
           <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 6px;">
+            <div class="q-mcq-key-block" style="display: ${isEssay ? 'none' : 'flex'}; align-items: center; gap: 6px;">
               <label style="font-size: 12px; font-weight: 800; color: var(--bpmp-gold);">Kunci Jawaban:</label>
               <select class="q-key-select" style="background: #0f172a; border: 2px solid var(--bpmp-gold); color: #fff; font-weight: 900; font-size: 13px; border-radius: 6px; padding: 4px 10px;">
                 <option value="A" ${currentAns === 'A' ? 'selected' : ''}>A</option>
@@ -1151,21 +1173,50 @@
                 <option value="D" ${currentAns === 'D' ? 'selected' : ''}>D</option>
               </select>
             </div>
-            <div style="flex: 1; min-width: 220px;">
-              <input type="text" class="q-explanation-input" value="${q.explanation || ''}" style="width: 100%; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #a7f3d0; border-radius: 6px; padding: 5px 8px; font-size: 11px;" placeholder="Pembahasan / Alasan Jawaban">
+            <div class="q-essay-key-block" style="display: ${isEssay ? 'block' : 'none'}; flex: 1.2; min-width: 220px;">
+              <input type="text" class="q-essay-key-input" value="${q.answer || ''}" style="width: 100%; background: #0f172a; border: 1.5px solid #a855f7; color: #e9d5ff; border-radius: 6px; padding: 6px 10px; font-size: 12px; box-sizing: border-box;" placeholder="Pedoman Jawaban Acuan / Rubrik Guru">
+            </div>
+            <div style="flex: 1.5; min-width: 220px;">
+              <input type="text" class="q-explanation-input" value="${q.explanation || ''}" style="width: 100%; background: rgba(15,23,42,0.8); border: 1px solid var(--card-border); color: #a7f3d0; border-radius: 6px; padding: 6px 10px; font-size: 12px; box-sizing: border-box;" placeholder="Pembahasan / Rubrik Penilaian Soal">
             </div>
           </div>
         `;
 
         // Switch tipe soal dinamis
         const typeSelect = card.querySelector(".q-type-select");
+        const videoBlock = card.querySelector(".q-video-block");
         const listeningBlock = card.querySelector(".q-listening-block");
         const readingBlock = card.querySelector(".q-reading-block");
+        const optionsGrid = card.querySelector(".q-options-grid");
+        const essayInfoBlock = card.querySelector(".q-essay-info-block");
+        const mcqKeyBlock = card.querySelector(".q-mcq-key-block");
+        const essayKeyBlock = card.querySelector(".q-essay-key-block");
+
         typeSelect.addEventListener("change", (e) => {
           const val = e.target.value;
+          videoBlock.style.display = (val === "video_listening") ? "block" : "none";
           listeningBlock.style.display = (val === "listening") ? "block" : "none";
           readingBlock.style.display = (val === "reading") ? "block" : "none";
+          
+          const isNowEssay = (val === "essay");
+          optionsGrid.style.display = isNowEssay ? "none" : "grid";
+          essayInfoBlock.style.display = isNowEssay ? "block" : "none";
+          mcqKeyBlock.style.display = isNowEssay ? "none" : "flex";
+          essayKeyBlock.style.display = isNowEssay ? "block" : "none";
         });
+
+        // Tombol Tes Video
+        const previewVideoBtn = card.querySelector(".btn-preview-video");
+        if (previewVideoBtn) {
+          previewVideoBtn.addEventListener("click", () => {
+            const vidUrl = card.querySelector(".q-video-url-input").value.trim();
+            if (!vidUrl) {
+              alert("Silakan masukkan URL Video terlebih dahulu!");
+              return;
+            }
+            window.open(vidUrl, "_blank");
+          });
+        }
 
         // Tombol Tes Suara TTS langsung dari Dashboard
         const previewBtn = card.querySelector(".btn-preview-tts");
@@ -1206,38 +1257,52 @@
         const cat = card.querySelector(".q-category-input").value;
         const qType = card.querySelector(".q-type-select").value;
         const qText = card.querySelector(".q-text-input").value;
-        const optA = card.querySelector(".q-opt-a").value;
-        const optB = card.querySelector(".q-opt-b").value;
-        const optC = card.querySelector(".q-opt-c").value;
-        const optD = card.querySelector(".q-opt-d").value;
-        const key = card.querySelector(".q-key-select").value;
+        const optA = card.querySelector(".q-opt-a") ? card.querySelector(".q-opt-a").value : "";
+        const optB = card.querySelector(".q-opt-b") ? card.querySelector(".q-opt-b").value : "";
+        const optC = card.querySelector(".q-opt-c") ? card.querySelector(".q-opt-c").value : "";
+        const optD = card.querySelector(".q-opt-d") ? card.querySelector(".q-opt-d").value : "";
+        
+        let key = "A";
+        if (qType === "essay") {
+          key = card.querySelector(".q-essay-key-input") ? card.querySelector(".q-essay-key-input").value.trim() : "Rubrik Essay";
+        } else {
+          key = card.querySelector(".q-key-select") ? card.querySelector(".q-key-select").value : "A";
+        }
+        
         const exp = card.querySelector(".q-explanation-input").value;
-
+        const videoUrl = card.querySelector(".q-video-url-input") ? card.querySelector(".q-video-url-input").value.trim() : "";
         const audioText = card.querySelector(".q-audio-text-input") ? card.querySelector(".q-audio-text-input").value : "";
         const audioSpeed = card.querySelector(".q-audio-speed-select") ? parseFloat(card.querySelector(".q-audio-speed-select").value) : 1.0;
         const maxPlays = card.querySelector(".q-max-plays-input") ? parseInt(card.querySelector(".q-max-plays-input").value) : 2;
         const readingPassage = card.querySelector(".q-reading-passage-input") ? card.querySelector(".q-reading-passage-input").value : "";
+
+        const optionsArray = [];
+        if (qType !== "essay") {
+          optionsArray.push(
+            { key: "A", text: optA },
+            { key: "B", text: optB },
+            { key: "C", text: optC },
+            { key: "D", text: optD }
+          );
+        }
 
         list.push({
           id: idx + 1,
           type: qType,
           category: cat,
           question: qText,
+          videoUrl: videoUrl,
           audioText: audioText,
           audioSpeed: audioSpeed,
           maxPlays: maxPlays,
           readingPassage: readingPassage,
-          options: [
-            { key: "A", text: optA },
-            { key: "B", text: optB },
-            { key: "C", text: optC },
-            { key: "D", text: optD }
-          ],
+          options: optionsArray,
           answer: key,
           explanation: exp
         });
       });
       teacherQuestions = list;
+    }
     }
 
     document.getElementById("btn-add-new-question").addEventListener("click", () => {
@@ -1648,23 +1713,24 @@
             <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>E</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Pilihan B</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Teks jawaban opsi B</td></tr>
             <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>F</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Pilihan C</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Teks jawaban opsi C</td></tr>
             <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>G</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Pilihan D</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Teks jawaban opsi D</td></tr>
-            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>H</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Kunci Jawaban</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Huruf kunci: <code>A</code>, <code>B</code>, <code>C</code>, atau <code>D</code></td></tr>
-            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>I</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Pembahasan</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Penjelasan yang muncul saat posko selesai dijawab</td></tr>
-            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>J</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Tipe Soal</td><td style="padding:6px 10px; border-bottom:1px solid #334155;"><code>listening</code>, <code>reading</code>, <code>writing</code>, atau <code>standard</code></td></tr>
-            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>K</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Audio TTS</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Teks dialog / narasi Bahasa Inggris yang akan dibacakan mesin suara di posko Listening</td></tr>
-            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>L</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Speed Audio</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Kecepatan suara: <code>0.85</code>, <code>1.0</code>, atau <code>1.2</code></td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>H</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Kunci Jawaban</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Untuk Pilihan Ganda: <code>A</code>, <code>B</code>, <code>C</code>, atau <code>D</code>. Untuk Essay: Pedoman / Kunci acuan penilaian guru</td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>I</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Pembahasan</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Penjelasan / rubrik penilaian yang muncul saat posko selesai dikerjakan</td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>J</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Tipe Soal</td><td style="padding:6px 10px; border-bottom:1px solid #334155;"><code>video_listening</code> (menyimak video), <code>essay</code> (uraian bebas), <code>listening</code> (audio TTS), <code>reading</code> (bacaan), <code>writing</code>, atau <code>standard</code></td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>K</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Audio TTS</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Teks dialog / narasi yang akan dibacakan mesin suara di posko Listening TTS</td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>L</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Speed Audio</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Kecepatan suara: <code>0.75</code>, <code>1.0</code>, atau <code>1.25</code></td></tr>
             <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>M</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Batas Putar</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Kuota putar tombol audio siswa (misal: <code>2</code> atau <code>3</code> kali)</td></tr>
-            <tr><td style="padding:6px 10px;"><b>N</b></td><td style="padding:6px 10px;">Reading Passage</td><td style="padding:6px 10px;">Teks bacaan panjang / artikel yang muncul di atas soal Reading</td></tr>
+            <tr><td style="padding:6px 10px; border-bottom:1px solid #334155;"><b>N</b></td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Reading Passage</td><td style="padding:6px 10px; border-bottom:1px solid #334155;">Teks bacaan panjang / artikel yang muncul di atas soal Reading</td></tr>
+            <tr><td style="padding:6px 10px;"><b>O</b></td><td style="padding:6px 10px;">Link Video URL</td><td style="padding:6px 10px;">Link video YouTube (<code>https://www.youtube.com/watch?v=...</code> atau <code>https://youtu.be/...</code>) / link MP4 untuk tipe Menyimak Video</td></tr>
           </tbody>
         </table>
       </div>
 
       <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
         <button id="btn-copy-sheet-headers" class="btn-action" style="padding:8px 14px; font-size:12px; background:#0284c7; color:#fff; border:none;">
-          📋 Salin Baris Header (A-N)
+          📋 Salin Baris Header (A-O)
         </button>
         <button id="btn-copy-all-tsv" class="btn-action btn-gold" style="padding:8px 14px; font-size:12px;">
-          📋 Salin Semua 30 Soal ke Format Sheet (Langsung Paste ke Sel A1)
+          📋 Salin Semua Soal ke Format Sheet (Langsung Paste ke Sel A1)
         </button>
         <button id="btn-close-sheet-guide-bottom" class="btn-action" style="padding:8px 14px; font-size:12px; background:#334155; color:#fff; border:none;">
           Tutup
@@ -1681,9 +1747,9 @@
     document.getElementById("btn-close-sheet-guide-bottom").addEventListener("click", closeGuide);
 
     document.getElementById("btn-copy-sheet-headers").addEventListener("click", () => {
-      const headers = "ID Soal\tKategori / Topik\tPertanyaan\tPilihan A\tPilihan B\tPilihan C\tPilihan D\tKunci Jawaban\tPembahasan\tTipe\tAudio TTS\tSpeed Audio\tBatas Putar\tReading Passage";
+      const headers = "ID Soal\tKategori / Topik\tPertanyaan\tPilihan A\tPilihan B\tPilihan C\tPilihan D\tKunci Jawaban\tPembahasan\tTipe\tAudio TTS\tSpeed Audio\tBatas Putar\tReading Passage\tLink Video URL";
       navigator.clipboard.writeText(headers).then(() => {
-        alert("✅ Header kolom berhasil disalin! Silakan buka Google Sheet Anda dan Paste (Ctrl+V / Cmd+V) di sel A1.");
+        alert("✅ Header kolom (A-O) berhasil disalin! Silakan buka Google Sheet Anda dan Paste (Ctrl+V / Cmd+V) di sel A1.");
       }).catch(() => {
         prompt("Salin header berikut:", headers);
       });
