@@ -330,18 +330,15 @@ class BPMPFarmGame {
       { x: -16, z: -16 }, { x: 16, z: -16 }, { x: -22, z: -22 }, { x: 22, z: -22 }, { x: -8, z: -30 }, { x: 8, z: -30 }, { x: -28, z: -20 }, { x: 28, z: -20 }, { x: 0, z: -32 }, { x: 0, z: -18 }
     ];
 
-    // Acak urutan bank soal secara dinamis (Fisher-Yates) agar setiap siswa mendapatkan variasi nomor posko yang unik (anti-contek)
-    const shuffledQuestions = [...this.questions];
-    for (let j = shuffledQuestions.length - 1; j > 0; j--) {
-      const k = Math.floor(Math.random() * (j + 1));
-      [shuffledQuestions[j], shuffledQuestions[k]] = [shuffledQuestions[k], shuffledQuestions[j]];
-    }
+    // Urutan soal disesuaikan PERSIS dengan template guru / Google Sheets secara berurutan:
+    // Posko #1 memuat Soal Baris 1, Posko #2 memuat Soal Baris 2, ..., Posko #N memuat Soal Baris N
+    const orderedQuestions = [...this.questions];
 
     const count = this.questions.length || 30;
     this.totalQuestions = count;
 
     for (let i = 0; i < count; i++) {
-      const q = shuffledQuestions[i] || { id: i + 1, category: "Materi Asesmen", question: `Soal nomor ${i + 1}` };
+      const q = orderedQuestions[i] || { id: i + 1, category: "Materi Asesmen", question: `Soal nomor ${i + 1}` };
       let pos = positions[i];
       if (!pos) {
         // Titik posko tambahan dinamis jika soal lebih dari 40
