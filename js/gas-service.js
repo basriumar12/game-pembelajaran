@@ -844,32 +844,47 @@ class GASService {
   }
 
   /**
-   * 9. SISWA / GAME: AMBIL KONFIGURASI ROOM DARI KODE ROOM
+   * 9. SISWA / GAME: AMBIL KONFIGURASI ROOM DARI KODE ROOM (MENDUKUNG AUTO-LATEST)
    */
-  async getRoomConfig(roomId) {
-    const cleanRoom = String(roomId || "").trim().toUpperCase();
-    if (!cleanRoom) return null;
+  async getRoomConfig(roomId = "LATEST") {
+    const cleanRoom = String(roomId || "LATEST").trim().toUpperCase();
 
     // 1. Coba ambil dari local storage
-    try {
-      const saved = localStorage.getItem("room_cfg_" + cleanRoom);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.sheetId) return parsed;
-      }
-    } catch(e) {}
+    if (cleanRoom !== "LATEST") {
+      try {
+        const saved = localStorage.getItem("room_cfg_" + cleanRoom);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.sheetId) return parsed;
+        }
+      } catch(e) {}
+    } else {
+      try {
+        const lastRoom = localStorage.getItem("last_teacher_room_id");
+        if (lastRoom) {
+          const saved = localStorage.getItem("room_cfg_" + lastRoom);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed && parsed.sheetId) return parsed;
+          }
+        }
+      } catch(e) {}
+    }
 
     // 2. Coba fetch dari backend server Google Apps Script
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
       const url = `${this.endpoint}?action=getRoomConfig&roomId=${encodeURIComponent(cleanRoom)}&t=${Date.now()}`;
       const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) {
         const data = await res.json();
         if (data && data.roomConfig) {
-          localStorage.setItem("room_cfg_" + cleanRoom, JSON.stringify(data.roomConfig));
+          if (data.roomConfig.roomId) {
+            localStorage.setItem("room_cfg_" + data.roomConfig.roomId, JSON.stringify(data.roomConfig));
+            localStorage.setItem("last_teacher_room_id", data.roomConfig.roomId);
+          }
           return data.roomConfig;
         }
       }
@@ -878,6 +893,10 @@ class GASService {
     }
 
     return null;
+  }
+
+  async getLatestActiveRoom() {
+    return this.getRoomConfig("LATEST");
   }
 
   // --- Local Storage / Fallback Database ---

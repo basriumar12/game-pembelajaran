@@ -593,25 +593,44 @@
         });
       }
 
-      // Cek parameter URL: ?room=, ?sheet=, ?mapel=
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlRoom = urlParams.get("room") || urlParams.get("roomId");
-        const urlSheet = urlParams.get("sheet") || urlParams.get("sheetId");
-        const urlMapel = urlParams.get("mapel");
+      // Cek parameter URL: ?room=, ?sheet=, ?mapel= atau Auto-Detect Sesi Guru Aktif
+      async function initStudentRoomAndQuestions() {
+        try {
+          const urlParams = new URLSearchParams(window.location.search);
+          const urlRoom = urlParams.get("room") || urlParams.get("roomId");
+          const urlSheet = urlParams.get("sheet") || urlParams.get("sheetId");
+          const urlMapel = urlParams.get("mapel");
 
-        if (urlRoom && roomInput) {
-          roomInput.value = urlRoom.toUpperCase();
-          checkAndApplyRoomConfig(urlRoom);
+          if (urlSheet && window.gasService) {
+            window.gasService.setCustomConfig(null, urlSheet);
+          }
+          if (urlMapel) {
+            modalTitle.textContent = "Asesmen: " + urlMapel;
+            modalSub.textContent = "Mengerjakan Soal dari Guru (" + urlMapel + ")";
+          }
+
+          if (urlRoom && roomInput) {
+            roomInput.value = urlRoom.toUpperCase();
+            await checkAndApplyRoomConfig(urlRoom);
+            return;
+          }
+
+          // Jika siswa membuka link polos (tanpa parameter ?room=), otomatis hubungkan ke sesi room aktif guru terakhir!
+          if (window.gasService && typeof window.gasService.getLatestActiveRoom === "function") {
+            const latestCfg = await window.gasService.getLatestActiveRoom();
+            if (latestCfg && latestCfg.roomId && (latestCfg.sheetId || latestCfg.mapel)) {
+              if (roomInput && !roomInput.value) {
+                roomInput.value = latestCfg.roomId;
+                console.log("[Auto-Connect] Terhubung otomatis ke sesi guru aktif:", latestCfg);
+                await checkAndApplyRoomConfig(latestCfg.roomId);
+              }
+            }
+          }
+        } catch(e) {
+          console.warn("[Init Room] Gagal inisialisasi sesi room:", e);
         }
-        if (urlSheet && window.gasService) {
-          window.gasService.setCustomConfig(null, urlSheet);
-        }
-        if (urlMapel) {
-          modalTitle.textContent = "Asesmen: " + urlMapel;
-          modalSub.textContent = "Mengerjakan Soal dari Guru (" + urlMapel + ")";
-        }
-      } catch(e) {}
+      }
+      initStudentRoomAndQuestions();
 
       // Form Submit: Masuk Game dengan Mapel & Kelas Pilihan / Room Google Sheet Guru
       const loginForm = document.getElementById("login-form");
@@ -633,6 +652,14 @@
         submitBtn.innerHTML = "⏳ Menyiapkan Arena & Soal Posko...";
         submitBtn.disabled = true;
 
+        // Pastikan konfigurasi room selesai dicek sebelum game dimulai
+        if (!currentRoomConfig && roomCodeVal) {
+          try {
+            submitBtn.innerHTML = "⏳ Menghubungkan ke Sesi Room Guru...";
+            await checkAndApplyRoomConfig(roomCodeVal);
+          } catch(e) {}
+        }
+
         let activeTitle = "Asesmen Edukasi";
         const selectedMapelOpt = selectMapel ? selectMapel.options[selectMapel.selectedIndex] : null;
         if (selectedMapelOpt) {
@@ -640,10 +667,10 @@
         }
 
         // 1. Cek apakah ada soal dari Room / Google Sheet Guru
-        let questionsToUse = null;
+        let questionsToUse = activeLoadedQuestions || null;
         let activeSheetId = (currentRoomConfig && currentRoomConfig.sheetId) || window.gasService.spreadsheetId || "";
 
-        if (activeSheetId) {
+        if (!questionsToUse && activeSheetId) {
           try {
             submitBtn.innerHTML = "⏳ Memuat Soal Google Sheet Guru...";
             const sheetQuestions = await window.gasService.fetchQuestions(activeSheetId);

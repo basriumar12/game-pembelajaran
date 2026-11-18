@@ -428,6 +428,19 @@ function handleGetLeaderboard(roomId, data) {
  */
 function handleGetQuestions(data) {
   var ss = getTargetSpreadsheet(data);
+  if (!ss) {
+    // Coba cari Spreadsheet dari Room Aktif Terakhir jika parameter kosong
+    try {
+      var props = PropertiesService.getScriptProperties();
+      var latest = props.getProperty("LATEST_ACTIVE_ROOM");
+      if (latest) {
+        var parsedLatest = JSON.parse(latest);
+        if (parsedLatest && parsedLatest.sheetId) {
+          ss = getTargetSpreadsheet({ sheetId: parsedLatest.sheetId });
+        }
+      }
+    } catch (e) {}
+  }
   if (!ss) return jsonResponse([]);
   var sheet = ss.getSheetByName("Soal");
   if (!sheet || sheet.getLastRow() < 2) {
@@ -626,6 +639,7 @@ function handleSaveRoomConfig(data) {
   try {
     var props = PropertiesService.getScriptProperties();
     props.setProperty("ROOM_" + roomId, JSON.stringify(roomConfig));
+    props.setProperty("LATEST_ACTIVE_ROOM", JSON.stringify(roomConfig));
   } catch (err) {
     console.warn("Gagal simpan ke ScriptProperties:", err);
   }
@@ -665,24 +679,36 @@ function handleSaveRoomConfig(data) {
 }
 
 /**
- * 9. SISWA / GAME: AMBIL KONFIGURASI ROOM DARI KODE ROOM
+ * 9. SISWA / GAME: AMBIL KONFIGURASI ROOM DARI KODE ROOM (MENDUKUNG AUTO-CONNECT LATEST)
  */
 function handleGetRoomConfig(roomId, data) {
   var cleanRoomId = String(roomId || (data && data.roomId) || "").trim().toUpperCase();
-  if (!cleanRoomId) {
-    return jsonResponse({ status: "error", message: "Room ID tidak valid." });
+  var props = null;
+  try { props = PropertiesService.getScriptProperties(); } catch(e) {}
+
+  // 1. Jika diminta room terakhir / aktif atau tanpa parameter
+  if (!cleanRoomId || cleanRoomId === "LATEST" || cleanRoomId === "ACTIVE" || cleanRoomId === "DEFAULT") {
+    if (props) {
+      var latest = props.getProperty("LATEST_ACTIVE_ROOM");
+      if (latest) {
+        try {
+          return jsonResponse({ status: "success", roomConfig: JSON.parse(latest), isLatest: true });
+        } catch(e) {}
+      }
+    }
   }
 
-  try {
-    var props = PropertiesService.getScriptProperties();
-    var saved = props.getProperty("ROOM_" + cleanRoomId);
-    if (saved) {
-      var parsed = JSON.parse(saved);
-      return jsonResponse({ status: "success", roomConfig: parsed });
-    }
-  } catch (err) {}
+  // 2. Cek spesifik Room ID
+  if (props && cleanRoomId) {
+    try {
+      var saved = props.getProperty("ROOM_" + cleanRoomId);
+      if (saved) {
+        return jsonResponse({ status: "success", roomConfig: JSON.parse(saved) });
+      }
+    } catch (err) {}
+  }
 
-  // Fallback dari Sheet "RoomConfig"
+  // 3. Fallback dari Sheet "RoomConfig"
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     if (ss) {
@@ -707,6 +733,16 @@ function handleGetRoomConfig(roomId, data) {
       }
     }
   } catch (e) {}
+
+  // 4. Jika tetap tidak ketemu tapi ada LATEST_ACTIVE_ROOM, fallback ke room aktif terakhir
+  if (props) {
+    try {
+      var fallbackLatest = props.getProperty("LATEST_ACTIVE_ROOM");
+      if (fallbackLatest) {
+        return jsonResponse({ status: "success", roomConfig: JSON.parse(fallbackLatest), isFallback: true });
+      }
+    } catch(e) {}
+  }
 
   return jsonResponse({
     status: "not_found",
