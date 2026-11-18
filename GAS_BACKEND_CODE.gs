@@ -101,6 +101,11 @@ function getTargetSpreadsheet(data) {
     }
   }
 
+  // Gunakan Spreadsheet Utama Guru (English Learning) sebagai Target Default
+  try {
+    return SpreadsheetApp.openById("13rIFPVi2xx4xM_Up13ILyvqu1e4J-EIK6bRXXM7Hg54");
+  } catch(err) {}
+
   try {
     var active = SpreadsheetApp.getActiveSpreadsheet();
     if (active) return active;

@@ -11,6 +11,7 @@
 
 const GAS_CONFIG = {
   DEFAULT_DEPLOYMENT_ID: "AKfycbxLCx_3U0OkQa_iq92NJ22_J34qgXGx2YjfVQqTDRQjxKGn6ulugFcrt8IcHm_FDn4R",
+  DEFAULT_SPREADSHEET_ID: "13rIFPVi2xx4xM_Up13ILyvqu1e4J-EIK6bRXXM7Hg54",
   BASE_URL: "https://script.google.com/macros/s/",
   TIMEOUT_MS: 7000
 };
@@ -90,7 +91,10 @@ class GASService {
     // 2. Cek penyimpanan lokal
     const saved = localStorage.getItem("gas_custom_spreadsheet_id");
     const cleanSaved = this.cleanSpreadsheetId(saved);
-    return (cleanSaved && cleanSaved.length > 10) ? cleanSaved : "";
+    if (cleanSaved && cleanSaved.length > 10) return cleanSaved;
+
+    // 3. Selalu prioritaskan Google Sheet Utama Guru (13rIFPVi2xx4xM_Up13ILyvqu1e4J-EIK6bRXXM7Hg54)
+    return GAS_CONFIG.DEFAULT_SPREADSHEET_ID;
   }
 
   buildEndpointUrl(depId) {

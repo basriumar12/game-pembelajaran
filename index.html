@@ -205,7 +205,8 @@
           <div class="form-group">
             <label class="form-label">Pilih Jenis Soal Mata Pelajaran (Mapel) *</label>
             <select id="select-student-mapel" class="form-input" style="font-weight: 800; color: #0284c7; font-size: 13.5px;" required>
-              <option value="english_all" selected>🎧 Bahasa Inggris (Listening TTS, Reading & Writing)</option>
+              <option value="custom_gsheet" selected>📊 Soal Google Sheet Guru (English Learning — 30 Posko)</option>
+              <option value="english_all">🎧 Bahasa Inggris (Listening TTS, Reading & Writing)</option>
               <option value="bahasa_indonesia">🇮🇩 Bahasa Indonesia (Literasi & Tata Bahasa)</option>
               <option value="matematika">📐 Matematika (Numerasi & Logika)</option>
               <option value="ipas_sd">🌱 IPAS (Ilmu Pengetahuan Alam & Sosial SD)</option>
@@ -214,7 +215,6 @@
               <option value="pancasila">🦅 Pendidikan Pancasila & PKn</option>
               <option value="sma_iot_10">💻 Informatika & IoT (Arduino Wokwi)</option>
               <option value="smp_kka_7">📘 KKA (Poster Kampanye Digital)</option>
-              <option value="custom_gsheet">📊 Soal Google Sheet Guru (Via Room)</option>
             </select>
           </div>
 
@@ -666,9 +666,9 @@
           activeTitle = selectedMapelOpt.textContent.replace(/^[^\w]+/, "").trim();
         }
 
-        // 1. Cek apakah ada soal dari Room / Google Sheet Guru
+        // 1. Cek apakah ada soal dari Room / Google Sheet Guru (Default Fokus Utama)
         let questionsToUse = activeLoadedQuestions || null;
-        let activeSheetId = (currentRoomConfig && currentRoomConfig.sheetId) || window.gasService.spreadsheetId || "";
+        let activeSheetId = (currentRoomConfig && currentRoomConfig.sheetId) || window.gasService.spreadsheetId || "13rIFPVi2xx4xM_Up13ILyvqu1e4J-EIK6bRXXM7Hg54";
 
         if (!questionsToUse && activeSheetId) {
           try {
